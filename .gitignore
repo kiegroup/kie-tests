@@ -1,6 +1,22 @@
-*.class
+# compiled files
+target/
+bin/
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# Eclipse, Netbeans and IntelliJ files
+.*
+!.gitignore
+nbproject/
+*.ipr
+*.iws
+*.iml
+
+# Repository wide ignore mac DS_Store files
+.DS_Store
+
+*~
+*.tlog
+
+# Test info
+bitronix-default-config.properties
+*.db
+
