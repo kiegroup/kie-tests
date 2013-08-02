@@ -10,19 +10,20 @@
 
   <artifactId>kie-wb-tests</artifactId>
   <packaging>pom</packaging>
-  
-  <name>KIE Workbencht Integration Tests</name>
+
+  <name>KIE Workbench Integration Tests</name>
   <description>Integration tests for the Workbenches</description>
 
+  <modules>
+    <module>kie-wb-tests-jboss</module>
+  </modules>
+
   <properties>
-<!--
-        <shrinkwrap.resolver.version/>
-        <arquillian.version/>
--->
+    <!-- <shrinkwrap.resolver.version/> <arquillian.version/> -->
   </properties>
 
   <dependencies>
-      <dependency>
+    <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-services-client</artifactId>
       <scope>test</scope>
@@ -39,7 +40,7 @@
       <artifactId>slf4j-log4j12</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- arquillian -->
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
@@ -52,7 +53,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <dependencyManagement>
     <dependencies>
       <!-- arquillian -->
@@ -74,5 +75,28 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- ensure that repository directory is deleted before test runs -->
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <configuration>
+            <filesets>
+              <fileset>
+                <directory>${basedir}</directory>
+                <includes>
+                  <include>repository/</include>
+                  <include>.niogit/</include>
+                  <include>.index/</include>
+                </includes>
+              </fileset>
+            </filesets>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
   
 </project>

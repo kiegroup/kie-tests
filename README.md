@@ -1,7 +1,22 @@
 kie-tests
 =========
 
-Repository for integration tests and other tests involving multiple projects
+Repository for integration tests and other tests involving multiple projects. 
+
+In general, when adding modules (at any level) to this repo, try to keep the following structure in mind: 
+
+- Root level modules should be named after what they're testing: 
+  - "kie-wb-tests"
+  - "jbpm-tests"
+  - "dashboard-tests"
+  and etc. 
+
+- Nested modules should be named after the specific types of tests that they are: 
+  - "kie-wb-tests/kie-wb-tests-jboss"
+  - "jbpm-tests/jbpm-concurrency-tests"
+  and etc.. 
+  
+Thanks! 
 
 Developing Drools and jBPM
 ==========================
