@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss.jms;
+package org.kie.tests.wb.eap.jms;
 
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
@@ -34,16 +34,16 @@ import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.setup.DatasourceServerSetupTask;
 import org.kie.tests.wb.base.setup.JmsQueueServerSetupTask;
-import org.kie.tests.wb.jboss.base.KieServicesRemoteDeploy;
+import org.kie.tests.wb.eap.base.KieServicesRemoteDeploy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 @ServerSetup({DatasourceServerSetupTask.class, JmsQueueServerSetupTask.class})
-public class JbossAsJmsIntegrationTest extends KieServicesRemoteDeploy {
+public class JbossEapJmsIntegrationTest extends KieServicesRemoteDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossAsJmsIntegrationTest.class);
+    private static Logger logger = LoggerFactory.getLogger(JbossEapJmsIntegrationTest.class);
     private final static String DEPLOYMENT_NAME = "jms-kie-services-remote-test";
 
     @Deployment(testable = false)

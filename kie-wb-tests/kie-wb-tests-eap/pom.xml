@@ -8,10 +8,10 @@
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-wb-tests-jboss</artifactId>
+  <artifactId>kie-wb-tests-eap</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: JBoss AS 7</name>
+  <name>KIE Workbench Integration Tests :: JBoss EAP 6</name>
 
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
@@ -19,9 +19,9 @@
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
 
-    <version.org.jboss>7.1.1.Final</version.org.jboss>
-    <version.org.jboss.as.dist>7.1.1.Final</version.org.jboss.as.dist>
-    <jboss.server.name>jboss-as-7.1.1.Final</jboss.server.name>
+    <version.org.jboss.as.dist>7.2.0.Final-redhat-8</version.org.jboss.as.dist>
+    <jboss.server.name>jboss-eap-6.1</jboss.server.name>
+    <skip.integration.tests>true</skip.integration.tests>
   </properties>
 
   <dependencies>
@@ -40,7 +40,7 @@
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
       <version>${project.version}</version>
-      <classifier>jboss-as7</classifier>
+      <classifier>eap-6_1</classifier>
       <scope>test</scope>
       <type>war</type>
     </dependency>
@@ -49,7 +49,6 @@
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-core-client</artifactId>
-      <version>2.2.13</version>
       <exclusions>
         <exclusion>
           <artifactId>jboss-logmanager</artifactId>
@@ -61,7 +60,6 @@
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-jms-client</artifactId>
-      <version>2.2.13</version>
       <scope>test</scope>
     </dependency>
 
@@ -104,7 +102,6 @@
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-arquillian-container-managed</artifactId>
-      <version>${version.org.jboss}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -216,7 +213,7 @@
         <filtering>true</filtering>
       </testResource>
       <testResource>
-        <directory>src/test/resources-jboss-as7</directory>
+        <directory>src/test/resources-eap-6</directory>
         <filtering>false</filtering>
       </testResource>
     </testResources>
@@ -264,14 +261,30 @@
       </plugins>
     </pluginManagement>
 
+    <plugins>
+      <!-- only run when -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.integration.tests}</skipTests>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <profiles>
     <profile>
       <id>integration-tests</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>env.USER</name>
+          <value>hudson</value>
+        </property>
       </activation>
+      <properties>
+        <skip.integration.tests>false</skip.integration.tests>
+      </properties>
       <build>
         <plugins>
           <!-- testing with jboss AS 7 -->
@@ -311,7 +324,7 @@
                       <groupId>org.kie</groupId>
                       <artifactId>kie-wb-distribution-wars</artifactId>
                       <version>${project.version}</version>
-                      <classifier>jboss-as7</classifier>
+                      <classifier>eap-6_1</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
                       <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
@@ -337,7 +350,7 @@
                   <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>src/test/resources-jboss-as7/config</directory>
+                      <directory>src/test/resources-eap-6/config</directory>
                       <filtering>false</filtering>
                     </resource>
                   </resources>
@@ -389,6 +402,21 @@
                         &lt;permission type="consume" roles="kie-user"/&gt;</value>
                     </replacement>
                   </replacements>
+                </configuration>
+              </execution>
+              <execution>
+                <id>fix-broken-junit-reports</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>replace</goal>
+                </goals>
+                <configuration>
+                  <basedir>${project.build.directory}/failsafe-reports</basedir>
+                  <includes>
+                    <include>TEST*xml</include>
+                  </includes>
+                  <unescape>true</unescape>
+                  <tokenValueMap>${basedir}/replace-tokenFile.txt</tokenValueMap>
                 </configuration>
               </execution>
             </executions>
