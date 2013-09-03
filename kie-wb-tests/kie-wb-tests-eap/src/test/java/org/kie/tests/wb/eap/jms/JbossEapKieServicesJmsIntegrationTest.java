@@ -41,9 +41,9 @@ import org.slf4j.LoggerFactory;
 @RunAsClient
 @RunWith(Arquillian.class)
 @ServerSetup({DatasourceServerSetupTask.class, JmsQueueServerSetupTask.class})
-public class JbossEapJmsIntegrationTest extends KieServicesRemoteDeploy {
+public class JbossEapKieServicesJmsIntegrationTest extends KieServicesRemoteDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossEapJmsIntegrationTest.class);
+    private static Logger logger = LoggerFactory.getLogger(JbossEapKieServicesJmsIntegrationTest.class);
     private final static String DEPLOYMENT_NAME = "jms-kie-services-remote-test";
 
     @Deployment(testable = false)

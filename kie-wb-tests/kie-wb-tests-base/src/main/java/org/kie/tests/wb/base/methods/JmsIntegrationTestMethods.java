@@ -220,19 +220,11 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return cmdResponse;
     }
 
-    public void remoteApiHumanTaskProcess() throws Exception {
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext);
-        internalRemoteApiHumanTaskProcess(remoteSessionFactory);
-    }
-    
+
     public void remoteApiHumanTaskProcess(String user, String password) throws Exception {
         RemoteJmsRuntimeEngineFactory remoteSessionFactory 
             = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
-        internalRemoteApiHumanTaskProcess(remoteSessionFactory);
-    }
-    
-    
-    private void internalRemoteApiHumanTaskProcess(RemoteJmsRuntimeEngineFactory remoteSessionFactory) throws Exception {
+
         // create JMS request
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();

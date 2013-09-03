@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.UUID;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -117,10 +118,11 @@ public class KieWbWarDeploy {
                     new UsernamePasswordCredentials(userName, password));
             // Generate BASIC scheme object and stick it to the local execution context
             BasicScheme basicAuth = new BasicScheme();
-            localContext.setAttribute("preemptive-auth", basicAuth);
+            String contextId = UUID.randomUUID().toString();
+            localContext.setAttribute(contextId, basicAuth);
 
             // Add as the first request interceptor
-            client.addRequestInterceptor(new PreemptiveAuth(), 0);
+            client.addRequestInterceptor(new PreemptiveAuth(contextId), 0);
         }
 
         // set the following user agent with each request
@@ -130,13 +132,19 @@ public class KieWbWarDeploy {
     }
     
     static class PreemptiveAuth implements HttpRequestInterceptor {
+        
+        private final String contextId;
+        public PreemptiveAuth(String contextId) { 
+            this.contextId = contextId;
+        }
+        
         public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
 
             AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
 
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
-                AuthScheme authScheme = (AuthScheme) context.getAttribute("preemptive-auth");
+                AuthScheme authScheme = (AuthScheme) context.getAttribute(contextId);
                 CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(ClientContext.CREDS_PROVIDER);
                 HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
                 if (authScheme != null) {

@@ -19,7 +19,7 @@
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
 
-    <version.org.jboss.as.dist>7.2.0.Final-redhat-8</version.org.jboss.as.dist>
+    <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.1</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
   </properties>
