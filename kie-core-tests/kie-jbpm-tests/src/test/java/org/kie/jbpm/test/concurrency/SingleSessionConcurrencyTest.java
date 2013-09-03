@@ -15,9 +15,21 @@
  */
 package org.kie.jbpm.test.concurrency;
 
+import static org.kie.api.runtime.EnvironmentName.ENTITY_MANAGER_FACTORY;
+import static org.kie.api.runtime.EnvironmentName.TRANSACTION_MANAGER;
+
+import java.util.HashMap;
+
 import javax.persistence.EntityManagerFactory;
 
+import org.drools.core.impl.EnvironmentFactory;
+import org.jboss.byteman.contrib.bmunit.BMRule;
+import org.jboss.byteman.contrib.bmunit.BMScript;
+import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -34,24 +46,70 @@ import org.kie.internal.KnowledgeBaseFactory;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.persistence.jpa.JPAKnowledgeService;
 import org.kie.internal.runtime.StatefulKnowledgeSession;
+import org.kie.jbpm.test.util.PersistenceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SingleSessionConcurrencyTest {
+import bitronix.tm.TransactionManagerServices;
+
+@RunWith(BMUnitRunner.class)
+public class SingleSessionConcurrencyTest extends Assert {
 
     private static Logger logger = LoggerFactory.getLogger(SingleSessionConcurrencyTest.class);
 
-    protected static EntityManagerFactory emf;
-    
-    @Test
-    public void testMinimalProcess() throws Exception {
-        KieBase kbase = createKnowledgeBase("BPMN2-MinimalProcess.bpmn2");
-        KieSession ksession = createKnowledgeSession(kbase);
-        ProcessInstance processInstance = ksession.startProcess("Minimal");
-        assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
+    protected static HashMap<String, Object> context;
+
+    @Before
+    public void setup() {
+        context = PersistenceUtil.setupWithPoolingDataSource("org.jbpm.persistence.jpa");
     }
 
-    protected KieBase createKnowledgeBase(String... process) throws Exception {
+    @Test
+    @BMScript(value = "tx-wait", dir = "byteman")
+    public void testMinimalProcess() throws Exception {
+        Thread.currentThread().setName("test");
+        TestRunnable pausesBeforeTxSyncAfterCompletion = new TestRunnable();
+        Thread pausesThread = new Thread(pausesBeforeTxSyncAfterCompletion);
+        pausesThread.setName("pauses");
+        
+        TestRunnable runsBetweenCommitAndTxSyncAfterCompletion = new TestRunnable();
+        Thread runsInBetweenThread = new Thread(runsBetweenCommitAndTxSyncAfterCompletion);
+        runsInBetweenThread.setName("in-between");
+        
+        // Start the first process
+        pausesThread.start();
+       
+        waitForExecuteMethodToComplete();
+        runsInBetweenThread.start();
+        
+        continueWithSynchronizationAfterCompletionMethod();
+    }
+
+    public void createSSCSExecuteRendezvous() { 
+        // byteman rule called
+        
+    }
+    public void continueWithSynchronizationAfterCompletionMethod() { 
+       // byteman rule called 
+    }
+
+    public void waitForExecuteMethodToComplete() { 
+        // byteman rule called
+    }
+    
+    public static class TestRunnable implements Runnable {
+
+        @Override
+        public void run() {
+            KieBase kbase = createKnowledgeBase("MinimalProcess.bpmn2");
+            KieSession ksession = createKnowledgeSession(kbase);
+            ProcessInstance processInstance = ksession.startProcess("minimal");
+            assertTrue(processInstance.getState() == ProcessInstance.STATE_COMPLETED);
+        }
+
+    }
+
+    public static KieBase createKnowledgeBase(String... process) {
         Resource[] resources = new Resource[process.length];
         for (int i = 0; i < process.length; ++i) {
             String p = process[i];
@@ -60,7 +118,7 @@ public class SingleSessionConcurrencyTest {
         return createKnowledgeBaseFromResources(resources);
     }
 
-    protected KieBase createKnowledgeBaseFromResources(Resource... process) throws Exception {
+    public static KieBase createKnowledgeBaseFromResources(Resource... process) {
 
         KieServices ks = KieServices.Factory.get();
         KieRepository kr = ks.getRepository();
@@ -85,17 +143,19 @@ public class SingleSessionConcurrencyTest {
         return kContainer.getKieBase();
     }
 
-    protected StatefulKnowledgeSession createKnowledgeSession(KieBase kbase, KieSessionConfiguration conf, Environment env)
-            throws Exception {
-        StatefulKnowledgeSession result;
-        if (conf == null) {
-            conf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
-        }
-
-        if (env == null) {
-            env = createEnvironment(emf);
-        }
-        result = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, conf, env);
+    public static StatefulKnowledgeSession createKnowledgeSession(KieBase kbase) {
+        KieSessionConfiguration conf = KnowledgeBaseFactory.newKnowledgeSessionConfiguration();
+        Environment env = PersistenceUtil.createEnvironment(context);
+        StatefulKnowledgeSession result = JPAKnowledgeService.newStatefulKnowledgeSession(kbase, conf, env);
         return result;
     }
+
+    public static Environment createEnvironment(EntityManagerFactory emf) {
+        Environment env = EnvironmentFactory.newEnvironment();
+        env.set(ENTITY_MANAGER_FACTORY, emf);
+        env.set(TRANSACTION_MANAGER, TransactionManagerServices.getTransactionManager());
+
+        return env;
+    }
+    
 }
