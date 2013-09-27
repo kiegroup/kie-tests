@@ -35,15 +35,12 @@ import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.setup.DatasourceServerSetupTask;
 import org.kie.tests.wb.base.setup.JmsQueueServerSetupTask;
 import org.kie.tests.wb.eap.base.KieServicesRemoteDeploy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 @ServerSetup({DatasourceServerSetupTask.class, JmsQueueServerSetupTask.class})
 public class JbossEapKieServicesJmsIntegrationTest extends KieServicesRemoteDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossEapKieServicesJmsIntegrationTest.class);
     private final static String DEPLOYMENT_NAME = "jms-kie-services-remote-test";
 
     @Deployment(testable = false)

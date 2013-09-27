@@ -10,6 +10,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.arquillian.api.ServerSetup;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
@@ -22,10 +23,11 @@ import org.kie.tests.wb.eap.base.KieWbWarDeploy;
  *
  * @author ALR
  */
-@RunAsClient
-@RunWith(Arquillian.class)
-@ServerSetup({EmailServerSetupTask.class})
-public class JbossEapEmailIntegrationTest extends KieWbWarDeploy {
+//@RunAsClient
+//@RunWith(Arquillian.class)
+//@ServerSetup({EmailServerSetupTask.class})
+@Ignore
+public class JbossEapEmailIntegrationSkip extends KieWbWarDeploy {
 
     private static final String DEPLOYMENT_NAME = "kie-wb-email-test";
 

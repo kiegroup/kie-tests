@@ -21,6 +21,8 @@ import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.URL;
 
+import javax.ws.rs.core.MediaType;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -28,18 +30,16 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.base.KieWbWarDeploy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
-
-    private static Logger logger = LoggerFactory.getLogger(JbossEapBasicAuthIntegrationTest.class);
 
     @Deployment(testable = false)
     public static Archive<?> createWar() {
@@ -49,13 +49,32 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
     @ArquillianResource
     URL deploymentUrl;
 
-    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, MediaType.APPLICATION_JSON);
+    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
         Thread.sleep(1000);
     }
    
+    @Test
+    @Ignore
+    public void testStartProcess() throws Exception {
+        jmsTests.startProcess(USER, PASSWORD);
+    }
+
+    @Test
+    @Ignore
+    public void testRemoteApiHumanTaskProcess() throws Exception {
+        jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
+    }
+
+    @Test
+    @Ignore
+    public void testRemoteApiExceptions() throws Exception {
+        jmsTests.remoteApiException(USER, PASSWORD);
+    }
+    
     @Test
     public void testRestUrlStartHumanTaskProcess() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
@@ -91,4 +110,11 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.restDataServiceCoupling(deploymentUrl, requestFactory, USER);
     }
+    
+    @Test
+    public void testJsonAndXmlStartProcess() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
+    }
+
 }

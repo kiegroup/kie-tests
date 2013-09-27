@@ -277,6 +277,7 @@
     <profile>
       <id>integration-tests</id>
       <activation>
+        <activeByDefault>true</activeByDefault>
         <property>
           <name>env.USER</name>
           <value>hudson</value>

@@ -49,6 +49,7 @@ import org.kie.services.client.api.RemoteRestSessionFactory;
 import org.kie.services.client.serialization.jaxb.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.JaxbSerializationProvider;
+import org.kie.services.client.serialization.jaxb.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbHistoryLogList;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
@@ -62,9 +63,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private static final String taskUserId = "salaboy";
     
     private final String deploymentId;
+    private final String mediaType;
+    
+    public RestIntegrationTestMethods(String deploymentId, String mediaType) { 
+        this.deploymentId = deploymentId;
+        this.mediaType = mediaType;
+    }
     
     public RestIntegrationTestMethods(String deploymentId) { 
         this.deploymentId = deploymentId;
+        this.mediaType = MediaType.APPLICATION_XML;
     }
     
     /**
@@ -81,6 +89,25 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return responseObj;
     }
     
+    private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) { 
+        ClientRequest restRequest = requestFactory.createRequest(urlString);
+        if( mediaType.equals(MediaType.APPLICATION_JSON) ) {
+            restRequest.accept(mediaType);
+        }
+        logger.debug( ">> " + urlString);
+        return restRequest;
+    }
+    
+    private void addToRequestBody(ClientRequest restRequest, Object obj) throws Exception { 
+        if( mediaType.equals(MediaType.APPLICATION_XML) ) {
+            String body = JaxbSerializationProvider.convertJaxbObjectToString(obj);
+            restRequest.body(mediaType, body);
+        } else if( mediaType.equals(MediaType.APPLICATION_JSON) ) { 
+            String body = JsonSerializationProvider.convertJaxbObjectToJsonString(obj);
+            restRequest.body(mediaType, body);
+        }
+    }
+    
     /**
      * Test methods
      */
@@ -88,16 +115,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     public void urlStartHumanTaskProcessTest(URL deploymentUrl, ClientRequestFactory requestFactory, ClientRequestFactory taskRequestFactory) throws Exception { 
         // Start process
         String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/"+ deploymentId + "/process/org.jbpm.humantask/start").toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
-        logger.debug( ">> " + urlString);
+        ClientRequest restRequest = createRequest(taskRequestFactory, urlString);
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj.getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?taskOwner=" + taskUserId).toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
-        logger.debug( ">> " + urlString);
+        restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
         
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj.getEntity(JaxbTaskSummaryListResponse.class);
@@ -105,20 +130,20 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         // get task info
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId).toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
+        restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
         JaxbTask task = (JaxbTask) responseObj.getEntity(JaxbTask.class);
         assertEquals( "Incorrect task id", taskId, task.getId().longValue() );
 
         // start task
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/start").toExternalForm();
-        restRequest = taskRequestFactory.createRequest(urlString);
+        restRequest = createRequest(taskRequestFactory, urlString);
         responseObj = checkResponse(restRequest.post());
         JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
         
         // get task info
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId).toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
+        restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
     }
     
@@ -126,22 +151,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Start process
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/execute").toExternalForm();
         
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
+        ClientRequest restRequest = createRequest(requestFactory, urlString);
         JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, new StartProcessCommand("org.jbpm.humantask"));
-        String body = JaxbSerializationProvider.convertJaxbObjectToString(commandMessage);
-        restRequest.body(MediaType.APPLICATION_XML, body);
+        addToRequestBody(restRequest, commandMessage);
 
-        logger.debug( ">> [startProcess] " + urlString );
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
 
         JaxbCommandsResponse cmdsResp = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
         long procInstId = ((ProcessInstance) cmdsResp.getResponses().get(0)).getId();
 
         // query tasks
-        restRequest = requestFactory.createRequest(urlString);
+        restRequest = createRequest(requestFactory, urlString);
         commandMessage = new JaxbCommandsRequest(deploymentId, new GetTasksByProcessInstanceIdCommand(procInstId));
-        body = JaxbSerializationProvider.convertJaxbObjectToString(commandMessage);
-        restRequest.body(MediaType.APPLICATION_XML, body);
+        addToRequestBody(restRequest, commandMessage);
 
         logger.debug( ">> [getTasksByProcessInstanceId] " + urlString );
         responseObj = checkResponse(restRequest.post());
@@ -154,8 +176,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         logger.debug( ">> [startTask] " + urlString );
         restRequest = requestFactory.createRequest(urlString);
         commandMessage = new JaxbCommandsRequest(new StartTaskCommand(taskId, taskUserId));
-        body = JaxbSerializationProvider.convertJaxbObjectToString(commandMessage);
-        restRequest.body(MediaType.APPLICATION_XML, commandMessage);
+        addToRequestBody(restRequest, commandMessage);
 
         // Get response
         responseObj = checkResponse(restRequest.post());
@@ -165,8 +186,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         restRequest = requestFactory.createRequest(urlString);
         commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, null));
-        body = JaxbSerializationProvider.convertJaxbObjectToString(commandMessage);
-        restRequest.body(MediaType.APPLICATION_XML, commandMessage);
+        addToRequestBody(restRequest, commandMessage);
 
         // Get response
         logger.debug( ">> [completeTask] " + urlString );
@@ -178,7 +198,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     public void remoteApiHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
         // create REST request
         RemoteRestSessionFactory restSessionFactory 
-            = new RemoteRestSessionFactory(deploymentId, deploymentUrl.toExternalForm(), user, password);
+            = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
@@ -211,7 +231,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void executeTaskCommands(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception {
-        RuntimeEngine runtimeEngine = new RemoteRestSessionFactory(deploymentId, deploymentUrl.toExternalForm(), user, password).newRuntimeEngine();
+        RuntimeEngine runtimeEngine = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password).newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
         
@@ -235,8 +255,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Commands are null!", commandMessage.getCommands() );
         assertTrue( "Commands are empty!", commandMessage.getCommands().size() > 0 );
         
-        String body = JaxbSerializationProvider.convertJaxbObjectToString(commandMessage);
-        restRequest.body(MediaType.APPLICATION_XML, body);
+        addToRequestBody(restRequest, commandMessage);
 
         ClientResponse<JaxbCommandsResponse> responseObj = restRequest.post(JaxbCommandsResponse.class);
         checkResponse(responseObj);
@@ -304,5 +323,20 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj.getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
+    }
+    
+    public void jsonAndXmlStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        // XML
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/"+ deploymentId + "/process/org.jbpm.humantask/start").toExternalForm();
+        ClientRequest restRequest = requestFactory.createRequest(urlString);
+        logger.debug( ">> " + urlString);
+        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        System.out.println((String) responseObj.getEntity(String.class));
+
+        // JSON
+        restRequest = requestFactory.createRequest(urlString);
+        logger.debug( ">> " + urlString);
+        responseObj = checkResponse(restRequest.post());
+        System.out.println((String) responseObj.getEntity(String.class));
     }
 }

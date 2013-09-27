@@ -56,6 +56,12 @@ public class JbossEapNoAuthIntegrationTest extends KieServicesRemoteDeploy {
     }
    
     @Test
+    public void testJsonAndXmlStartProcess() throws Exception { 
+        ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
+        restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
+    }
+    
+    @Test
     public void testRestUrlStartHumanTaskProcess() throws Exception {
         ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
         restTests.urlStartHumanTaskProcessTest(deploymentUrl, requestFactory, requestFactory);
