@@ -8,7 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jbpm.process.audit.xml.JaxbProcessInstanceLog;
+import org.kie.services.client.serialization.jaxb.impl.audit.JaxbProcessInstanceLog;
+
 
 @XmlRootElement(name = "mail-message-list")
 @XmlAccessorType(XmlAccessType.FIELD)

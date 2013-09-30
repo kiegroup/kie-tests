@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
@@ -74,10 +73,6 @@ public class KieServicesRemoteDeploy {
                 .addAsWebInfResource("WEB-INF/ejb-jar.xml", "ejb-jar.xml")
                 .setWebXML("WEB-INF/web.xml")
                 .addAsLibraries(libs);
-        
-        
-        // export in order to inspect it
-        war.as(ZipExporter.class).exportTo(new File("target/" + war.getName()), true);
         
         return war;
     }

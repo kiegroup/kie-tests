@@ -31,8 +31,6 @@ import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
-import org.jbpm.process.audit.xml.AbstractJaxbHistoryObject;
-import org.jbpm.process.audit.xml.JaxbVariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
@@ -46,24 +44,30 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteRestSessionFactory;
-import org.kie.services.client.serialization.jaxb.JaxbCommandsRequest;
-import org.kie.services.client.serialization.jaxb.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
-import org.kie.services.client.serialization.jaxb.impl.JaxbHistoryLogList;
+import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
+import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
-import org.kie.services.client.serialization.jaxb.impl.JaxbProcessInstanceResponse;
-import org.kie.services.client.serialization.jaxb.impl.JaxbTaskSummaryListResponse;
+import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
+import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
+import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
+    private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
+    
     private static final String taskUserId = "salaboy";
     
     private final String deploymentId;
-    private final String mediaType;
+    private String mediaType;
     
     public RestIntegrationTestMethods(String deploymentId, String mediaType) { 
         this.deploymentId = deploymentId;
@@ -83,7 +87,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj.resetStream();
         int status = responseObj.getStatus(); 
         if( status != 200 ) { 
-            System.out.println("Response with exception:\n" + responseObj.getEntity(String.class));
+            logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
             assertEquals( "Status OK", 200, status);
         } 
         return responseObj;
@@ -121,7 +125,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?taskOwner=" + taskUserId).toExternalForm();
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?potentialOwner=" + taskUserId).toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
         
@@ -148,6 +152,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void executeStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        String originalMedia = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML;
+        
         // Start process
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/execute").toExternalForm();
         
@@ -193,6 +200,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         checkResponse(restRequest.post());
         
         // TODO: check that above has completed?
+        this.mediaType = originalMedia;
     }
 
     public void remoteApiHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
@@ -239,11 +247,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbCommandResponse<?> response = executeTaskCommand(deploymentUrl, requestFactory, deploymentId, new GetTasksByProcessInstanceIdCommand(processInstanceId));
         
         long taskId = ((JaxbLongListResponse) response).getResult().get(0);
+        assertTrue( "task id is less than 0", taskId > 0 );
+        
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("userId", taskUserId);
     }
     
     private JaxbCommandResponse<?> executeTaskCommand(URL deploymentUrl, ClientRequestFactory requestFactory, String deploymentId, Command<?> command) throws Exception {
+        String originalMediaType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML;
+        
         List<Command<?>> commands = new ArrayList<Command<?>>();
         commands.add(command);
         
@@ -261,6 +274,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         checkResponse(responseObj);
         
         JaxbCommandsResponse cmdsResp = responseObj.getEntity();
+        
+        this.mediaType = originalMediaType;
         return cmdsResp.getResponses().get(0);
     }
     
@@ -331,12 +346,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ClientRequest restRequest = requestFactory.createRequest(urlString);
         logger.debug( ">> " + urlString);
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
-        System.out.println((String) responseObj.getEntity(String.class));
+        logger.info("JAXB: " + (String) responseObj.getEntity(String.class));
 
         // JSON
         restRequest = requestFactory.createRequest(urlString);
         logger.debug( ">> " + urlString);
         responseObj = checkResponse(restRequest.post());
-        System.out.println((String) responseObj.getEntity(String.class));
+        logger.info("JSON: " + (String) responseObj.getEntity(String.class));
     }
 }

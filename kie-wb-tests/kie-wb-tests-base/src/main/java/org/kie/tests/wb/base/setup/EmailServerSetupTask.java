@@ -6,9 +6,14 @@ import org.jboss.as.arquillian.api.ServerSetupTask;
 import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmailServerSetupTask implements ServerSetupTask {
 
+    private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
+    
     /**
      * Name in JNDI to which the SMTP {@link javax.mail.Session} will be bound
      */
@@ -36,7 +41,7 @@ public class EmailServerSetupTask implements ServerSetupTask {
         final ModelNode socketBindingAddress = createSocketBindingOperation.get("address");
         socketBindingAddress.add("socket-binding-group", "standard-sockets");
         socketBindingAddress.add("remote-destination-outbound-socket-binding", "mail-smtp-25000");
-        System.out.println("Add remote outbound socket binding: " + client.execute(createSocketBindingOperation));
+        logger.info("Add remote outbound socket binding: " + client.execute(createSocketBindingOperation));
 
         /**
          * <mail-session jndi-name="java:/mail/jbpmMailSession" debug="true">
@@ -49,7 +54,7 @@ public class EmailServerSetupTask implements ServerSetupTask {
         final ModelNode smtpAddress = createMailServiceOperation.get("address");
         smtpAddress.add("subsystem", "mail");
         smtpAddress.add("mail-session", JNDI_BIND_NAME_MAIL_SESSION);
-        System.out.println("Add mail service:" + client.execute(createMailServiceOperation));
+        logger.info("Add mail service:" + client.execute(createMailServiceOperation));
 
         /**
          * <mail-session jndi-name="java:/mail/jbpmMailSession" debug="true">
@@ -62,11 +67,11 @@ public class EmailServerSetupTask implements ServerSetupTask {
         socketBindingRefAddress.add("subsystem", "mail");
         socketBindingRefAddress.add("mail-session", JNDI_BIND_NAME_MAIL_SESSION);
         socketBindingRefAddress.add("server", "smtp");
-        System.out.println("Configure mail service w/ socket binding:" + client.execute(createSocketBindingRefOp));
+        logger.info("Configure mail service w/ socket binding:" + client.execute(createSocketBindingRefOp));
 
         final ModelNode reloadOperation = new ModelNode();
         reloadOperation.get("operation").set("reload");
-        System.out.println("Reload config:" + client.execute(reloadOperation));
+        logger.info("Reload config:" + client.execute(reloadOperation));
 
         Thread.sleep(3000); // Because the operation returns but then server reload continues in the BG
         // Find from the WildFly team a better notification mechanism upon which to wait
@@ -84,18 +89,18 @@ public class EmailServerSetupTask implements ServerSetupTask {
         final ModelNode socketBindingAddress = removeSocketBindingOperation.get("address");
         socketBindingAddress.add("socket-binding-group", "standard-sockets");
         socketBindingAddress.add("remote-destination-outbound-socket-binding", "mail-smtp-25000");
-        System.out.println("REMOVE SOCKETS" + client.execute(removeSocketBindingOperation));
+        logger.info("REMOVE SOCKETS" + client.execute(removeSocketBindingOperation));
 
         final ModelNode removeMailServiceOperation = new ModelNode();
         removeMailServiceOperation.get("operation").set("remove");
         final ModelNode smtpAddress = removeMailServiceOperation.get("address");
         smtpAddress.add("subsystem", "mail");
         smtpAddress.add("mail-session", JNDI_BIND_NAME_MAIL_SESSION);
-        System.out.println("REMOVE MAIL" + client.execute(removeMailServiceOperation));
+        logger.info("REMOVE MAIL" + client.execute(removeMailServiceOperation));
 
         final ModelNode reloadOperation = new ModelNode();
         reloadOperation.get("operation").set("reload");
-        System.out.println("Reload config:" + client.execute(reloadOperation));
+        logger.info("Reload config:" + client.execute(reloadOperation));
         Thread.sleep(3000); // Because the operation returns but then server reload continues in the BG
                     // Find from the WildFly team a better notification mechanism upon which to wait
                     // https://github.com/arquillian/continuous-enterprise-development/issues/66
