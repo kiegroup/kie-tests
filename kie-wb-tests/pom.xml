@@ -16,8 +16,8 @@
 
   <modules>
     <module>kie-wb-tests-base</module>
-    <module>kie-wb-tests-jboss</module>
     <module>kie-wb-tests-eap</module>
+    <module>kie-wb-tests-jboss</module>
 <!--
     <module>kie-wb-tests-tomcat</module>
 -->

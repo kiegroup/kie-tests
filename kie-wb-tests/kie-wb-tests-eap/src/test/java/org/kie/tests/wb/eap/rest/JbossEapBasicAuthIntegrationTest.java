@@ -36,10 +36,14 @@ import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.base.KieWbWarDeploy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
+
+    private static Logger logger = LoggerFactory.getLogger(JbossEapBasicAuthIntegrationTest.class);
 
     @Deployment(testable = false)
     public static Archive<?> createWar() {

@@ -21,6 +21,8 @@ import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.URL;
 
+import javax.ws.rs.core.MediaType;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -49,7 +51,7 @@ public class JbossAsBasicAuthIntegrationTest extends KieWbWarDeploy {
     @ArquillianResource
     URL deploymentUrl;
 
-    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, MediaType.APPLICATION_JSON);
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
@@ -90,5 +92,11 @@ public class JbossAsBasicAuthIntegrationTest extends KieWbWarDeploy {
     public void testRestDataServicesCoupling() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.restDataServiceCoupling(deploymentUrl, requestFactory, USER);
+    }
+    
+    @Test
+    public void testJsonAndXmlStartProcess() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
     }
 }
