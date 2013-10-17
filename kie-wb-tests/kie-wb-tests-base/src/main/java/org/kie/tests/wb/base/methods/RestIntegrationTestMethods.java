@@ -19,6 +19,7 @@ package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.*;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
+import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
@@ -95,7 +97,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) { 
         ClientRequest restRequest = requestFactory.createRequest(urlString);
-        if( mediaType.equals(MediaType.APPLICATION_JSON) ) {
+        if( mediaType.equals(MediaType.APPLICATION_XML) ) {
             restRequest.accept(mediaType);
         }
         logger.debug( ">> " + urlString);
@@ -125,12 +127,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?potentialOwner=" + taskUserId).toExternalForm();
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?processInstanceId=" + procInstId).toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
         
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj.getEntity(JaxbTaskSummaryListResponse.class);
-        long taskId = findTaskId(procInstId, taskSumlistResponse.getResult());
+        TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
+        long taskId = taskSum.getId();
         
         // get task info
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId).toExternalForm();
@@ -354,4 +357,70 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj = checkResponse(restRequest.post());
         logger.info("JSON: " + (String) responseObj.getEntity(String.class));
     }
+    
+    public void humanTaskWithFormVariableChange(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        String originalMedia = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML;
+        
+        // Start process
+        String urlString = new URL(deploymentUrl, 
+                deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/org.jboss.qa.bpms.HumanTaskWithForm/start?map_userName=John"
+                ).toExternalForm();
+        
+        ClientRequest restRequest = createRequest(requestFactory, urlString);
+        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        long procInstId = processInstance.getId();
+
+        // query tasks for associated task Id
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?processInstanceId=" + procInstId).toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.get());
+        
+        JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj.getEntity(JaxbTaskSummaryListResponse.class);
+        TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
+        long taskId = taskSum.getId();
+        
+        // start task
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/start").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.post());
+        JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        
+        // complete task
+        String georgeVal = "George";
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/complete?map_outUserName=" + georgeVal).toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.post());
+        resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        
+        urlString = new URL(deploymentUrl, 
+                    deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/userName").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.get());
+        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        
+        List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
+        boolean georgeFound = false;
+        for( AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList ) { 
+            VariableInstanceLog varLog = absVarLog.createEntityInstance();
+            if( "userName".equals(varLog.getVariableId()) && georgeVal.equals(varLog.getValue()) ) { 
+                georgeFound = true;
+            }
+        }
+        assertTrue("'userName' var with value '" + georgeVal + "' not found!", georgeFound);
+        
+        this.mediaType = originalMedia;
+        
+    }
+    
+    public void httpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/var-proc/start");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+
+        connection.connect();
+        assertEquals(200, connection.getResponseCode());
+    }
+    
 }

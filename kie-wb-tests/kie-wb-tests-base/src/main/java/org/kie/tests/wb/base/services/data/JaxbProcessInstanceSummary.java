@@ -1,5 +1,7 @@
 package org.kie.tests.wb.base.services.data;
 
+import java.util.Date;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -33,8 +35,8 @@ public class JaxbProcessInstanceSummary extends AbstractJaxbObject<ProcessInstan
     private Integer state;
 
     @XmlElement(name="start-time")
-    @XmlSchemaType(name="string")
-    private String startTime;
+    @XmlSchemaType(name="date")
+    private Date  startTime;
 
     @XmlElement(name="deployment-id")
     @XmlSchemaType(name="string")
@@ -92,11 +94,11 @@ public class JaxbProcessInstanceSummary extends AbstractJaxbObject<ProcessInstan
         this.state = state;
     }
 
-    public String getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
 

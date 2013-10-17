@@ -62,21 +62,23 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
     }
    
     @Test
-    @Ignore
-    public void testStartProcess() throws Exception {
+    public void testJmsStartProcess() throws Exception {
         jmsTests.startProcess(USER, PASSWORD);
     }
 
     @Test
-    @Ignore
-    public void testRemoteApiHumanTaskProcess() throws Exception {
+    public void testJmsRemoteApiHumanTaskProcess() throws Exception {
         jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
     }
 
     @Test
-    @Ignore
-    public void testRemoteApiExceptions() throws Exception {
+    public void testJmsRemoteApiExceptions() throws Exception {
         jmsTests.remoteApiException(USER, PASSWORD);
+    }
+    
+    @Test
+    public void testJmsNoProcessInstanceFound() throws Exception {
+        jmsTests.noProcessInstanceFound(USER, PASSWORD);
     }
     
     @Test
@@ -119,6 +121,11 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
     public void testJsonAndXmlStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
+    }
+    @Test
+    public void testHumanTaskCompleteWithVariable() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.humanTaskWithFormVariableChange(deploymentUrl, requestFactory);
     }
 
 }

@@ -272,4 +272,21 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
         
+    public void noProcessInstanceFound(String user, String password) throws Exception {
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+
+        // create JMS request
+        RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
+        ProcessInstance processInstance = ksession.startProcess("org.jbpm.scripttask");
+        
+        logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
+        
+        Command<?> cmd = new GetProcessInstanceCommand(processInstance.getId());
+        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
+        JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+        assertNotNull( "Response should not be null.", response);
+        assertEquals( "Size of response list", response.getResponses().size(), 0);
+    }
 }

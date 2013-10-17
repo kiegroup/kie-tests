@@ -79,6 +79,12 @@
         <artifactId>hornetq-jms-client</artifactId>
     </dependency>
     
+    <!-- producers -->
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-io</artifactId>
+    </dependency>
+    
     <!-- server setup -->
     <dependency>
       <groupId>org.jboss.as</groupId>

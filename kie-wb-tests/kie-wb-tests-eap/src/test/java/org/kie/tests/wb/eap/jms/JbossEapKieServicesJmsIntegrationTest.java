@@ -59,19 +59,16 @@ public class JbossEapKieServicesJmsIntegrationTest extends KieServicesRemoteDepl
     }
 
     @Test
-    @InSequence(value = 1)
     public void testStartProcess() throws Exception {
         jmsTests.startProcess(USER, PASSWORD);
     }
 
     @Test
-    @InSequence(value = 1)
     public void testRemoteApiHumanTaskProcess() throws Exception {
         jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
     }
 
     @Test
-    @InSequence(value = 1)
     public void testRemoteApiExceptions() throws Exception {
         jmsTests.remoteApiException(USER, PASSWORD);
     }

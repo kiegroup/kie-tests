@@ -78,4 +78,10 @@ public class JbossEapNoAuthIntegrationTest extends KieServicesRemoteDeploy {
         ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
         restTests.restHistoryLogs(deploymentUrl, requestFactory);
     }
+    
+    @Test
+    public void testHttpURLConnectionAcceptHeader() throws Exception {
+        ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
+        restTests.httpURLConnectionAcceptHeaderIsFixed(deploymentUrl, requestFactory);
+    }
 }

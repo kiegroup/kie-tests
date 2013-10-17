@@ -87,6 +87,7 @@ public class TestKjarDeploymentLoader {
     public static void deployKjarToMaven(String group, String artifact, String version, String kbaseName, String ksessionName) {
         List<BpmnResource> bpmnResources = new ArrayList<BpmnResource>();
         bpmnResources.add(new BpmnResource("/repo/test/humanTask.bpmn2"));
+        bpmnResources.add(new BpmnResource("/repo/test/humanTaskVar.bpmn2"));
         bpmnResources.add(new BpmnResource("/repo/test/scriptTask.bpmn2"));
         bpmnResources.add(new BpmnResource("/repo/test/signal.bpmn2"));
         bpmnResources.add(new BpmnResource("/repo/test/varScriptTask.bpmn2"));

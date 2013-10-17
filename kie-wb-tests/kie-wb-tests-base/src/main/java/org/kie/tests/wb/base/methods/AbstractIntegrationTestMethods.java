@@ -1,6 +1,6 @@
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -21,6 +21,16 @@ public class AbstractIntegrationTestMethods {
         }
         assertNotEquals("Could not determine taskId!", -1, taskId);
         return taskId;
+    }
+    
+    protected TaskSummary findTaskSummary(long procInstId, List<TaskSummary> taskSumList) { 
+        for( TaskSummary task : taskSumList ) { 
+            if( task.getProcessInstanceId() == procInstId ) {
+                return task;
+            }
+        }
+        fail( "Unable to find task summary for process instance " + procInstId); 
+        return null;
     }
     
 }

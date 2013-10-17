@@ -36,6 +36,8 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- <dependency> <groupId>com.google.inject</groupId> <artifactId>guice</artifactId> <version>3.0</version> </dependency> -->
+
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
@@ -112,13 +114,13 @@
     </dependency>
 
 
-    <!--  needed for test? -->
+    <!-- needed for test? -->
     <dependency>
-        <groupId>org.jbpm</groupId>
-        <artifactId>jbpm-flow-builder</artifactId>
-        <scope>test</scope>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-flow-builder</artifactId>
+      <scope>test</scope>
     </dependency>
-    
+
     <!-- libs needed for (test) war integration -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -148,6 +150,11 @@
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-audit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
       <artifactId>jbpm-runtime-manager</artifactId>
       <scope>test</scope>
     </dependency>
@@ -160,18 +167,18 @@
 
     <!-- kie nio providers -->
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-nio2-fs</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-nio2-fs</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-nio2-model</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-nio2-model</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-commons-io</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-io</artifactId>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -204,14 +211,20 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
-    <!-- ht/escalation e-mails -->
+
+    <!-- maven's broken -->
     <dependency>
-      <groupId>org.subethamail</groupId>
-      <artifactId>subethasmtp</artifactId>
-      <version>3.1.7</version>
-      <scope>test</scope>
+      <groupId>org.sonatype.sisu</groupId>
+      <artifactId>sisu-guice</artifactId>
+      <version>3.0.3</version>
     </dependency>
+    <!-- 
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20090211</version>
+    </dependency>
+    -->
   </dependencies>
 
   <build>
@@ -320,29 +333,6 @@
                   </artifactItems>
                 </configuration>
               </execution>
-              <!-- make web-exec-server.xml from war available for tests -->
-              <execution>
-                <id>unpack-web-xml</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>unpack</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>org.kie</groupId>
-                      <artifactId>kie-wb-distribution-wars</artifactId>
-                      <version>${project.version}</version>
-                      <classifier>eap-6_1</classifier>
-                      <type>war</type>
-                      <overWrite>false</overWrite>
-                      <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
-                      <excludes>**/*.class</excludes>
-                      <includes>**/web-exec-server.xml</includes>
-                    </artifactItem>
-                  </artifactItems>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
           <!-- 2. install files with user/password information in the server dir -->
@@ -401,14 +391,12 @@
                       <value></value>
                     </replacement>
                     <replacement>
-                      <token>&lt;security-settings&gt;
-                    &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="guest"/&gt;
-                        &lt;permission type="consume" roles="guest"/&gt;</token>
+                      <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
                       <value>&lt;security-settings&gt;
-                    &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="kie-user"/&gt;
-                        &lt;permission type="consume" roles="kie-user"/&gt;</value>
+                        &lt;security-setting match="#"&gt;
+                        &lt;permission type="send"
+                        roles="admin"/&gt;
+                        &lt;permission type="consume" roles="admin"/&gt;</value>
                     </replacement>
                   </replacements>
                 </configuration>

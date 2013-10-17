@@ -16,8 +16,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenCoordinate;
-import org.kie.commons.java.nio.file.spi.FileSystemProvider;
-import org.kie.commons.java.nio.fs.file.SimpleFileSystemProvider;
+import org.uberfire.java.nio.file.spi.FileSystemProvider;
+import org.uberfire.java.nio.fs.file.SimpleFileSystemProvider;
 
 public class KieServicesRemoteDeploy {
 
@@ -33,10 +33,11 @@ public class KieServicesRemoteDeploy {
                 "org.jbpm:jbpm-audit",
                 "org.jbpm:jbpm-persistence-jpa",
                 "org.jbpm:jbpm-runtime-manager",
+                "org.jbpm:jbpm-human-task-audit",
                 // cdi impls (includes core jbpm libs)
                 "org.jbpm:jbpm-kie-services",
                 // services
-                "org.kie.commons:kie-nio2-fs",
+                "org.uberfire:uberfire-nio2-fs",
                 // test
                 "org.jbpm:jbpm-shared-services:test-jar:" + projectVersion,
         };

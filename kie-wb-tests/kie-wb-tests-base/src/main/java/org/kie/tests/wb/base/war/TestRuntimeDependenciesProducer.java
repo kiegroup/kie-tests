@@ -15,8 +15,6 @@ import org.jbpm.kie.services.api.Kjar;
 import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
 import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
 import org.jbpm.shared.services.cdi.Selectable;
-import org.kie.commons.io.IOService;
-import org.kie.commons.io.impl.IOServiceDotFileImpl;
 import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.cdi.qualifier.PerProcessInstance;
 import org.kie.internal.runtime.manager.cdi.qualifier.PerRequest;
@@ -25,6 +23,8 @@ import org.kie.internal.task.api.UserGroupCallback;
 import org.kie.tests.wb.base.methods.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.uberfire.io.IOService;
+import org.uberfire.io.impl.IOServiceDotFileImpl;
 
 @Singleton
 public class TestRuntimeDependenciesProducer {

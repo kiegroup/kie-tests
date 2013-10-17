@@ -43,10 +43,6 @@ public class KieWbWarDeploy {
     protected static final String PROCESS_ID = "org.jbpm.humantask";
     
     protected static WebArchive createWarWithTestDeploymentLoader(String deployName, String classifier) {
-        return createWarWithTestDeploymentLoader(deployName, classifier, false, false);
-    }
-    
-    protected static WebArchive createWarWithTestDeploymentLoader(String deployName, String classifier, boolean useExecServerWebXml, boolean mailDeps) {
         // Import kie-wb war
         File [] warFile = 
                 Maven.resolver()
@@ -66,7 +62,8 @@ public class KieWbWarDeploy {
         war.delete("WEB-INF/kie-services-client-" + projectVersion + "-.jar");
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client")
+                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client",
+                        "org.jbpm:jbpm-human-task-audit")
                 .withoutTransitivity()
                 .asFile();
         war.addAsLibraries(kieRemoteDeps);
@@ -74,23 +71,12 @@ public class KieWbWarDeploy {
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
         
-        if( useExecServerWebXml ) { 
-            war.delete("WEB-INF/web.xml");
-            URL webExecServerXmlUrl = KieWbWarDeploy.class.getResource("/WEB-INF/web-exec-server.xml");
-            assertNotNull("web-exec-server.xml resource could not be found.", webExecServerXmlUrl);
-            war.setWebXML(webExecServerXmlUrl);
-        }
-        
-        if( mailDeps ) { 
-            war.addPackage("org/kie/tests/wb/base/services/mail");
-            // Add subetha jars for e-mail test
-            final File[] subEthaMailDeps = Maven.resolver()
+            final File[] jsonDeps = Maven.resolver()
                     .loadPomFromFile("pom.xml")
-                    .resolve("org.subethamail:subethasmtp")
+                    .resolve("org.json:json")
                     .withTransitivity()
                     .asFile();
-            war.addAsLibraries(subEthaMailDeps);
-        }
+            war.addAsLibraries(jsonDeps);
 
         // Deploy test deployment
         TestKjarDeploymentLoader.deployKjarToMaven();
