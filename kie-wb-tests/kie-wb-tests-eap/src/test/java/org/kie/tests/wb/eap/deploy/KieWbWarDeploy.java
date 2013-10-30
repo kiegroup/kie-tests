@@ -1,4 +1,4 @@
-package org.kie.tests.wb.eap.base;
+package org.kie.tests.wb.eap.deploy;
 
 import static org.junit.Assert.assertNotNull;
 import static org.kie.tests.wb.base.methods.TestConstants.*;

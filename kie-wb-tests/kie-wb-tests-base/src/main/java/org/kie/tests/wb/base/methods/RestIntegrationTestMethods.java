@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -422,5 +423,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         connection.connect();
         assertEquals(200, connection.getResponseCode());
     }
-    
+ 
+    public void remoteApiSerialization(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
+        RemoteRestSessionFactory restSessionFactory 
+        = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password);
+        RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
+        ProcessInstance processInstance = ksession.startProcess("org.jbpm.scripttask");
+        Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
+    }
 }

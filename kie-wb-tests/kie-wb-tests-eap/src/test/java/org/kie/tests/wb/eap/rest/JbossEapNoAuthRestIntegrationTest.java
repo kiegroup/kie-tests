@@ -33,12 +33,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.base.setup.DatasourceServerSetupTask;
-import org.kie.tests.wb.eap.base.KieServicesRemoteDeploy;
+import org.kie.tests.wb.eap.deploy.KieServicesRemoteDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 @ServerSetup({DatasourceServerSetupTask.class})
-public class JbossEapNoAuthIntegrationTest extends KieServicesRemoteDeploy {
+public class JbossEapNoAuthRestIntegrationTest extends KieServicesRemoteDeploy {
 
     @Deployment(testable = false)
     public static Archive<?> createWar() {

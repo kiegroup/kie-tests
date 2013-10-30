@@ -1,4 +1,4 @@
-package org.kie.tests.wb.eap.base;
+package org.kie.tests.wb.eap.deploy;
 
 import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 
@@ -36,8 +36,10 @@ public class KieServicesRemoteDeploy {
                 "org.jbpm:jbpm-human-task-audit",
                 // cdi impls (includes core jbpm libs)
                 "org.jbpm:jbpm-kie-services",
-                // services
+                // uberfire vfs/io
                 "org.uberfire:uberfire-nio2-fs",
+                "org.uberfire:uberfire-io",
+                "org.jbpm:jbpm-console-ng-business-domain-backend",
                 // test
                 "org.jbpm:jbpm-shared-services:test-jar:" + projectVersion,
         };

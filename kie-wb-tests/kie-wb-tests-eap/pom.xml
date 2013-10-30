@@ -36,8 +36,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- <dependency> <groupId>com.google.inject</groupId> <artifactId>guice</artifactId> <version>3.0</version> </dependency> -->
-
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
@@ -113,7 +111,6 @@
       </exclusions>
     </dependency>
 
-
     <!-- needed for test? -->
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -185,14 +182,11 @@
           <artifactId>log4j</artifactId>
           <groupId>log4j</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>helix-core</artifactId>
+          <groupId>org.apache.helix</groupId>
+        </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- kjar deployment -->
-    <dependency>
-      <artifactId>kie-ci</artifactId>
-      <groupId>org.kie</groupId>
-      <scope>test</scope>
     </dependency>
 
     <!-- data service -->
@@ -218,13 +212,6 @@
       <artifactId>sisu-guice</artifactId>
       <version>3.0.3</version>
     </dependency>
-    <!-- 
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
-    </dependency>
-    -->
   </dependencies>
 
   <build>

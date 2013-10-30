@@ -35,15 +35,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.wb.eap.base.KieWbWarDeploy;
+import org.kie.tests.wb.eap.deploy.KieWbWarDeploy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
+public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossEapBasicAuthIntegrationTest.class);
+    private static Logger logger = LoggerFactory.getLogger(JbossEapBasicAuthRestIntegrationTest.class);
 
     @Deployment(testable = false)
     public static Archive<?> createWar() {
@@ -61,26 +61,6 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
         Thread.sleep(1000);
     }
    
-    @Test
-    public void testJmsStartProcess() throws Exception {
-        jmsTests.startProcess(USER, PASSWORD);
-    }
-
-    @Test
-    public void testJmsRemoteApiHumanTaskProcess() throws Exception {
-        jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
-    }
-
-    @Test
-    public void testJmsRemoteApiExceptions() throws Exception {
-        jmsTests.remoteApiException(USER, PASSWORD);
-    }
-    
-    @Test
-    public void testJmsNoProcessInstanceFound() throws Exception {
-        jmsTests.noProcessInstanceFound(USER, PASSWORD);
-    }
-    
     @Test
     public void testRestUrlStartHumanTaskProcess() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
@@ -122,10 +102,16 @@ public class JbossEapBasicAuthIntegrationTest extends KieWbWarDeploy {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
     }
+    
     @Test
     public void testHumanTaskCompleteWithVariable() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.humanTaskWithFormVariableChange(deploymentUrl, requestFactory);
     }
 
+    @Test
+    public void testRemoteApiProcessInstances() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.remoteApiSerialization(deploymentUrl, requestFactory, USER, PASSWORD);
+    }
 }

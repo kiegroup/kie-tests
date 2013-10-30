@@ -108,7 +108,6 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     // Tests ----------------------------------------------------------------------------------------------------------------------
     
     public void startProcess(String user, String password) throws Exception {
-        
         // send cmd
         Command<?> cmd = new StartProcessCommand("org.jbpm.humantask"); 
         JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
@@ -194,7 +193,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             // Create msg
             BytesMessage msg = session.createBytesMessage();
             msg.setJMSCorrelationID(corrId);
-            msg.setIntProperty("serialization", 1);
+            msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE );
             String xmlStr = JaxbSerializationProvider.convertJaxbObjectToString(req);
             msg.writeUTF(xmlStr);
             
@@ -268,7 +267,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             fail("startProcess should fail!");
         } catch( RemoteRuntimeException rre) { 
             String errMsg = rre.getMessage();
-            assertTrue( "Incorrect error message: " + errMsg, errMsg.startsWith("DomainNotFoundBadRequestException"));
+            assertTrue( "Incorrect error message: " + errMsg, errMsg.contains("DomainNotFoundBadRequestException"));
         }
     }
         

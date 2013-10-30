@@ -46,6 +46,38 @@
       <artifactId>jboss-ejb-api_3.1_spec</artifactId>
     </dependency>
 
+    <!-- vfs deployment -->
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-console-ng-business-domain-backend</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>uberfire-security-client</artifactId>
+          <groupId>org.uberfire</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>errai-bus</artifactId>
+          <groupId>org.jboss.errai</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>guvnor-m2repo-editor-backend</artifactId>
+          <groupId>org.guvnor</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>guvnor-project-api</artifactId>
+          <groupId>org.guvnor</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>uberfire-client-api</artifactId>
+          <groupId>org.uberfire</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>uberfire-backend-server</artifactId>
+          <groupId>org.uberfire</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
     <!-- data service -->
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -83,6 +115,7 @@
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-io</artifactId>
+      <version>0.3.0-SNAPSHOT</version>
     </dependency>
     
     <!-- server setup -->
