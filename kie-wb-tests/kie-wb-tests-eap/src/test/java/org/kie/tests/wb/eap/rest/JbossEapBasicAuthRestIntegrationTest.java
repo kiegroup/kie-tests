@@ -30,31 +30,24 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarDeploy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossEapBasicAuthRestIntegrationTest.class);
-
-    @Deployment(testable = false)
+    @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("kie-wb-basic-auth-test", "eap-6_1");
+       return createWarWithTestDeploymentLoader("eap-6_1");
     }
 
     @ArquillianResource
     URL deploymentUrl;
 
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, MediaType.APPLICATION_JSON);
-    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 

@@ -13,7 +13,7 @@
 
   <itemDefinition id="_stringItem" structureRef="java.lang.String" />
 
-  <process processType="Private" isExecutable="true" id="var-proc" name="ScriptTask Process" tns:packageName="com.sample" >
+  <process processType="Private" isExecutable="true" id="org.jbpm.humantask.var" name="ScriptTask Process" tns:packageName="com.sample" >
 
     <!-- process variables -->
     <property id="x" itemSubjectRef="_stringItem"/>

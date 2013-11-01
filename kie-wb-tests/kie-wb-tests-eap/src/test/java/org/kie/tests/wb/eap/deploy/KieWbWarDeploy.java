@@ -42,7 +42,7 @@ public class KieWbWarDeploy {
 
     protected static final String PROCESS_ID = "org.jbpm.humantask";
     
-    protected static WebArchive createWarWithTestDeploymentLoader(String deployName, String classifier) {
+    protected static WebArchive createWarWithTestDeploymentLoader(String classifier) {
         // Import kie-wb war
         File [] warFile = 
                 Maven.resolver()
@@ -50,7 +50,7 @@ public class KieWbWarDeploy {
                 .resolve("org.kie:kie-wb-distribution-wars:war:" + classifier + ":" + projectVersion )
                 .withoutTransitivity()
                 .asFile();
-        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, deployName + ".war").importFrom(warFile[0]);
+        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(warFile[0]);
         
         WebArchive war = zipWar.as(WebArchive.class);
         

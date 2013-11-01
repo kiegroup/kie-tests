@@ -21,7 +21,7 @@ import org.uberfire.java.nio.fs.file.SimpleFileSystemProvider;
 
 public class KieServicesRemoteDeploy {
 
-    protected static WebArchive createWebArchive(String deploymentName) { 
+    protected static WebArchive createWebArchive() { 
         List<MavenResolvedArtifact> artifacts = new ArrayList<MavenResolvedArtifact>();
         
         String [] warDeps = { 
@@ -68,7 +68,7 @@ public class KieServicesRemoteDeploy {
         }
         File [] libs = libList.toArray(new File[libList.size()]);
         
-        WebArchive war =  ShrinkWrap.create(WebArchive.class, deploymentName + ".war")
+        WebArchive war =  ShrinkWrap.create(WebArchive.class, "test.war")
                 .addPackages(true, "org/kie/tests/wb/base/war")
                 .addAsResource("META-INF/persistence.xml")
                 .addAsServiceProvider(FileSystemProvider.class, SimpleFileSystemProvider.class)

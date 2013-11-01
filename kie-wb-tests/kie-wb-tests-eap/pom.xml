@@ -13,9 +13,9 @@
 
   <name>KIE Workbench Integration Tests :: JBoss EAP 6</name>
 
+  <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
+
   <properties>
-    <!-- DO NOT TOUCH THESE PROPERTIES -->
-    <!-- If you want to modify these, please contact mriet first! -->
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
 
@@ -378,12 +378,35 @@
                       <value></value>
                     </replacement>
                     <replacement>
+                      <!--  AUTO-FORMAT: the following line must not be broken up! -->
                       <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
                       <value>&lt;security-settings&gt;
                         &lt;security-setting match="#"&gt;
-                        &lt;permission type="send"
-                        roles="admin"/&gt;
+                        &lt;permission type="send" roles="admin"/&gt;
                         &lt;permission type="consume" roles="admin"/&gt;</value>
+                    </replacement>
+                    <replacement>
+                      <token>periodic-rotating-file-handler&gt;</token>
+                      <value>periodic-rotating-file-handler&gt;
+                        &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
+                        &lt;formatter&gt;
+                        &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
+                        &lt;/formatter&gt;
+                        &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
+                        &lt;suffix value=".yyyy-MM-dd"/&gt;
+                        &lt;append value="true"/&gt;
+                        &lt;/periodic-rotating-file-handler&gt;</value>
+                    </replacement>
+                    <replacement>
+                        <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
+                        <value>&lt;root-logger&gt;
+                        &lt;level name="DEBUG"/&gt;
+                        </value>
+                    </replacement>
+                    <replacement>
+                        <token>&lt;handlers&gt;</token>
+                        <value>&lt;handlers&gt;
+                        &lt;handler name="DEBUGFILE"/&gt;</value>
                     </replacement>
                   </replacements>
                 </configuration>

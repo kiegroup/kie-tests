@@ -39,6 +39,8 @@ import javax.naming.NamingException;
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
+import org.jbpm.services.task.commands.GetContentCommand;
+import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.GetTasksOwnedCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
@@ -58,6 +60,7 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 
 public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
@@ -287,5 +290,104 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
         assertNotNull( "Response should not be null.", response);
         assertEquals( "Size of response list", response.getResponses().size(), 0);
+    }
+    
+    public void completeSimpleHumanTask(String user, String password) throws Exception {
+        // Via the remote api
+        
+        // setup
+        String processId = "org.jboss.qa.bpms.HumanTask";
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+        RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
+        
+        // start process
+        ProcessInstance processInstance = ksession.startProcess(processId);
+        long procInstId = processInstance.getId();
+         
+        TaskService taskService = engine.getTaskService();
+        List<Long> tasks = taskService.getTasksByProcessInstanceId(procInstId);
+        assertEquals("Only expected 1 task for this process instance", 1, tasks.size());
+        long taskId = tasks.get(0);
+        assertNotNull( "Null task!", taskService.getTaskById(taskId));
+        
+        String userId = "admin";
+        taskService.start(taskId, userId);
+        taskService.complete(taskId, userId, null);
+               
+        processInstance  = ksession.getProcessInstance(procInstId);
+        assertNull(processInstance);
+        
+        // Via the JaxbCommandsRequest 
+        // send cmd
+        Command<?> cmd = new StartProcessCommand(processId);
+        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
+        JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertNotNull("response was null.", response);
+        assertTrue("response did not contain any command responses",  response.getResponses() != null && response.getResponses().size() > 0);
+        JaxbCommandResponse<?> cmdResponse = response.getResponses().get(0);
+        assertTrue( "response is not the proper class type : " + cmdResponse.getClass().getSimpleName(), cmdResponse instanceof JaxbProcessInstanceResponse );
+        ProcessInstance procInst = (ProcessInstance) cmdResponse;
+        procInstId = procInst.getId();
+       
+        // send cmd
+        cmd = new GetTasksByProcessInstanceIdCommand(procInstId);
+        req = new JaxbCommandsRequest(deploymentId, cmd);
+        response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertNotNull("response was null.", response);
+        assertTrue("response did not contain any command responses",  response.getResponses() != null && response.getResponses().size() > 0);
+        cmdResponse = response.getResponses().get(0);
+        assertTrue( "response is not the proper class type : " + cmdResponse.getClass().getSimpleName(), cmdResponse instanceof JaxbLongListResponse );
+        taskId = ((JaxbLongListResponse) cmdResponse).getResult().get(0);
+        
+        // send cmd
+        cmd = new GetTaskCommand(taskId);
+        req = new JaxbCommandsRequest(deploymentId, cmd);
+        response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertNotNull("response was null.", response);
+        assertTrue("response did not contain any command responses",  response.getResponses() != null && response.getResponses().size() > 0);
+        cmdResponse = response.getResponses().get(0);
+        assertTrue( "response is not the proper class type : " + cmdResponse.getClass().getSimpleName(), cmdResponse instanceof JaxbTaskResponse );
+        Task task = ((JaxbTaskResponse) cmdResponse).getResult();
+        assertNotNull("task was null.", task);
+        
+        // send cmd
+        /**
+        cmd = new GetContentCommand(task.getTaskData().getDocumentContentId());
+        req = new JaxbCommandsRequest(deploymentId, cmd);
+        response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertNotNull("response was null.", response);
+        assertTrue("response did not contain any command responses",  response.getResponses() != null && response.getResponses().size() > 0);
+        cmdResponse = response.getResponses().get(0);
+        assertTrue( "response is not the proper class type : " + cmdResponse.getClass().getSimpleName(), cmdResponse instanceof JaxbTaskResponse );
+        Task task = ((JaxbTaskResponse) cmdResponse).getResult();
+        assertNotNull("task was null.", task);
+        **/
+        
+        // send cmd
+        cmd = new StartTaskCommand(taskId, userId);
+        req = new JaxbCommandsRequest(deploymentId, cmd);
+        req.getCommands().add(new CompleteTaskCommand(taskId, userId, null));
+        response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertNotNull("response was null.", response);
+
+        // send cmd
+        cmd = new GetProcessInstanceCommand(procInstId);
+        req = new JaxbCommandsRequest(deploymentId, cmd);
+        response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+        
+        // check response 
+        assertEquals("Process instance did not complete..", 0, response.getResponses().size());
     }
 }

@@ -284,7 +284,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void restHistoryLogs(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/var-proc/start?map_x=initVal").toExternalForm();
+        String processId = "org.jbpm.humantask.var";
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start?map_x=initVal").toExternalForm();
         ClientRequest restRequest = requestFactory.createRequest(urlString);
 
         // Get and check response
@@ -304,13 +305,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         for( AbstractJaxbHistoryObject<?> log : logList.getHistoryLogList() ) {
            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) log;
            assertEquals( "Incorrect variable id", "x", varLog.getVariableId() );
-           assertEquals( "Incorrect process id", "var-proc", varLog.getProcessId() );
-           assertEquals( "Incorrect process instance id", "var-proc", varLog.getProcessId() );
+           assertEquals( "Incorrect process id", processId, varLog.getProcessId() );
+           assertEquals( "Incorrect process instance id", procInstId, varLog.getProcessInstanceId().longValue() );
         }
     }
  
     public void restDataServiceCoupling(URL deploymentUrl, ClientRequestFactory requestFactory, String user) throws Exception {
-        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/var-proc/start?map_x=initVal").toExternalForm();
+        String processId = "org.jbpm.humantask.var";
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start?map_x=initVal").toExternalForm();
         ClientRequest restRequest = requestFactory.createRequest(urlString);
 
         // Get and check response
@@ -416,7 +418,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void httpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
-        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/var-proc/start");
+        String processId = "org.jbpm.humantask.var";
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
 

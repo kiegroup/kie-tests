@@ -40,9 +40,9 @@ import org.kie.tests.wb.eap.deploy.KieServicesRemoteDeploy;
 @ServerSetup({DatasourceServerSetupTask.class})
 public class JbossEapNoAuthRestIntegrationTest extends KieServicesRemoteDeploy {
 
-    @Deployment(testable = false)
+    @Deployment(testable = false, name ="kie-services-remote-rest")
     public static Archive<?> createWar() {
-       return createWebArchive("rest-kie-services-remote-test");
+       return createWebArchive();
     }
 
     @ArquillianResource

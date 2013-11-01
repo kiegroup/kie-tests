@@ -24,7 +24,6 @@ import java.net.URL;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.as.arquillian.api.ServerSetup;
 import org.jboss.shrinkwrap.api.Archive;
@@ -41,11 +40,9 @@ import org.kie.tests.wb.eap.deploy.KieServicesRemoteDeploy;
 @ServerSetup({DatasourceServerSetupTask.class, JmsQueueServerSetupTask.class})
 public class JbossEapKieServicesJmsIntegrationTest extends KieServicesRemoteDeploy {
 
-    private final static String DEPLOYMENT_NAME = "jms-kie-services-remote-test";
-
-    @Deployment(testable = false)
+    @Deployment(testable = false, name="jms-kie-services-remote-test")
     public static Archive<?> createWar() {
-        return createWebArchive(DEPLOYMENT_NAME);
+        return createWebArchive();
     }
 
     @ArquillianResource
