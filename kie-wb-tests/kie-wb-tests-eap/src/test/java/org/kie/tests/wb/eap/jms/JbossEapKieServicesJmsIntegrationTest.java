@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss.jms;
+package org.kie.tests.wb.eap.jms;
 
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
@@ -24,7 +24,6 @@ import java.net.URL;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.as.arquillian.api.ServerSetup;
 import org.jboss.shrinkwrap.api.Archive;
@@ -34,21 +33,16 @@ import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.setup.DatasourceServerSetupTask;
 import org.kie.tests.wb.base.setup.JmsQueueServerSetupTask;
-import org.kie.tests.wb.jboss.base.KieServicesRemoteDeploy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.kie.tests.wb.eap.deploy.KieServicesRemoteDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 @ServerSetup({DatasourceServerSetupTask.class, JmsQueueServerSetupTask.class})
-public class JbossAsJmsIntegrationTest extends KieServicesRemoteDeploy {
+public class JbossEapKieServicesJmsIntegrationTest extends KieServicesRemoteDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossAsJmsIntegrationTest.class);
-    private final static String DEPLOYMENT_NAME = "jms-kie-services-remote-test";
-
-    @Deployment(testable = false)
+    @Deployment(testable = false, name="jms-kie-services-remote-test")
     public static Archive<?> createWar() {
-        return createWebArchive(DEPLOYMENT_NAME);
+        return createWebArchive();
     }
 
     @ArquillianResource
@@ -62,21 +56,23 @@ public class JbossAsJmsIntegrationTest extends KieServicesRemoteDeploy {
     }
 
     @Test
-    @InSequence(value = 1)
-    public void testStartProcess() throws Exception {
+    public void testJmsStartProcess() throws Exception {
         jmsTests.startProcess(USER, PASSWORD);
     }
 
     @Test
-    @InSequence(value = 1)
-    public void testRemoteApiHumanTaskProcess() throws Exception {
+    public void testJmsRemoteApiHumanTaskProcess() throws Exception {
         jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
     }
 
     @Test
-    @InSequence(value = 1)
-    public void testRemoteApiExceptions() throws Exception {
+    public void testJmsRemoteApiExceptions() throws Exception {
         jmsTests.remoteApiException(USER, PASSWORD);
+    }
+    
+    @Test
+    public void testJmsNoProcessInstanceFound() throws Exception {
+        jmsTests.noProcessInstanceFound(USER, PASSWORD);
     }
 
 

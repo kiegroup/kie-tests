@@ -15,11 +15,18 @@
   <description>Integration tests for the Workbenches</description>
 
   <modules>
+    <module>kie-wb-tests-base</module>
+    <module>kie-wb-tests-eap</module>
+<!--
+    Not finished yet.. 
     <module>kie-wb-tests-jboss</module>
+    <module>kie-wb-tests-tomcat</module>
+-->
   </modules>
 
   <properties>
-    <!-- <shrinkwrap.resolver.version/> <arquillian.version/> -->
+    <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version> 
+    <arquillian.version>1.1.1.Final</arquillian.version> 
   </properties>
 
   <dependencies>
@@ -33,11 +40,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -72,6 +74,12 @@
         <version>${arquillian.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.kie.tests</groupId>
+        <artifactId>kie-wb-tests-base</artifactId>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
