@@ -1,6 +1,5 @@
 package org.kie.tests.wb.eap.deploy;
 
-import static org.junit.Assert.assertNotNull;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.io.File;
@@ -58,16 +57,20 @@ public class KieWbWarDeploy {
         war.addClass(TestKjarDeploymentLoader.class);
         
         // Replace kie-services-remote jar with the one we just generated
-        war.delete("WEB-INF/kie-services-remote-" + projectVersion + "-.jar");
-        war.delete("WEB-INF/kie-services-client-" + projectVersion + "-.jar");
+        war.delete("WEB-INF/lib/kie-services-remote-" + projectVersion + ".jar");
+        war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client",
-                        "org.jbpm:jbpm-human-task-audit")
+                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client")
                 .withoutTransitivity()
                 .asFile();
         war.addAsLibraries(kieRemoteDeps);
        
+        // TEMP
+        
+        war.delete("WEB-INF/classes/META-INF/persistence.xml");
+        war.addAsResource("META-INF/persistence.xml");
+        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
         

@@ -15,6 +15,13 @@
 
   <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 
+  <!-- 
+  == test setup ==
+  generate-test-resources: unpack jboss
+  process-test-resources:  place standalone-full.xml
+                           fix standalone-full.xml
+  post-integration-test:   fix weird characters in failsafe reports
+   -->
   <properties>
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
@@ -285,7 +292,6 @@
     <profile>
       <id>integration-tests</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
         <property>
           <name>env.USER</name>
           <value>hudson</value>
