@@ -1,6 +1,6 @@
 package org.kie.tests.wb.eap.deploy;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,7 +89,7 @@ public class KieWbWarDeploy {
     
     protected static ClientRequestFactory createBasicAuthRequestFactory(URL deploymentUrl, String user, String password) throws URISyntaxException { 
         BasicHttpContext localContext = new BasicHttpContext();
-        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(USER, PASSWORD, 5, localContext);
+        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(user, password, 5, localContext);
         ClientExecutor clientExecutor = new ApacheHttpClient4Executor(preemptiveAuthClient, localContext);
         return new ClientRequestFactory(clientExecutor, deploymentUrl.toURI());
     }
