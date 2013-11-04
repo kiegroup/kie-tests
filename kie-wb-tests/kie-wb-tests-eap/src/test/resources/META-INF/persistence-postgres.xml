@@ -65,7 +65,7 @@
     <class>org.jbpm.process.audit.VariableInstanceLog</class>
 
     <properties>
-      <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
 
       <property name="hibernate.max_fetch_depth" value="3" />
       <property name="hibernate.hbm2ddl.auto" value="update" />
