@@ -13,6 +13,15 @@
 
   <name>KIE Workbench Integration Tests :: JBoss AS 7</name>
 
+  <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
+
+  <!-- 
+  == test setup ==
+  generate-test-resources: unpack jboss
+  process-test-resources:  place standalone-full.xml
+                           fix standalone-full.xml
+  post-integration-test:   fix weird characters in failsafe reports
+   -->
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
     <!-- If you want to modify these, please contact mriet first! -->
@@ -49,7 +58,7 @@
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-core-client</artifactId>
-      <version>2.2.13</version>
+      <version>2.2.13.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>jboss-logmanager</artifactId>
@@ -61,7 +70,7 @@
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-jms-client</artifactId>
-      <version>2.2.13</version>
+      <version>2.2.13.Final</version>
       <scope>test</scope>
     </dependency>
 
@@ -143,6 +152,11 @@
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-audit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
       <artifactId>jbpm-runtime-manager</artifactId>
       <scope>test</scope>
     </dependency>
@@ -155,32 +169,29 @@
 
     <!-- kie nio providers -->
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-nio2-fs</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-nio2-fs</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-nio2-model</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-nio2-model</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.kie.commons</groupId>
-      <artifactId>kie-commons-io</artifactId>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-io</artifactId>
       <scope>test</scope>
       <exclusions>
         <exclusion>
           <artifactId>log4j</artifactId>
           <groupId>log4j</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>helix-core</artifactId>
+          <groupId>org.apache.helix</groupId>
+        </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- kjar deployment -->
-    <dependency>
-      <artifactId>kie-ci</artifactId>
-      <groupId>org.kie</groupId>
-      <scope>test</scope>
     </dependency>
 
     <!-- data service -->
@@ -200,12 +211,11 @@
       </exclusions>
     </dependency>
     
-    <!-- ht/escalation e-mails -->
+    <!-- maven's broken -->
     <dependency>
-      <groupId>org.subethamail</groupId>
-      <artifactId>subethasmtp</artifactId>
-      <version>3.1.7</version>
-      <scope>test</scope>
+      <groupId>org.sonatype.sisu</groupId>
+      <artifactId>sisu-guice</artifactId>
+      <version>3.0.3</version>
     </dependency>
   </dependencies>
 
@@ -298,29 +308,6 @@
                   </artifactItems>
                 </configuration>
               </execution>
-              <!-- make web-exec-server.xml from war available for tests -->
-              <execution>
-                <id>unpack-web-xml</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>unpack</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>org.kie</groupId>
-                      <artifactId>kie-wb-distribution-wars</artifactId>
-                      <version>${project.version}</version>
-                      <classifier>jboss-as7</classifier>
-                      <type>war</type>
-                      <overWrite>false</overWrite>
-                      <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
-                      <excludes>**/*.class</excludes>
-                      <includes>**/web-exec-server.xml</includes>
-                    </artifactItem>
-                  </artifactItems>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
           <!-- 2. install files with user/password information in the server dir -->
@@ -379,14 +366,35 @@
                       <value></value>
                     </replacement>
                     <replacement>
-                      <token>&lt;security-settings&gt;
-                    &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="guest"/&gt;
-                        &lt;permission type="consume" roles="guest"/&gt;</token>
+                      <!--  AUTO-FORMAT: the following line must not be broken up! -->
+                      <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
                       <value>&lt;security-settings&gt;
                     &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="kie-user"/&gt;
-                        &lt;permission type="consume" roles="kie-user"/&gt;</value>
+                        &lt;permission type="send" roles="admin"/&gt;
+                        &lt;permission type="consume" roles="admin"/&gt;</value>
+                    </replacement>
+                    <replacement>
+                      <token>periodic-rotating-file-handler&gt;</token>
+                      <value>periodic-rotating-file-handler&gt;
+                        &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
+                        &lt;formatter&gt;
+                        &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
+                        &lt;/formatter&gt;
+                        &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
+                        &lt;suffix value=".yyyy-MM-dd"/&gt;
+                        &lt;append value="true"/&gt;
+                        &lt;/periodic-rotating-file-handler&gt;</value>
+                    </replacement>
+                    <replacement>
+                        <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
+                        <value>&lt;root-logger&gt;
+                        &lt;level name="DEBUG"/&gt;
+                        </value>
+                    </replacement>
+                    <replacement>
+                        <token>&lt;handlers&gt;</token>
+                        <value>&lt;handlers&gt;
+                        &lt;handler name="DEBUGFILE"/&gt;</value>
                     </replacement>
                   </replacements>
                 </configuration>

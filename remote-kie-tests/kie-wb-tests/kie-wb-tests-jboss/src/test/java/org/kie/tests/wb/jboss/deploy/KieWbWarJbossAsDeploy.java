@@ -1,4 +1,4 @@
-package org.kie.tests.wb.eap.deploy;
+package org.kie.tests.wb.jboss.deploy;
 
 import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 
@@ -37,7 +37,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
 
-public class KieWbWarDeploy {
+public class KieWbWarJbossAsDeploy {
 
     protected static final String PROCESS_ID = "org.jbpm.humantask";
     

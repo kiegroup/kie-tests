@@ -118,13 +118,6 @@
       </exclusions>
     </dependency>
 
-    <!-- needed for test? -->
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-flow-builder</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!-- libs needed for (test) war integration -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>

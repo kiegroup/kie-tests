@@ -33,19 +33,15 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.wb.jboss.base.KieWbWarDeploy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.kie.tests.wb.jboss.deploy.KieWbWarJbossAsDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossAsBasicAuthIntegrationTest extends KieWbWarDeploy {
+public class JbossAsBasicAuthRestIntegrationTest extends KieWbWarJbossAsDeploy {
 
-    private static Logger logger = LoggerFactory.getLogger(JbossAsBasicAuthIntegrationTest.class);
-
-    @Deployment(testable = false)
+    @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("kie-wb-basic-auth-test", "jboss-as7");
+       return createWarWithTestDeploymentLoader("jboss-as7");
     }
 
     @ArquillianResource
@@ -98,5 +94,17 @@ public class JbossAsBasicAuthIntegrationTest extends KieWbWarDeploy {
     public void testJsonAndXmlStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
+    }
+    
+    @Test
+    public void testHumanTaskCompleteWithVariable() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.humanTaskWithFormVariableChange(deploymentUrl, requestFactory);
+    }
+
+    @Test
+    public void testRemoteApiProcessInstances() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.remoteApiSerialization(deploymentUrl, requestFactory, USER, PASSWORD);
     }
 }

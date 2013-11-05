@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss.rest;
+package org.kie.tests.wb.jboss.jms;
 
-import static org.kie.tests.wb.base.methods.TestConstants.VFS_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.URL;
 
@@ -25,51 +25,54 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.as.arquillian.api.ServerSetup;
-import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.wb.base.setup.DatasourceServerSetupTask;
-import org.kie.tests.wb.jboss.base.KieServicesRemoteDeploy;
+import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
+import org.kie.tests.wb.jboss.deploy.KieWbWarJbossAsDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-@ServerSetup({DatasourceServerSetupTask.class})
-public class JbossAsNoAuthIntegrationTest extends KieServicesRemoteDeploy {
+public class JbossAsBasicAuthJmsIntegrationTest extends KieWbWarJbossAsDeploy {
 
-    @Deployment(testable = false)
+    @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWebArchive("rest-kie-services-remote-test");
+       return createWarWithTestDeploymentLoader("jboss-as7");
     }
 
     @ArquillianResource
     URL deploymentUrl;
 
-    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(VFS_DEPLOYMENT_ID);
+    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
         Thread.sleep(1000);
     }
-   
+
     @Test
-    public void testRestUrlStartHumanTaskProcess() throws Exception {
-        ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
-        restTests.urlStartHumanTaskProcessTest(deploymentUrl, requestFactory, requestFactory);
+    public void testJmsStartProcess() throws Exception {
+        jmsTests.startProcess(USER, PASSWORD);
+    }
+
+    @Test
+    public void testJmsRemoteApiHumanTaskProcess() throws Exception {
+        jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
+    }
+
+    @Test
+    public void testJmsRemoteApiExceptions() throws Exception {
+        jmsTests.remoteApiException(USER, PASSWORD);
     }
     
     @Test
-    public void testRestExecuteStartProcess() throws Exception { 
-        ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
-        restTests.executeStartProcess(deploymentUrl, requestFactory);
+    public void testJmsNoProcessInstanceFound() throws Exception {
+        jmsTests.noProcessInstanceFound(USER, PASSWORD);
     }
     
     @Test
-    public void testRestHistoryLogs() throws Exception {
-        ClientRequestFactory requestFactory = createNoAuthRequestFactory(deploymentUrl);
-        restTests.restHistoryLogs(deploymentUrl, requestFactory);
+    public void testCompleteSimpleHumanTask() throws Exception {
+        jmsTests.completeSimpleHumanTask(USER, PASSWORD);
     }
 }

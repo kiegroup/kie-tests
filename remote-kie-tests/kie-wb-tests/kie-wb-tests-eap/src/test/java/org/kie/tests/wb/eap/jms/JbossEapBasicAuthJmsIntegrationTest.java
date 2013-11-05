@@ -30,11 +30,11 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
-import org.kie.tests.wb.eap.deploy.KieWbWarDeploy;
+import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapBasicAuthJmsIntegrationTest extends KieWbWarDeploy {
+public class JbossEapBasicAuthJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {

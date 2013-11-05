@@ -1,12 +1,12 @@
-package org.kie.tests.wb.jboss.base;
+package org.kie.tests.wb.eap.deploy;
 
-import static org.junit.Assert.assertNotNull;
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.UUID;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -37,15 +37,11 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
 
-public class KieWbWarDeploy {
+public class KieWbWarJbossEapDeploy {
 
     protected static final String PROCESS_ID = "org.jbpm.humantask";
     
-    protected static WebArchive createWarWithTestDeploymentLoader(String deployName, String classifier) {
-        return createWarWithTestDeploymentLoader(deployName, classifier, false, false);
-    }
-    
-    protected static WebArchive createWarWithTestDeploymentLoader(String deployName, String classifier, boolean useExecServerWebXml, boolean mailDeps) {
+    protected static WebArchive createWarWithTestDeploymentLoader(String classifier) {
         // Import kie-wb war
         File [] warFile = 
                 Maven.resolver()
@@ -53,7 +49,7 @@ public class KieWbWarDeploy {
                 .resolve("org.kie:kie-wb-distribution-wars:war:" + classifier + ":" + projectVersion )
                 .withoutTransitivity()
                 .asFile();
-        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, deployName + ".war").importFrom(warFile[0]);
+        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(warFile[0]);
         
         WebArchive war = zipWar.as(WebArchive.class);
         
@@ -61,8 +57,8 @@ public class KieWbWarDeploy {
         war.addClass(TestKjarDeploymentLoader.class);
         
         // Replace kie-services-remote jar with the one we just generated
-        war.delete("WEB-INF/kie-services-remote-" + projectVersion + "-.jar");
-        war.delete("WEB-INF/kie-services-client-" + projectVersion + "-.jar");
+        war.delete("WEB-INF/lib/kie-services-remote-" + projectVersion + ".jar");
+        war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
                 .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client")
@@ -73,24 +69,6 @@ public class KieWbWarDeploy {
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
         
-        if( useExecServerWebXml ) { 
-            war.delete("WEB-INF/web.xml");
-            URL webExecServerXmlUrl = KieWbWarDeploy.class.getResource("/WEB-INF/web-exec-server.xml");
-            assertNotNull("web-exec-server.xml resource could not be found.", webExecServerXmlUrl);
-            war.setWebXML(webExecServerXmlUrl);
-        }
-        
-        if( mailDeps ) { 
-            war.addPackage("org/kie/tests/wb/base/services/mail");
-            // Add subetha jars for e-mail test
-            final File[] subEthaMailDeps = Maven.resolver()
-                    .loadPomFromFile("pom.xml")
-                    .resolve("org.subethamail:subethasmtp")
-                    .withTransitivity()
-                    .asFile();
-            war.addAsLibraries(subEthaMailDeps);
-        }
-
         // Deploy test deployment
         TestKjarDeploymentLoader.deployKjarToMaven();
         
@@ -99,7 +77,7 @@ public class KieWbWarDeploy {
     
     protected static ClientRequestFactory createBasicAuthRequestFactory(URL deploymentUrl, String user, String password) throws URISyntaxException { 
         BasicHttpContext localContext = new BasicHttpContext();
-        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(USER, PASSWORD, 5, localContext);
+        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(user, password, 5, localContext);
         ClientExecutor clientExecutor = new ApacheHttpClient4Executor(preemptiveAuthClient, localContext);
         return new ClientRequestFactory(clientExecutor, deploymentUrl.toURI());
     }
@@ -117,10 +95,11 @@ public class KieWbWarDeploy {
                     new UsernamePasswordCredentials(userName, password));
             // Generate BASIC scheme object and stick it to the local execution context
             BasicScheme basicAuth = new BasicScheme();
-            localContext.setAttribute("preemptive-auth", basicAuth);
+            String contextId = UUID.randomUUID().toString();
+            localContext.setAttribute(contextId, basicAuth);
 
             // Add as the first request interceptor
-            client.addRequestInterceptor(new PreemptiveAuth(), 0);
+            client.addRequestInterceptor(new PreemptiveAuth(contextId), 0);
         }
 
         // set the following user agent with each request
@@ -130,13 +109,19 @@ public class KieWbWarDeploy {
     }
     
     static class PreemptiveAuth implements HttpRequestInterceptor {
+        
+        private final String contextId;
+        public PreemptiveAuth(String contextId) { 
+            this.contextId = contextId;
+        }
+        
         public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
 
             AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
 
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
-                AuthScheme authScheme = (AuthScheme) context.getAttribute("preemptive-auth");
+                AuthScheme authScheme = (AuthScheme) context.getAttribute(contextId);
                 CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(ClientContext.CREDS_PROVIDER);
                 HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
                 if (authScheme != null) {
