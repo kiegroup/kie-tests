@@ -128,7 +128,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?processInstanceId=" + procInstId).toExternalForm();
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?status=Reserved&processInstanceId=" + procInstId).toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
         
@@ -352,13 +352,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ClientRequest restRequest = requestFactory.createRequest(urlString);
         logger.debug( ">> " + urlString);
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
-        logger.info("JAXB: " + (String) responseObj.getEntity(String.class));
+        String result = (String) responseObj.getEntity(String.class);
+        assertTrue("Doesn't start like a JAXB string!", result.startsWith("<"));
 
         // JSON
         restRequest = requestFactory.createRequest(urlString);
+        restRequest.accept(MediaType.APPLICATION_JSON_TYPE);
         logger.debug( ">> " + urlString);
         responseObj = checkResponse(restRequest.post());
-        logger.info("JSON: " + (String) responseObj.getEntity(String.class));
+        result = (String) responseObj.getEntity(String.class);
+        assertTrue("Doesn't start like a JSON string!", result.startsWith("{"));
     }
     
     public void humanTaskWithFormVariableChange(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 

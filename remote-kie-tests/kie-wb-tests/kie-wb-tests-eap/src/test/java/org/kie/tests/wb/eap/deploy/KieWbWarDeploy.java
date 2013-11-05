@@ -66,21 +66,9 @@ public class KieWbWarDeploy {
                 .asFile();
         war.addAsLibraries(kieRemoteDeps);
        
-        // TEMP
-        
-        war.delete("WEB-INF/classes/META-INF/persistence.xml");
-        war.addAsResource("META-INF/persistence.xml");
-        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
         
-            final File[] jsonDeps = Maven.resolver()
-                    .loadPomFromFile("pom.xml")
-                    .resolve("org.json:json")
-                    .withTransitivity()
-                    .asFile();
-            war.addAsLibraries(jsonDeps);
-
         // Deploy test deployment
         TestKjarDeploymentLoader.deployKjarToMaven();
         
