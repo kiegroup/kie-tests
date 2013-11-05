@@ -12,7 +12,9 @@
     <configuration>
       <property name="jbossHome">target/${jboss.server.name}</property>
       <property name="allowConnectingToRunningServer">false</property>
+      <!--
       <property name="serverConfig">${jboss.server.config.file.name:standalone-full.xml}</property>
+      -->
       <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m</property>
     </configuration>
   </container>

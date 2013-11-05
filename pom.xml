@@ -39,7 +39,8 @@
   </licenses>
 
   <modules>
-    <module>kie-wb-tests</module>
+    <module>core-kie-tests</module>
+    <module>remote-kie-tests</module>
   </modules>
 
   <repositories>

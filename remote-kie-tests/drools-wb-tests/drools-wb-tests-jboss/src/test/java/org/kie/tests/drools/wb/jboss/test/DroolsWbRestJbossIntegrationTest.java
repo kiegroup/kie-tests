@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.URL;
 
+import javax.ws.rs.core.MediaType;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -41,10 +43,10 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
     
     @Test
     public void deployTest() throws Exception { 
-        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        ClientResponse<?> responseObj = checkResponse(restRequest.get());
         System.out.println(responseObj.getEntity(String.class));
     }
     
@@ -60,6 +62,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
     
     private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) { 
         ClientRequest restRequest = requestFactory.createRequest(urlString);
+        restRequest.accept(MediaType.APPLICATION_JSON_TYPE);
         logger.debug( ">> " + urlString);
         return restRequest;
     }

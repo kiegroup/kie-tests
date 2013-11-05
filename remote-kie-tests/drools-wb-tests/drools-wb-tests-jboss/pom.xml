@@ -4,14 +4,14 @@
 
   <parent>
     <groupId>org.kie.tests</groupId>
-    <artifactId>kie-wb-tests</artifactId>
+    <artifactId>drools-wb-tests</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-wb-tests-jboss</artifactId>
+  <artifactId>drools-wb-tests-jboss</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: JBoss AS 7</name>
+  <name>Drools Workbench Integration Tests :: JBoss AS 7</name>
 
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
@@ -30,6 +30,17 @@
       <classifier>jboss-as7.0</classifier>
       <type>war</type>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
     </dependency>
 
     <!-- test -->
@@ -51,21 +62,36 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- arquillian -->
-    <dependency>
-      <groupId>org.jboss.arquillian.junit</groupId>
-      <artifactId>arquillian-junit-container</artifactId>
-      <scope>test</scope>
-    </dependency>
+    <!-- shrinkwrap -->
     <dependency>
       <groupId>org.jboss.shrinkwrap</groupId>
       <artifactId>shrinkwrap-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.jboss.shrinkwrap</groupId>
+      <artifactId>shrinkwrap-impl-base</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- arquillian -->
+    <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-container</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-arquillian-container-managed</artifactId>
+      <version>${version.org.jboss}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>jboss-logmanager</artifactId>
+          <groupId>org.jboss.logmanager</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
@@ -84,22 +110,6 @@
     <!-- running tests -->
     <pluginManagement>
       <plugins>
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <configuration>
-            <filesets>
-              <fileset>
-                <directory>${basedir}</directory>
-                <includes>
-                  <include>repository/</include>
-                  <include>.niogit/</include>
-                  <include>.index/</include>
-                </includes>
-              </fileset>
-            </filesets>
-          </configuration>
-        </plugin>
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
@@ -179,44 +189,6 @@
                     </resource>
                   </resources>
                   <overwrite>true</overwrite>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- 3. modify server configuration -->
-          <plugin>
-            <groupId>com.google.code.maven-replacer-plugin</groupId>
-            <artifactId>replacer</artifactId>
-            <version>1.5.2</version>
-            <executions>
-              <execution>
-                <id>fix-jboss-standalone-xml</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>replace</goal>
-                </goals>
-                <configuration>
-                  <file>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</file>
-                  <outputFile>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</outputFile>
-                  <replacements>
-                    <!-- allow jms queue creation via arquillian server task -->
-                    <replacement>
-                      <token>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;\n\s*&lt;journal</token>
-                      <value>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;
-                        &lt;jmx-management-enabled&gt;true&lt;/jmx-management-enabled&gt;
-                        &lt;journal</value>
-                    </replacement>
-                    <replacement>
-                      <!-- Service jboss.pojo."org.jboss.netty.internal.LoggerConfigurator".DESCRIBED is already registered -->
-                      <token>&lt;extension module="org.jboss.as.pojo"/&gt;</token>
-                      <value></value>
-                    </replacement>
-                    <replacement>
-                      <token>&lt;subsystem xmlns="urn:jboss:domain:pojo:1.0"/&gt;</token>
-                      <value></value>
-                    </replacement>
-                    
-                  </replacements>
                 </configuration>
               </execution>
             </executions>
