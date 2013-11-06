@@ -1,5 +1,7 @@
 package org.kie.tests.drools.wb.jboss.base;
 
+import static org.kie.tests.drools.wb.jboss.TestConstants.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -48,13 +50,29 @@ public class DroolsWbWarJbossDeploy {
         ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, deployName + ".war").importFrom(warFile[0]);
         WebArchive war = zipWar.as(WebArchive.class);
 
+        String [][] jarsToReplace = new String[2][2];
+        int j = 0;
+        jarsToReplace[j][0] = "org.drools"; jarsToReplace[j][1] = "drools-wb-rest"; ++j;
+        jarsToReplace[j][0] = "org.kie.workbench.services"; jarsToReplace[j][1] = "kie-wb-common-services-api";
+        
+        // Replace kie-services-remote jar with the one we just generated
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+            war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + projectVersion + ".jar");
+        }
+        File [] kieRemoteDeps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve(jarsToReplace[0][0] + ":" + jarsToReplace[0][1], jarsToReplace[1][0] + ":" + jarsToReplace[1][1])
+                .withoutTransitivity()
+                .asFile();
+        war.addAsLibraries(kieRemoteDeps);
+        
         return war;
     }
 
     
     protected static ClientRequestFactory createBasicAuthRequestFactory(URL deploymentUrl, String user, String password) throws URISyntaxException { 
         BasicHttpContext localContext = new BasicHttpContext();
-        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(user, password, 5, localContext);
+        HttpClient preemptiveAuthClient = createPreemptiveAuthHttpClient(user, password, 15, localContext);
         ClientExecutor clientExecutor = new ApacheHttpClient4Executor(preemptiveAuthClient, localContext);
         return new ClientRequestFactory(clientExecutor, deploymentUrl.toURI());
     }
