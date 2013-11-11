@@ -146,6 +146,8 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(createProjectRequest.getJodId(), createProjectRequest.getStatus(), requestFactory);
+        
+        
     }
     
     private void waitForJobToComplete(String jobId, Status jobStatus, ClientRequestFactory requestFactory) throws Exception { 

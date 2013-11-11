@@ -11,7 +11,7 @@
   <artifactId>kie-test-marshalling</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: JBoss AS 7</name>
+  <name>KIE Core Tests :: special jBPM tests</name>
 
   <dependencies>
     <!-- jbpm -->

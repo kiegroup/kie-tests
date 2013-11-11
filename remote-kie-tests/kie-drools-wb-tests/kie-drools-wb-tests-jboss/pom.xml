@@ -4,14 +4,14 @@
 
   <parent>
     <groupId>org.kie.tests</groupId>
-    <artifactId>kie-wb-tests</artifactId>
+    <artifactId>kie-drools-wb-tests</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-wb-tests-jboss</artifactId>
+  <artifactId>kie-drools-wb-tests-jboss</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: JBoss AS 7</name>
+  <name>KIE Drools Workbench Integration Tests :: JBoss AS 7</name>
 
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->

@@ -11,11 +11,10 @@
   <artifactId>drools-wb-tests</artifactId>
   <packaging>pom</packaging>
 
-  <name>KIE Remote Tests :: Drools Workbench Integration Tests</name>
+  <name>Drools Workbench Integration Tests</name>
 
   <modules>
     <module>drools-wb-tests-jboss</module>
-    <module>drools-wb-tests-eap</module>
   </modules>
 
   <dependencyManagement>

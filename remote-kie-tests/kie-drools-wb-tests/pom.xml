@@ -4,18 +4,18 @@
 
   <parent>
     <groupId>org.kie.tests</groupId>
-    <artifactId>kie-tests</artifactId>
+    <artifactId>remote-kie-tests</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests</artifactId>
+  <artifactId>kie-drools-wb-tests</artifactId>
   <packaging>pom</packaging>
 
-  <name>Drools Workbench Integration Tests</name>
+  <name>KIE Drools Workbench Integration Tests</name>
 
   <modules>
-    <module>drools-wb-tests-jboss</module>
-    <module>drools-wb-tests-eap</module>
+    <module>kie-drools-wb-tests-jboss</module>
+    <module>kie-drools-wb-tests-eap</module>
   </modules>
 
   <properties>

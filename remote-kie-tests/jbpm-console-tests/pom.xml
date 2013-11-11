@@ -4,26 +4,12 @@
 
   <parent>
     <groupId>org.kie.tests</groupId>
-    <artifactId>kie-tests</artifactId>
+    <artifactId>remote-kie-tests</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-core-tests</artifactId>
+  <artifactId>jbpm-console-tests</artifactId>
+  <name>jBPM Console Tests</name>
   <packaging>pom</packaging>
-
-  <name>KIE Core Tests</name>
-  <description>Tests for the KIE Core: drools, jbpm, fusion, optaplanner</description>
-
-  <modules>
-    <!-- fix me.. 
-    <module>core-marshalling-kie-tests</module>
-     -->
-    <module>jbpm-special-kie-tests</module>
-  </modules>
-
-  <dependencies>
-
-  </dependencies>
-
 
 </project>
