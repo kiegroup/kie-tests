@@ -14,13 +14,19 @@
   <name>KIE Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <tomcat.version>7.0.40</tomcat.version>
+    <version.org.apache.tomcat>7.0.40</version.org.apache.tomcat>
+    <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-services-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.tests</groupId>
+      <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -36,44 +42,26 @@
     <!-- arquillian tomcat container -->
     <dependency>
       <groupId>org.jboss.arquillian.container</groupId>
-      <artifactId>arquillian-tomcat-embedded-7</artifactId>
+      <artifactId>arquillian-tomcat-managed-7</artifactId>
+      <version>1.0.0.CR5</version>
       <scope>test</scope>
-      <version>1.0.0.CR4</version>
-    </dependency>
-
-    <!-- tomcat -->
-    <dependency>
-      <groupId>org.apache.tomcat.embed</groupId>
-      <artifactId>tomcat-embed-core</artifactId>
-      <version>${tomcat.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tomcat.embed</groupId>
-      <artifactId>tomcat-embed-logging-juli</artifactId>
-      <version>${tomcat.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
     </dependency>
 
     <!-- testing -->
+    <!-- arquillian -->
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+      <groupId>org.jboss.shrinkwrap</groupId>
+      <artifactId>shrinkwrap-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss.shrinkwrap.descriptors</groupId>
-      <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -88,31 +76,6 @@
       <artifactId>resteasy-jaxrs</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- Hibernate dependencies -->
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-entitymanager</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-validator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tomcat-dbcp</artifactId>
-      <version>7.0.40</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -121,29 +84,66 @@
         <directory>src/test/resources</directory>
         <filtering>true</filtering>
       </testResource>
+      <testResource>
+        <directory>src/test/resources-tomcat7</directory>
+        <filtering>false</filtering>
+      </testResource>
     </testResources>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>generate-test-resources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="${project.build.directory}/downloads" />
+                <get
+                  src="http://archive.apache.org/dist/tomcat/tomcat-7/v${version.org.apache.tomcat}/bin/apache-tomcat-${version.org.apache.tomcat}.zip"
+                  dest="${project.build.directory}/downloads" verbose="true" skipexisting="true" />
+                <unzip src="${project.build.directory}/downloads/apache-tomcat-${version.org.apache.tomcat}.zip" dest="${project.build.directory}" />
+                <!-- Remove the default ROOT webapp so it won't collide with tests -->
+                <delete dir="${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}/webapps/ROOT" />
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${tomcat.home}/conf</outputDirectory>
+              <overwrite>true</overwrite>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/test/resources/container</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <CATALINA_HOME>${tomcat.home}</CATALINA_HOME>
+          </environmentVariables>
+          <!-- Workaround for SHRINKDESC-97 until it is fixed. -->
+          <argLine>-Dfile.encoding=${project.build.sourceEncoding}</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
-
-  <dependencyManagement>
-    <dependencies>
-      <!-- arquillian -->
-      <!-- Override dependency resolver with test version. This must go *BEFORE* the Arquillian BOM. -->
-      <dependency>
-        <groupId>org.jboss.shrinkwrap.resolver</groupId>
-        <artifactId>shrinkwrap-resolver-bom</artifactId>
-        <version>2.0.0</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-      <!-- arquillian: contains all versions for specific arquillian artifacts -->
-      <dependency>
-        <groupId>org.jboss.arquillian</groupId>
-        <artifactId>arquillian-bom</artifactId>
-        <version>1.0.3.Final</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
 </project> 

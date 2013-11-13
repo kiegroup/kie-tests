@@ -39,7 +39,6 @@ import javax.naming.NamingException;
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
-import org.jbpm.services.task.commands.GetContentCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.GetTasksOwnedCommand;
@@ -54,7 +53,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.command.RemoteRuntimeException;
-import org.kie.services.client.serialization.jaxb.JaxbSerializationProvider;
+import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
@@ -74,16 +73,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private final String deploymentId;
     private final InitialContext remoteInitialContext;
+    private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
     
     public JmsIntegrationTestMethods(String deploymentId) { 
         this.deploymentId = deploymentId;
         this.remoteInitialContext = getRemoteInitialContext();
     }
-    // Helper methods ------------------------------------------------------------------------------------------------------------
     
-    /**
-     * JMS initial context
-     */
+    // Helper methods ------------------------------------------------------------------------------------------------------------
     
     /**
      * Initializes a (remote) IntialContext instance.
@@ -197,7 +194,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             BytesMessage msg = session.createBytesMessage();
             msg.setJMSCorrelationID(corrId);
             msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE );
-            String xmlStr = JaxbSerializationProvider.convertJaxbObjectToString(req);
+            String xmlStr = jaxbSerializationProvider.serialize(req);
             msg.writeUTF(xmlStr);
             
             // send
@@ -211,7 +208,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             assertEquals("Correlation id not equal to request msg id.", corrId, response.getJMSCorrelationID() );
             assertNotNull("Response from MDB was null!", response);
             xmlStr = ((BytesMessage) response).readUTF();
-            cmdResponse = (JaxbCommandsResponse) JaxbSerializationProvider.convertStringToJaxbObject(xmlStr);
+            cmdResponse = (JaxbCommandsResponse) jaxbSerializationProvider.deserialize(xmlStr);
             assertNotNull("Jaxb Cmd Response was null!", cmdResponse);
         } finally {
             if (connection != null) {

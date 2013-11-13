@@ -47,8 +47,8 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteRestSessionFactory;
-import org.kie.services.client.serialization.jaxb.JaxbSerializationProvider;
-import org.kie.services.client.serialization.jaxb.JsonSerializationProvider;
+import org.kie.services.client.serialization.JaxbSerializationProvider;
+import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
@@ -82,6 +82,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         this.mediaType = MediaType.APPLICATION_XML;
     }
     
+    private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
+    private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
+    
     /**
      * Helper methods
      */
@@ -107,10 +110,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     private void addToRequestBody(ClientRequest restRequest, Object obj) throws Exception { 
         if( mediaType.equals(MediaType.APPLICATION_XML) ) {
-            String body = JaxbSerializationProvider.convertJaxbObjectToString(obj);
+            String body = jaxbSerializationProvider.serialize(obj);
             restRequest.body(mediaType, body);
         } else if( mediaType.equals(MediaType.APPLICATION_JSON) ) { 
-            String body = JsonSerializationProvider.convertJaxbObjectToJsonString(obj);
+            String body = jsonSerializationProvider.serialize(obj);
             restRequest.body(mediaType, body);
         }
     }
