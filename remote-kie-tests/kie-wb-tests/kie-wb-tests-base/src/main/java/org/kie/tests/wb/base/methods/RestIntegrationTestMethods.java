@@ -17,6 +17,7 @@
  */
 package org.kie.tests.wb.base.methods;
 
+import static org.kie.tests.wb.base.methods.TestConstants.*;
 import static org.junit.Assert.*;
 
 import java.net.HttpURLConnection;
@@ -46,7 +47,7 @@ import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.services.client.api.RemoteRestSessionFactory;
+import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
@@ -122,7 +123,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * Test methods
      */
     
-    public void urlStartHumanTaskProcessTest(URL deploymentUrl, ClientRequestFactory requestFactory, ClientRequestFactory taskRequestFactory) throws Exception { 
+    public void urlsStartHumanTaskProcess(URL deploymentUrl, ClientRequestFactory requestFactory, ClientRequestFactory taskRequestFactory) throws Exception { 
         // Start process
         String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/"+ deploymentId + "/process/org.jbpm.humantask/start").toExternalForm();
         ClientRequest restRequest = createRequest(taskRequestFactory, urlString);
@@ -158,7 +159,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj = checkResponse(restRequest.get());
     }
     
-    public void executeStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+    public void commandsStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
         String originalMedia = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML;
         
@@ -212,11 +213,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void remoteApiHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
         // create REST request
-        RemoteRestSessionFactory restSessionFactory 
-            = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password);
+        RemoteRestRuntimeFactory restSessionFactory 
+            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         
         logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
         
@@ -245,10 +246,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
     
-    public void executeTaskCommands(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception {
-        RuntimeEngine runtimeEngine = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password).newRuntimeEngine();
+    public void commandsTaskCommands(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception {
+        RuntimeEngine runtimeEngine = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password).newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         
         long processInstanceId = processInstance.getId();
         JaxbCommandResponse<?> response = executeTaskCommand(deploymentUrl, requestFactory, deploymentId, new GetTasksByProcessInstanceIdCommand(processInstanceId));
@@ -286,9 +287,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return cmdsResp.getResponses().get(0);
     }
     
-    public void restHistoryLogs(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String processId = "org.jbpm.humantask.var";
-        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start?map_x=initVal").toExternalForm();
+    public void urlsHistoryLogs(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal").toExternalForm();
         ClientRequest restRequest = requestFactory.createRequest(urlString);
 
         // Get and check response
@@ -308,14 +308,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         for( AbstractJaxbHistoryObject<?> log : logList.getHistoryLogList() ) {
            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) log;
            assertEquals( "Incorrect variable id", "x", varLog.getVariableId() );
-           assertEquals( "Incorrect process id", processId, varLog.getProcessId() );
+           assertEquals( "Incorrect process id", SCRIPT_TASK_VAR_PROCESS_ID, varLog.getProcessId() );
            assertEquals( "Incorrect process instance id", procInstId, varLog.getProcessInstanceId().longValue() );
         }
     }
  
-    public void restDataServiceCoupling(URL deploymentUrl, ClientRequestFactory requestFactory, String user) throws Exception {
-        String processId = "org.jbpm.humantask.var";
-        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start?map_x=initVal").toExternalForm();
+    public void urlsDataServiceCoupling(URL deploymentUrl, ClientRequestFactory requestFactory, String user) throws Exception {
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal").toExternalForm();
         ClientRequest restRequest = requestFactory.createRequest(urlString);
 
         // Get and check response
@@ -332,24 +331,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Incorrect initiator.", user, summary.getInitiator());
     }
  
-    public void restEscalationEmailSnafu(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String body, String adminUser) throws Exception {
-        String urlString = new URL(deploymentUrl,  
-                deploymentUrl.getPath() + "rest/runtime/" + deploymentId 
-                + "/process/escalation"
-                + "/start"
-                + "?map_actor=" + user
-                + "&map_escalation=" + body
-                + "&map_reassignTo=" + adminUser
-                + "&map_escUser=" + adminUser
-       ).toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
-        logger.debug( ">> " + urlString );
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
-        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj.getEntity(JaxbProcessInstanceResponse.class);
-        long procInstId = processInstance.getId();
-    }
-    
-    public void jsonAndXmlStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+    public void urlsJsonJaxbStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
         // XML
         String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/runtime/"+ deploymentId + "/process/org.jbpm.humantask/start").toExternalForm();
         ClientRequest restRequest = requestFactory.createRequest(urlString);
@@ -367,13 +349,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertTrue("Doesn't start like a JSON string!", result.startsWith("{"));
     }
     
-    public void humanTaskWithFormVariableChange(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+    public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
         String originalMedia = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML;
         
         // Start process
         String urlString = new URL(deploymentUrl, 
-                deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/org.jboss.qa.bpms.HumanTaskWithForm/start?map_userName=John"
+                deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start?map_userName=John"
                 ).toExternalForm();
         
         ClientRequest restRequest = createRequest(requestFactory, urlString);
@@ -423,9 +405,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
     }
     
-    public void httpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
-        String processId = "org.jbpm.humantask.var";
-        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + processId + "/start");
+    public void urlsHttpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + SCRIPT_TASK_PROCESS_ID + "/start");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
 
@@ -434,11 +415,47 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
  
     public void remoteApiSerialization(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
-        RemoteRestSessionFactory restSessionFactory 
-        = new RemoteRestSessionFactory(deploymentId, deploymentUrl, user, password);
+        RemoteRestRuntimeFactory restSessionFactory 
+        = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess("org.jbpm.scripttask");
+        ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
     }
+
+    public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception { 
+        // create REST request
+        RemoteRestRuntimeFactory restSessionFactory 
+            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
+        RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
+        ProcessInstance processInstance = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID);
+        
+        logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
+        
+        TaskService taskService = engine.getTaskService();
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
+        long taskId = findTaskId(processInstance.getId(), tasks);
+        
+        logger.debug("Found task " + taskId);
+        Task task = taskService.getTaskById(taskId);
+        logger.debug("Got task " + taskId + ": " + task );
+        taskService.start(taskId, taskUserId);
+        taskService.complete(taskId, taskUserId, null);
+        
+        logger.debug("Now expecting failure");
+        try {
+        	taskService.complete(taskId, taskUserId, null);
+        	fail( "Should not be able to complete task " + taskId + " a second time.");
+        } catch (Throwable t) {
+            logger.info("The above exception was an expected part of the test.");
+            // do nothing
+        }
+        
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.add(Status.Reserved);
+        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(processInstance.getId(), statuses, "en-UK");
+        assertEquals("Expected 2 tasks.", 2, taskIds.size());
+    }
+    
 }

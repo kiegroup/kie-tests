@@ -109,7 +109,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     public void startProcess(String user, String password) throws Exception {
         // send cmd
-        Command<?> cmd = new StartProcessCommand("org.jbpm.humantask"); 
+        Command<?> cmd = new StartProcessCommand(HUMAN_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
         JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
         
@@ -227,7 +227,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // create JMS request
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         
         logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
         
@@ -263,7 +263,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         try { 
-            ProcessInstance processInstance = ksession.startProcess("org.jbpm.humantask");
+            ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
             fail("startProcess should fail!");
         } catch( RemoteRuntimeException rre) { 
             String errMsg = rre.getMessage();
@@ -278,7 +278,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // create JMS request
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess("org.jbpm.scripttask");
+        ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
         
         logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
         
@@ -293,14 +293,13 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Via the remote api
         
         // setup
-        String processId = "org.jboss.qa.bpms.HumanTask";
         RemoteJmsRuntimeEngineFactory remoteSessionFactory 
             = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         
         // start process
-        ProcessInstance processInstance = ksession.startProcess(processId);
+        ProcessInstance processInstance = ksession.startProcess(SINGLE_HUMAN_TASK_PROCESS_ID);
         long procInstId = processInstance.getId();
          
         TaskService taskService = engine.getTaskService();
@@ -318,7 +317,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         // Via the JaxbCommandsRequest 
         // send cmd
-        Command<?> cmd = new StartProcessCommand(processId);
+        Command<?> cmd = new StartProcessCommand(SINGLE_HUMAN_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
         JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
         

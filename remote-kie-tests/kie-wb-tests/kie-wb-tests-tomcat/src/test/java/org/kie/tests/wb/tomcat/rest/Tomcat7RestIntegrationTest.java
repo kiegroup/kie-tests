@@ -58,13 +58,13 @@ public class Tomcat7RestIntegrationTest extends KieWbWarTomcat7Deploy {
     public void testRestUrlStartHumanTaskProcess() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         ClientRequestFactory taskRequestFactory = createBasicAuthRequestFactory(deploymentUrl, SALA_USER, SALA_PASSWORD);
-        restTests.urlStartHumanTaskProcessTest(deploymentUrl, requestFactory, taskRequestFactory);
+        restTests.urlsStartHumanTaskProcess(deploymentUrl, requestFactory, taskRequestFactory);
     }
     
     @Test
     public void testRestExecuteStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.executeStartProcess(deploymentUrl, requestFactory);
+        restTests.commandsStartProcess(deploymentUrl, requestFactory);
     }
     
     @Test
@@ -75,31 +75,31 @@ public class Tomcat7RestIntegrationTest extends KieWbWarTomcat7Deploy {
     @Test
     public void testRestExecuteTaskCommands() throws Exception  {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.executeTaskCommands(deploymentUrl, requestFactory, USER, PASSWORD);
+        restTests.commandsTaskCommands(deploymentUrl, requestFactory, USER, PASSWORD);
     }
     
     @Test
     public void testRestHistoryLogs() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.restHistoryLogs(deploymentUrl, requestFactory);
+        restTests.urlsHistoryLogs(deploymentUrl, requestFactory);
     }
     
     @Test
     public void testRestDataServicesCoupling() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.restDataServiceCoupling(deploymentUrl, requestFactory, USER);
+        restTests.urlsDataServiceCoupling(deploymentUrl, requestFactory, USER);
     }
     
     @Test
     public void testJsonAndXmlStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.jsonAndXmlStartProcess(deploymentUrl, requestFactory);
+        restTests.urlsJsonJaxbStartProcess(deploymentUrl, requestFactory);
     }
     
     @Test
     public void testHumanTaskCompleteWithVariable() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.humanTaskWithFormVariableChange(deploymentUrl, requestFactory);
+        restTests.urlsHumanTaskWithFormVariableChange(deploymentUrl, requestFactory);
     }
 
     @Test

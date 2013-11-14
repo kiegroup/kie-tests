@@ -1,18 +1,25 @@
 package org.kie.tests.wb.base.deploy;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.kie.scanner.MavenRepository.getMavenRepository;
+import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
@@ -39,6 +46,7 @@ import org.kie.api.conf.EqualityBehaviorOption;
 import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.kie.scanner.MavenRepository;
+import org.kie.tests.wb.base.test.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,12 +74,12 @@ public class TestKjarDeploymentLoader {
     }
 
     private static class BpmnResource {
-        public String fileName;
-        public String path;
+        public String name;
+        public String content;
 
-        public BpmnResource(String path) {
-            this.path = path;
-            this.fileName = path.replaceAll("^.*/", "");
+        public BpmnResource(String name, String content) {
+            this.content = content;
+            this.name = name;
         }
     }
     
@@ -85,12 +93,13 @@ public class TestKjarDeploymentLoader {
     }
     
     public static void deployKjarToMaven(String group, String artifact, String version, String kbaseName, String ksessionName) {
-        List<BpmnResource> bpmnResources = new ArrayList<BpmnResource>();
-        bpmnResources.add(new BpmnResource("/repo/test/humanTask.bpmn2")); // org.jbpm.humantask
-        bpmnResources.add(new BpmnResource("/repo/test/humanTaskVar.bpmn2")); // org.jboss.qa.bpms.HumanTaskWithForm
-        bpmnResources.add(new BpmnResource("/repo/test/scriptTask.bpmn2")); // org.jbpm.scripttask
-        bpmnResources.add(new BpmnResource("/repo/test/varScriptTask.bpmn2")); // org.jbpm.humantask.var
-        bpmnResources.add(new BpmnResource("/repo/test/singleHumanTask.bpmn2")); // org.jboss.qa.bpms.HumanTask
+        List<BpmnResource> bpmnResources;
+        
+        try { 
+            bpmnResources = loadBpmnResources();
+        } catch( Exception e ) { 
+            throw new RuntimeException("Unable to load BPMN resources: " + e.getMessage(), e);
+        }
         
         final KieServices ks = new KieServicesImpl(){
             public KieRepository getRepository() {
@@ -116,21 +125,46 @@ public class TestKjarDeploymentLoader {
         repository.deployArtifact(releaseId, kjar, pomFile);
     }
 
-    protected static InternalKieModule createKieJar(KieServices ks, ReleaseId releaseId, List<BpmnResource> bpmns, String kbaseName, String ksessionName) {
-        KieFileSystem kfs = createKieFileSystemWithKProject(ks, kbaseName, ksessionName);
-        kfs.writePomXML( getPom(releaseId) );
+    private static List<BpmnResource> loadBpmnResources() throws Exception { 
+        List<BpmnResource> list = new ArrayList<BpmnResource>();
+        boolean foundFiles = false;
 
-        for (BpmnResource bpmn : bpmns) {
-            kfs.write("src/main/resources/" + kbaseName + "/" + bpmn.fileName, convertFileToString(bpmn.path));
+        CodeSource src = MyType.class.getProtectionDomain().getCodeSource();
+        URL jarUrl = src.getLocation();
+        ZipInputStream zip = new ZipInputStream(jarUrl.openStream());
+        if (zip.getNextEntry() != null) {
+            ZipFile jarFile = new ZipFile(new File(jarUrl.toURI()));
+            while (true) {
+                ZipEntry e = zip.getNextEntry();
+                if (e == null)
+                    break;
+                String name = e.getName();
+                if (name.startsWith("repo/test/") && name.length() > 10) {
+                    String shortName = name.replace("repo/test/", "");
+                    foundFiles = true;
+                    InputStream in = jarFile.getInputStream(e);
+                    String content = convertFileToString(in);
+                    assertTrue(content.length() > 100);
+                    list.add(new BpmnResource(shortName, content));
+                }
+            }
         }
-
-        KieBuilder kieBuilder = ks.newKieBuilder(kfs);
-        assertTrue(kieBuilder.buildAll().getResults().getMessages().isEmpty());
-        return ( InternalKieModule ) kieBuilder.getKieModule();
+        if (!foundFiles) {
+            URL url = TestKjarDeploymentLoader.class.getResource("/repo/test");
+            File folder = new File(url.toURI());
+            for (final File fileEntry : folder.listFiles()) {
+                foundFiles = true;
+                InputStream in = new FileInputStream(fileEntry);
+                String content = convertFileToString(in);
+                assertTrue(content.length() > 100);
+                list.add(new BpmnResource(fileEntry.getName(), content));
+            }
+        }
+        return list;
     }
-    
-    private static String convertFileToString(String fileName) { 
-        InputStreamReader input = new InputStreamReader(TestKjarDeploymentLoader.class.getResourceAsStream(fileName));
+
+    private static String convertFileToString(InputStream in) {
+        InputStreamReader input = new InputStreamReader(in);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputStreamWriter output = new OutputStreamWriter(baos);
         char[] buffer = new char[4096];
@@ -144,6 +178,19 @@ public class TestKjarDeploymentLoader {
             e.printStackTrace();
         }
         return baos.toString();
+    }
+    
+    protected static InternalKieModule createKieJar(KieServices ks, ReleaseId releaseId, List<BpmnResource> bpmns, String kbaseName, String ksessionName) {
+        KieFileSystem kfs = createKieFileSystemWithKProject(ks, kbaseName, ksessionName);
+        kfs.writePomXML( getPom(releaseId) );
+
+        for (BpmnResource bpmn : bpmns) {
+            kfs.write("src/main/resources/" + kbaseName + "/" + bpmn.name, bpmn.content);
+        }
+
+        KieBuilder kieBuilder = ks.newKieBuilder(kfs);
+        assertTrue(kieBuilder.buildAll().getResults().getMessages().isEmpty());
+        return ( InternalKieModule ) kieBuilder.getKieModule();
     }
     
     protected static KieFileSystem createKieFileSystemWithKProject(KieServices ks, String kbaseName, String ksessionName) {

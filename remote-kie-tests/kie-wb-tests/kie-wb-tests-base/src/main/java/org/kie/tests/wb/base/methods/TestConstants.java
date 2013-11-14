@@ -5,6 +5,21 @@ import java.util.Properties;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 
 public class TestConstants {
+   
+    /**
+     * Process ids
+     */
+    
+    public static final String HUMAN_TASK_PROCESS_ID        = "org.jbpm.humantask";
+    public static final String HUMAN_TASK_VAR_PROCESS_ID    = "org.jboss.qa.bpms.HumanTaskWithForm";
+    public static final String SCRIPT_TASK_PROCESS_ID       = "org.jbpm.scripttask";
+    public static final String SCRIPT_TASK_VAR_PROCESS_ID   = "org.jbpm.scripttask.var";
+    public static final String SINGLE_HUMAN_TASK_PROCESS_ID = "org.jboss.qa.bpms.HumanTask";
+    public static final String OBJECT_VARIABLE_PROCESS_ID   = "org.jboss.qa.bpms.ObjectVariableProcess";
+   
+    /**
+     * User/password
+     */
     
     public static final String USER = "mary";
     public static final String PASSWORD = "mary123@";
@@ -13,6 +28,9 @@ public class TestConstants {
     public static final String JOHN_USER = "john";
     public static final String JOHN_PASSWORD = "john123@";
     
+    /**
+     * Project version (arquillian jars)
+     */
     public final static String projectVersion;
     static { 
         Properties testProps = new Properties();
@@ -45,5 +63,6 @@ public class TestConstants {
         KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION, KBASE_NAME, KSESSION_NAME);
         KJAR_DEPLOYMENT_ID = deploymentUnit.getIdentifier();
     }
+
     
 }

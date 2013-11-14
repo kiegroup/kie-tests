@@ -77,7 +77,7 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <!-- data service -->
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -94,30 +94,22 @@
       </exclusions>
     </dependency>
 
-    <!-- ht/escalation e-mails -->
-    <dependency>
-      <groupId>org.subethamail</groupId>
-      <artifactId>subethasmtp</artifactId>
-      <version>3.1.7</version>
-    </dependency>
-
     <!-- jms queue setup -->
     <dependency>
-        <groupId>org.hornetq</groupId>
-        <artifactId>hornetq-core-client</artifactId>
+      <groupId>org.hornetq</groupId>
+      <artifactId>hornetq-core-client</artifactId>
     </dependency>
     <dependency>
-        <groupId>org.hornetq</groupId>
-        <artifactId>hornetq-jms-client</artifactId>
+      <groupId>org.hornetq</groupId>
+      <artifactId>hornetq-jms-client</artifactId>
     </dependency>
-    
+
     <!-- producers -->
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-io</artifactId>
-      <version>0.3.0-SNAPSHOT</version>
     </dependency>
-    
+
     <!-- server setup -->
     <dependency>
       <groupId>org.jboss.as</groupId>
@@ -129,6 +121,13 @@
       <artifactId>jboss-as-arquillian-common</artifactId>
       <version>7.2.0.Final</version>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- for getting *.bpmn2 files in classpath -->
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>0.9.9-RC1</version>
     </dependency>
   </dependencies>
 
