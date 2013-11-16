@@ -89,7 +89,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         logger.debug("]] " + convertObjectToJsonString(createJobRequest));
         assertNotNull( "create repo job request", createJobRequest);
         assertEquals( "job request status", Status.ACCEPTED, createJobRequest.getStatus() );
-        String jobId = createJobRequest.getJodId();
+        String jobId = createJobRequest.getJobId();
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(jobId, createJobRequest.getStatus(), requestFactory);
@@ -134,7 +134,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(createProjectRequest.getJodId(), createProjectRequest.getStatus(), requestFactory);
+        waitForJobToComplete(createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
 
         // rest/repositories/{repoName}/projects POST
         String mavenOperBase = "rest/repositories/" + repoName + "/projects/" + projectName + "/maven/";
@@ -145,7 +145,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         logger.debug("]] " + convertObjectToJsonString(compileRequest));
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(createProjectRequest.getJodId(), createProjectRequest.getStatus(), requestFactory);
+        waitForJobToComplete(createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
         
         
     }
@@ -157,7 +157,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
             ClientResponse<?> responseObj = checkResponse(restRequest.get());
             JobResult jobResult = responseObj.getEntity(JobResult.class);
             logger.debug( "]] " + convertObjectToJsonString(jobResult) );
-            assertEquals( jobResult.getJodId(), jobId );
+            assertEquals( jobResult.getJobId(), jobId );
             jobStatus = jobResult.getStatus();
         }
     }
@@ -184,7 +184,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         CreateOrganizationalUnitRequest createOURequest = responseObj.getEntity(CreateOrganizationalUnitRequest.class);
 
         // rest/jobs/{jobId}
-        waitForJobToComplete(createOURequest.getJodId(), createOURequest.getStatus(), requestFactory);
+        waitForJobToComplete(createOURequest.getJobId(), createOURequest.getStatus(), requestFactory);
         
         // rest/organizaionalunits GET
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/organizationalunits").toExternalForm();

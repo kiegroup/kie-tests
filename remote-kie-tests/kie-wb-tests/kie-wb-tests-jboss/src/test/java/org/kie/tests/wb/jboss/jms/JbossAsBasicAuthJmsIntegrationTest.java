@@ -53,7 +53,7 @@ public class JbossAsBasicAuthJmsIntegrationTest extends KieWbWarJbossAsDeploy {
 
     @Test
     public void testJmsStartProcess() throws Exception {
-        jmsTests.startProcess(USER, PASSWORD);
+        jmsTests.commandsStartProcess(USER, PASSWORD);
     }
 
     @Test
@@ -68,11 +68,11 @@ public class JbossAsBasicAuthJmsIntegrationTest extends KieWbWarJbossAsDeploy {
     
     @Test
     public void testJmsNoProcessInstanceFound() throws Exception {
-        jmsTests.noProcessInstanceFound(USER, PASSWORD);
+        jmsTests.remoteApiNoProcessInstanceFound(USER, PASSWORD);
     }
     
     @Test
     public void testCompleteSimpleHumanTask() throws Exception {
-        jmsTests.completeSimpleHumanTask(USER, PASSWORD);
+        jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(USER, PASSWORD);
     }
 }

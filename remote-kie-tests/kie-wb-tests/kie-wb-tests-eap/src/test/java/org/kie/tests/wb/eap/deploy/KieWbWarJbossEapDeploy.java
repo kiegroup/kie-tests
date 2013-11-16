@@ -36,6 +36,7 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
+import org.kie.tests.wb.base.test.MyType;
 
 public class KieWbWarJbossEapDeploy {
 
@@ -68,6 +69,9 @@ public class KieWbWarJbossEapDeploy {
        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
+       
+        // extra JAXB classes / own classes tests
+        war.addClass(MyType.class);
         
         // Deploy test deployment
         TestKjarDeploymentLoader.deployKjarToMaven();

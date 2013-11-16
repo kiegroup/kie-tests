@@ -17,8 +17,8 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
 import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -48,6 +48,7 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
+import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
@@ -61,6 +62,7 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
+import org.kie.tests.wb.base.test.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -394,7 +396,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for( AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList ) { 
-            VariableInstanceLog varLog = absVarLog.createEntityInstance();
+            VariableInstanceLog varLog = ((JaxbVariableInstanceLog) absVarLog).getResult();
             if( "userName".equals(varLog.getVariableId()) && georgeVal.equals(varLog.getValue()) ) { 
                 georgeFound = true;
             }
@@ -427,35 +429,36 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // create REST request
         RemoteRestRuntimeFactory restSessionFactory 
             = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
-        RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID);
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("myobject", new MyType("Hello World!"));
+        long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
-        logger.debug("Started process instance: " + processInstance + " " + (processInstance == null? "" : processInstance.getId()));
-        
-        TaskService taskService = engine.getTaskService();
-        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long taskId = findTaskId(processInstance.getId(), tasks);
-        
-        logger.debug("Found task " + taskId);
-        Task task = taskService.getTaskById(taskId);
-        logger.debug("Got task " + taskId + ": " + task );
-        taskService.start(taskId, taskUserId);
-        taskService.complete(taskId, taskUserId, null);
-        
-        logger.debug("Now expecting failure");
-        try {
-        	taskService.complete(taskId, taskUserId, null);
-        	fail( "Should not be able to complete task " + taskId + " a second time.");
-        } catch (Throwable t) {
-            logger.info("The above exception was an expected part of the test.");
-            // do nothing
+        List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
+        VariableInstanceLog thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) { 
+                thisProcInstVarLog = varLog;
+            }
         }
+        assertEquals( "type", thisProcInstVarLog.getVariableId() );
+        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
         
-        List<Status> statuses = new ArrayList<Status>();
-        statuses.add(Status.Reserved);
-        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(processInstance.getId(), statuses, "en-UK");
-        assertEquals("Expected 2 tasks.", 2, taskIds.size());
+        parameters.clear(); 
+        parameters.put("myobject", new Float[]{0.2F});
+        procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        
+        varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
+        thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) { 
+                thisProcInstVarLog = varLog;
+            }
+        }
+        assertEquals( "type", thisProcInstVarLog.getVariableId() );
+        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
     }
     
 }

@@ -20,8 +20,11 @@ package org.kie.tests.wb.base.methods;
 import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -38,6 +41,7 @@ import javax.naming.NamingException;
 
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -52,6 +56,8 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
+import org.kie.services.client.api.RemoteRestRuntimeFactory;
+import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.RemoteRuntimeException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
@@ -61,6 +67,7 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
+import org.kie.tests.wb.base.test.MyType;
 
 public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
@@ -87,7 +94,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * 
      * @return a remote {@link InitialContext} instance
      */
-    public static InitialContext getRemoteInitialContext() {
+    private static InitialContext getRemoteInitialContext() {
         Properties initialProps = new Properties();
         initialProps.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         initialProps.setProperty(InitialContext.PROVIDER_URL, "remote://localhost:4447");
@@ -105,9 +112,58 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
     
-    // Tests ----------------------------------------------------------------------------------------------------------------------
+    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER, String PASSWORD) throws Exception { 
+        ConnectionFactory factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
+        Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
+        Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
     
-    public void startProcess(String user, String password) throws Exception {
+        Connection connection = null;
+        Session session = null;
+        JaxbCommandsResponse cmdResponse = null;
+        try {
+            // setup
+            connection = factory.createConnection(USER, PASSWORD);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    
+            MessageProducer producer = session.createProducer(jbpmQueue);
+            String corrId = UUID.randomUUID().toString();
+            String selector = "JMSCorrelationID = '" + corrId + "'";
+            MessageConsumer consumer = session.createConsumer(responseQueue, selector);
+    
+            connection.start();
+    
+            // Create msg
+            BytesMessage msg = session.createBytesMessage();
+            msg.setJMSCorrelationID(corrId);
+            msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE );
+            String xmlStr = jaxbSerializationProvider.serialize(req);
+            msg.writeUTF(xmlStr);
+            
+            // send
+            producer.send(msg);
+            
+            // receive
+            Message response = consumer.receive(QUALITY_OF_SERVICE_THRESHOLD_MS);
+            
+            // check
+            assertNotNull("Response is empty.", response);
+            assertEquals("Correlation id not equal to request msg id.", corrId, response.getJMSCorrelationID() );
+            assertNotNull("Response from MDB was null!", response);
+            xmlStr = ((BytesMessage) response).readUTF();
+            cmdResponse = (JaxbCommandsResponse) jaxbSerializationProvider.deserialize(xmlStr);
+            assertNotNull("Jaxb Cmd Response was null!", cmdResponse);
+        } finally {
+            if (connection != null) {
+                connection.close();
+                session.close();
+            }
+        }
+        return cmdResponse;
+    }
+    
+    // Tests ----------------------------------------------------------------------------------------------------------------------
+
+    public void commandsStartProcess(String user, String password) throws Exception {
         // send cmd
         Command<?> cmd = new StartProcessCommand(HUMAN_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
@@ -170,56 +226,6 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull(cmdResponse);
     }
     
-    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER, String PASSWORD) throws Exception { 
-        ConnectionFactory factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
-        Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
-        Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
-
-        Connection connection = null;
-        Session session = null;
-        JaxbCommandsResponse cmdResponse = null;
-        try {
-            // setup
-            connection = factory.createConnection(USER, PASSWORD);
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            MessageProducer producer = session.createProducer(jbpmQueue);
-            String corrId = UUID.randomUUID().toString();
-            String selector = "JMSCorrelationID = '" + corrId + "'";
-            MessageConsumer consumer = session.createConsumer(responseQueue, selector);
-
-            connection.start();
-
-            // Create msg
-            BytesMessage msg = session.createBytesMessage();
-            msg.setJMSCorrelationID(corrId);
-            msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE );
-            String xmlStr = jaxbSerializationProvider.serialize(req);
-            msg.writeUTF(xmlStr);
-            
-            // send
-            producer.send(msg);
-            
-            // receive
-            Message response = consumer.receive(QUALITY_OF_SERVICE_THRESHOLD_MS);
-            
-            // check
-            assertNotNull("Response is empty.", response);
-            assertEquals("Correlation id not equal to request msg id.", corrId, response.getJMSCorrelationID() );
-            assertNotNull("Response from MDB was null!", response);
-            xmlStr = ((BytesMessage) response).readUTF();
-            cmdResponse = (JaxbCommandsResponse) jaxbSerializationProvider.deserialize(xmlStr);
-            assertNotNull("Jaxb Cmd Response was null!", cmdResponse);
-        } finally {
-            if (connection != null) {
-                connection.close();
-                session.close();
-            }
-        }
-        return cmdResponse;
-    }
-
-
     public void remoteApiHumanTaskProcess(String user, String password) throws Exception {
         RemoteJmsRuntimeEngineFactory remoteSessionFactory 
             = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
@@ -271,7 +277,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
         
-    public void noProcessInstanceFound(String user, String password) throws Exception {
+    public void remoteApiNoProcessInstanceFound(String user, String password) throws Exception {
         RemoteJmsRuntimeEngineFactory remoteSessionFactory 
             = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
 
@@ -289,7 +295,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "Size of response list", response.getResponses().size(), 0);
     }
     
-    public void completeSimpleHumanTask(String user, String password) throws Exception {
+    public void remoteApiAndCommandsCompleteSimpleHumanTask(String user, String password) throws Exception {
         // Via the remote api
         
         // setup
@@ -386,4 +392,46 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // check response 
         assertEquals("Process instance did not complete..", 0, response.getResponses().size());
     }
+    
+    public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
+        // Via the remote api
+        
+        // setup
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+        RemoteRuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
+        
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("myobject", new MyType("Hello World!"));
+        long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        
+        List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
+        VariableInstanceLog thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) { 
+                thisProcInstVarLog = varLog;
+            }
+        }
+        assertEquals( "type", thisProcInstVarLog.getVariableId() );
+        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
+        
+        parameters.clear(); 
+        parameters.put("myobject", new Float[]{0.2F});
+        procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        
+        varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
+        thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) { 
+                thisProcInstVarLog = varLog;
+            }
+        }
+        assertEquals( "type", thisProcInstVarLog.getVariableId() );
+        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
+    }
+
+    // Helper methods -------------------------------------------------------------------------------------------------------------
+
+    
 }
