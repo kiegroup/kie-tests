@@ -35,6 +35,8 @@ import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
+
 @RunAsClient
 @RunWith(Arquillian.class)
 public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy {
@@ -115,6 +117,7 @@ public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy
     
     @Test
     public void testRemoteApiExtraJaxbClasses() throws Exception { 
-        restTests.remoteApiExtraJaxbClasses(deploymentUrl, USER, PASSWORD);
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.remoteApiExtraJaxbClasses(deploymentUrl, requestFactory, USER, PASSWORD);
     }
 }

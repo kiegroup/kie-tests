@@ -425,17 +425,35 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
     }
 
-    public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception { 
-        // create REST request
+    public void remoteApiExtraJaxbClasses(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
+        
+        /**
+         * Send ping request (research)
+         */
+        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/class/load/" + MyType.class.getName()).toExternalForm();
+        
+        ClientRequest restRequest = createRequest(requestFactory, urlString);
+        // This should cause the server to print out: 
+        //   YAY! : org.kie.tests.wb.base.test.MyType
+        restRequest.get();
+        
+        if( false ) { 
+        /**
+         * Send request with MyType
+         */
+            // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory 
             = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         
         KieSession ksession = engine.getKieSession();
         Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("myobject", new MyType("Hello World!"));
+        parameters.put("myobject", new MyType("Hello World!", 59));
         long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
+        /**
+         * Check that MyType was correctly deserialized on server side
+         */
         List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
@@ -446,10 +464,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
         logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
         
+        /**
+         * Send request with array parameter
+         */
         parameters.clear(); 
         parameters.put("myobject", new Float[]{0.2F});
         procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
+        /**
+         * Check that array parameter was correctly deserialized on server side
+         */
         varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
         thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
@@ -459,6 +483,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
         logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
+        }
     }
     
 }

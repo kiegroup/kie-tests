@@ -13,15 +13,15 @@ public class MyType {
     private String text;
     
     @XmlAttribute
-    private Float data;
+    private Integer data;
     
     public MyType() {
         
     }
     
-    public MyType(String text) {
+    public MyType(String text, int data) {
         this.text = text;
-        //this.data = data;
+        this.data = data;
     }
     
     public String getText() {
@@ -32,11 +32,11 @@ public class MyType {
         this.text = text;
     }
 
-    public Float getData() {
+    public Integer getData() {
         return data;
     }
     
-    public void setData(Float data) {
+    public void setData(Integer data) {
         this.data = data;
     }
     

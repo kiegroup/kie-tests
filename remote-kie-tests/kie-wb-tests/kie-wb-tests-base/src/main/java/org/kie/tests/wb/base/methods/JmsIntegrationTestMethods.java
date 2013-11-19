@@ -403,7 +403,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         KieSession ksession = engine.getKieSession();
         
         Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("myobject", new MyType("Hello World!"));
+        parameters.put("myobject", new MyType("Hello World!", 21));
         long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
         List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
