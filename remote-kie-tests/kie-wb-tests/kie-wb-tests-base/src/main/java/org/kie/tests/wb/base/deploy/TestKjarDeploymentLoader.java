@@ -225,17 +225,10 @@ public class TestKjarDeploymentLoader {
      * @param kfs The {@link KieFileSystem}
      */
     private static void addClass(Class<?> userClass, KieFileSystem kfs) {
-        String pkgFolder = userClass.getPackage().toString();
-        pkgFolder = pkgFolder.replace("package ", "");
-        pkgFolder = pkgFolder.replaceAll("\\.", File.separator);
         String classSimpleName = userClass.getSimpleName();
-        String classFilePath = pkgFolder + "/" + classSimpleName + ".class";
-
+        
         URL classFileUrl = userClass.getResource(classSimpleName + ".class");
         assertNotNull("Unable to get path for class " + classSimpleName, classFileUrl);
-
-        System.out.println("PROT: " + classFileUrl.getProtocol());
-        System.out.println("PATH: " + classFileUrl.getPath());
 
         byte[] classByteCode = null;
         if ("file".equalsIgnoreCase(classFileUrl.getProtocol())) {
@@ -267,6 +260,13 @@ public class TestKjarDeploymentLoader {
                 fail("Unable to read in " + jarPath);
             }
         }
+
+        String pkgFolder = userClass.getPackage().toString();
+        pkgFolder = pkgFolder.replace("package ", "");
+        // @#$%ing Eclipe classloader!!
+        pkgFolder = pkgFolder.replaceAll(",.+$", "");
+        pkgFolder = pkgFolder.replaceAll("\\.", File.separator);
+        String classFilePath = pkgFolder + "/" + classSimpleName + ".class";
 
         kfs.write(classFilePath, classByteCode);
     }

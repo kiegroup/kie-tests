@@ -34,6 +34,7 @@ import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
+import org.jboss.resteasy.util.Base64;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -407,9 +408,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
     }
     
-    public void urlsHttpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+    public void urlsHttpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, String user, String password) throws Exception { 
         URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + SCRIPT_TASK_PROCESS_ID + "/start");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        String authString = user + ":" + password;
+        byte[] authEncBytes = Base64.encodeBytesToBytes(authString.getBytes());
+        String authStringEnc = new String(authEncBytes);
+        connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        
         connection.setRequestMethod("POST");
 
         connection.connect();
@@ -437,19 +444,31 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         //   YAY! : org.kie.tests.wb.base.test.MyType
         restRequest.get();
         
-        if( false ) { 
-        /**
-         * Send request with MyType
-         */
-            // Remote API setup
+        // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory 
             = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         
-        KieSession ksession = engine.getKieSession();
+        /**
+         * MyType
+         */
+        testParamSerialization(engine, new MyType("variable", 29));
+        
+        /**
+         * Float
+         */
+        testParamSerialization(engine, new Float(23.01));
+        
+        /**
+         * Float []
+         */
+        testParamSerialization(engine, new Float [] { 39.391f });
+    }
+    
+    private void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("myobject", new MyType("Hello World!", 59));
-        long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        parameters.put("myobject", param);
+        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
         /**
          * Check that MyType was correctly deserialized on server side
@@ -462,28 +481,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             }
         }
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
-        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
-        
-        /**
-         * Send request with array parameter
-         */
-        parameters.clear(); 
-        parameters.put("myobject", new Float[]{0.2F});
-        procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
-        
-        /**
-         * Check that array parameter was correctly deserialized on server side
-         */
-        varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
-        thisProcInstVarLog = null;
-        for( VariableInstanceLog varLog : varLogList ) {
-            if( varLog.getProcessInstanceId() == procInstId ) { 
-                thisProcInstVarLog = varLog;
-            }
-        }
-        assertEquals( "type", thisProcInstVarLog.getVariableId() );
-        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
-        }
+        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
     }
     
 }

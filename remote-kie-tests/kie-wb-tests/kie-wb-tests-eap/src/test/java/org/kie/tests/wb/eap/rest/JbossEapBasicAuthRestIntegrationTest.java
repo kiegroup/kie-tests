@@ -105,8 +105,7 @@ public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy
 
     @Test
     public void testHttpURLConnection() throws Exception { 
-        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.urlsHttpURLConnectionAcceptHeaderIsFixed(deploymentUrl, requestFactory);
+        restTests.urlsHttpURLConnectionAcceptHeaderIsFixed(deploymentUrl, USER, PASSWORD);
     }
 
     @Test

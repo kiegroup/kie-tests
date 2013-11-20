@@ -60,9 +60,10 @@ public class KieWbWarJbossEapDeploy {
         // Replace kie-services-remote jar with the one we just generated
         war.delete("WEB-INF/lib/kie-services-remote-" + projectVersion + ".jar");
         war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
+        war.delete("WEB-INF/lib/jbpm-kie-services-" + projectVersion + ".jar");
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client")
+                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client", "org.jbpm:jbpm-kie-services")
                 .withoutTransitivity()
                 .asFile();
         war.addAsLibraries(kieRemoteDeps);

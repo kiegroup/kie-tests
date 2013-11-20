@@ -348,7 +348,6 @@
           <plugin>
             <groupId>com.google.code.maven-replacer-plugin</groupId>
             <artifactId>replacer</artifactId>
-            <version>1.5.2</version>
             <executions>
               <execution>
                 <id>fix-jboss-standalone-xml</id>
