@@ -28,6 +28,7 @@ import org.jboss.byteman.contrib.bmunit.BMScript;
 import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.api.KieBase;
@@ -66,6 +67,7 @@ public class SingleSessionConcurrencyTest extends Assert {
 
     @Test
     @BMScript(value = "tx-wait", dir = "byteman")
+    @Ignore
     public void testMinimalProcess() throws Exception {
         Thread.currentThread().setName("test");
         TestRunnable pausesBeforeTxSyncAfterCompletion = new TestRunnable();
