@@ -38,7 +38,7 @@ public class JbossAsBasicAuthJmsIntegrationTest extends KieWbWarJbossAsDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("jboss-as7");
+       return createTestWar("jboss-as7");
     }
 
     @ArquillianResource

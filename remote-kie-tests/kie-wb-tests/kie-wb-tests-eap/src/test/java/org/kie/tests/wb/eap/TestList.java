@@ -18,7 +18,7 @@ import java.util.zip.ZipInputStream;
 import org.junit.Assert;
 import org.junit.Test;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
-import org.kie.tests.wb.base.test.MyType;
+import org.kie.tests.wb.base.test.objects.MyType;
 
 public class TestList extends Assert {
 

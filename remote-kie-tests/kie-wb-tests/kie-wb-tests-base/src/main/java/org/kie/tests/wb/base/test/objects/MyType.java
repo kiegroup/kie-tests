@@ -1,4 +1,4 @@
-package org.kie.tests.wb.base.test;
+package org.kie.tests.wb.base.test.objects;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

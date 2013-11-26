@@ -22,8 +22,10 @@ import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,8 @@ import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.util.Base64;
+import org.jbpm.kie.services.api.DeploymentUnit.RuntimeStrategy;
+import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -63,7 +67,7 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
-import org.kie.tests.wb.base.test.MyType;
+import org.kie.tests.wb.base.test.objects.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +92,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
     private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
+    
+    private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
     
     /**
      * Helper methods
@@ -423,7 +429,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals(200, connection.getResponseCode());
     }
  
-    public void remoteApiSerialization(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
+    public void remoteApiSerialization(URL deploymentUrl, String user, String password) throws Exception { 
         RemoteRestRuntimeFactory restSessionFactory 
         = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
@@ -433,16 +439,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiExtraJaxbClasses(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
-        
-        /**
-         * Send ping request (research)
-         */
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/class/load/" + MyType.class.getName()).toExternalForm();
-        
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
-        // This should cause the server to print out: 
-        //   YAY! : org.kie.tests.wb.base.test.MyType
-        restRequest.get();
         
         // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory 
@@ -482,6 +478,24 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+    }
+    
+    public void deployModule(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
+        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
+        String oper = "rest/deployment/" + deploymentUnit.getIdentifier() + "/deploy" + "?strategy=" + strategy.toString();
+        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+        
+        ClientRequest restRequest = createRequest(requestFactory, urlString);
+        
+        System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
+        ClientResponse<?> responseObj = restRequest.post();
+        System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
+        responseObj = checkResponse(responseObj);
+        
+        KModuleDeploymentUnit restDeploymentUnit = responseObj.getEntity(KModuleDeploymentUnit.class);
+        assertEquals("Deployment unit identifier", deploymentUnit.getIdentifier(), restDeploymentUnit.getIdentifier());
+        assertEquals("Deployment unit strategy", strategy, deploymentUnit.getStrategy() );
     }
     
 }

@@ -67,7 +67,7 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
-import org.kie.tests.wb.base.test.MyType;
+import org.kie.tests.wb.base.test.objects.MyType;
 
 public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 

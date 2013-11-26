@@ -220,59 +220,56 @@
 
   <build>
     <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-        <filtering>true</filtering>
-      </testResource>
-      <testResource>
-        <directory>src/test/resources-jboss-as7</directory>
-        <filtering>false</filtering>
-      </testResource>
+  <testResource>
+    <directory>src/test/resources</directory>
+    <filtering>true</filtering>
+  </testResource>
+  <testResource>
+    <directory>src/test/resources-jboss-as7</directory>
+    <filtering>false</filtering>
+  </testResource>
     </testResources>
 
     <!-- running tests -->
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <configuration>
-            <filesets>
-              <fileset>
-                <directory>${basedir}</directory>
-                <includes>
-                  <include>repository/</include>
-                  <include>.niogit/</include>
-                  <include>.index/</include>
-                </includes>
-              </fileset>
-            </filesets>
-          </configuration>
-        </plugin>
+    <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>${basedir}</directory>
+              <includes>
+                <include>repository/</include>
+                <include>.niogit/</include>
+                <include>.index/</include>
+              </includes>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>integration-test</id>
-              <goals>
-                <goal>integration-test</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>verify</id>
-              <goals>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <profiles>
@@ -336,7 +333,6 @@
           <plugin>
             <groupId>com.google.code.maven-replacer-plugin</groupId>
             <artifactId>replacer</artifactId>
-            <version>1.5.2</version>
             <executions>
               <execution>
                 <id>fix-jboss-standalone-xml</id>

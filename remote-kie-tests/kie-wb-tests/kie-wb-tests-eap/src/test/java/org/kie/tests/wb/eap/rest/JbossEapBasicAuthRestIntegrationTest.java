@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.Archive;
@@ -57,64 +58,81 @@ public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy
     }
    
     @Test
+    @InSequence(1)
+    public void testDeployment() throws Exception { 
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        restTests.deployModule(deploymentUrl, requestFactory);
+    }
+    
+    @Test
+    @InSequence(2)
     public void testRestUrlStartHumanTaskProcess() throws Exception {
          ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, SALA_USER, SALA_PASSWORD);
         restTests.urlsStartHumanTaskProcess(deploymentUrl, requestFactory, requestFactory);
     }
     
     @Test
+    @InSequence(2)
     public void testRestExecuteStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.commandsStartProcess(deploymentUrl, requestFactory);
     }
     
     @Test
+    @InSequence(2)
     public void testRestRemoteApiHumanTaskProcess() throws Exception {
         restTests.remoteApiHumanTaskProcess(deploymentUrl, USER, PASSWORD);
     }
     
     @Test
+    @InSequence(2)
     public void testRestExecuteTaskCommands() throws Exception  {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.commandsTaskCommands(deploymentUrl, requestFactory, USER, PASSWORD);
     }
     
     @Test
+    @InSequence(2)
     public void testRestHistoryLogs() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.urlsHistoryLogs(deploymentUrl, requestFactory);
     }
     
     @Test
+    @InSequence(2)
     public void testRestDataServicesCoupling() throws Exception {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.urlsDataServiceCoupling(deploymentUrl, requestFactory, USER);
     }
     
     @Test
+    @InSequence(2)
     public void testJsonAndXmlStartProcess() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.urlsJsonJaxbStartProcess(deploymentUrl, requestFactory);
     }
     
     @Test
+    @InSequence(2)
     public void testHumanTaskCompleteWithVariable() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.urlsHumanTaskWithFormVariableChange(deploymentUrl, requestFactory);
     }
 
     @Test
+    @InSequence(2)
     public void testHttpURLConnection() throws Exception { 
         restTests.urlsHttpURLConnectionAcceptHeaderIsFixed(deploymentUrl, USER, PASSWORD);
     }
 
     @Test
+    @InSequence(2)
     public void testRemoteApiProcessInstances() throws Exception { 
-        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.remoteApiSerialization(deploymentUrl, requestFactory, USER, PASSWORD);
+        restTests.remoteApiSerialization(deploymentUrl, USER, PASSWORD);
     }
     
     @Test
+    @InSequence(2)
     public void testRemoteApiExtraJaxbClasses() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.remoteApiExtraJaxbClasses(deploymentUrl, requestFactory, USER, PASSWORD);

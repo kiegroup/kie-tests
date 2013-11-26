@@ -236,7 +236,7 @@
               <fileset>
                 <directory>${basedir}</directory>
                 <includes>
-                  <include>repository/</include>
+                  <include>repositories/</include>
                   <include>.niogit/</include>
                   <include>.index/</include>
                 </includes>
