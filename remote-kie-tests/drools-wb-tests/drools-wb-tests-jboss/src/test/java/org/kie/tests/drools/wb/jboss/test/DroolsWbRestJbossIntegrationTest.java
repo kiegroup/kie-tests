@@ -1,15 +1,11 @@
 package org.kie.tests.drools.wb.jboss.test;
 
-import static org.junit.Assert.*;
-import static org.kie.tests.drools.wb.jboss.TestConstants.*;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -27,19 +23,21 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.drools.wb.jboss.base.DroolsWbWarJbossDeploy;
+import org.kie.workbench.common.services.shared.rest.CompileProjectRequest;
 import org.kie.workbench.common.services.shared.rest.CreateOrCloneRepositoryRequest;
+import org.kie.workbench.common.services.shared.rest.CreateOrganizationalUnitRequest;
 import org.kie.workbench.common.services.shared.rest.CreateProjectRequest;
 import org.kie.workbench.common.services.shared.rest.Entity;
-import org.kie.workbench.common.services.shared.rest.JobRequest.Status;
-import org.kie.workbench.common.services.shared.rest.BuildConfig;
-import org.kie.workbench.common.services.shared.rest.CompileProjectRequest;
-import org.kie.workbench.common.services.shared.rest.CreateOrganizationalUnitRequest;
 import org.kie.workbench.common.services.shared.rest.JobResult;
+import org.kie.workbench.common.services.shared.rest.JobStatus;
 import org.kie.workbench.common.services.shared.rest.OrganizationalUnit;
 import org.kie.workbench.common.services.shared.rest.RepositoryRequest;
 import org.kie.workbench.common.services.shared.rest.RepositoryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.*;
+import static org.kie.tests.drools.wb.jboss.TestConstants.*;
 
 @RunAsClient
 @RunWith(Arquillian.class)
@@ -88,7 +86,7 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         CreateOrCloneRepositoryRequest createJobRequest = responseObj.getEntity(CreateOrCloneRepositoryRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createJobRequest));
         assertNotNull( "create repo job request", createJobRequest);
-        assertEquals( "job request status", Status.ACCEPTED, createJobRequest.getStatus() );
+        assertEquals( "job request status", JobStatus.ACCEPTED, createJobRequest.getStatus() );
         String jobId = createJobRequest.getJobId();
         
         // rest/jobs/{jobId} GET
@@ -150,8 +148,8 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         
     }
     
-    private void waitForJobToComplete(String jobId, Status jobStatus, ClientRequestFactory requestFactory) throws Exception { 
-        while( jobStatus.equals(Status.ACCEPTED) ) { 
+    private void waitForJobToComplete(String jobId, JobStatus jobStatus, ClientRequestFactory requestFactory) throws Exception {
+        while( jobStatus.equals(JobStatus.ACCEPTED) ) {
             String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/jobs/" + jobId).toExternalForm();
             ClientRequest restRequest = createRequest(requestFactory, urlString);
             ClientResponse<?> responseObj = checkResponse(restRequest.get());
