@@ -36,8 +36,6 @@ import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
-import com.google.web.bindery.requestfactory.shared.RequestFactory;
-
 @RunAsClient
 @RunWith(Arquillian.class)
 public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy {
