@@ -63,6 +63,9 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
+import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
+import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
+import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
@@ -100,9 +103,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      */
     
     private ClientResponse<?> checkResponse(ClientResponse<?> responseObj) throws Exception {
+        return checkResponse(responseObj, 200);
+    }
+    
+    private ClientResponse<?> checkResponse(ClientResponse<?> responseObj, int status) throws Exception {
         responseObj.resetStream();
-        int status = responseObj.getStatus(); 
-        if( status != 200 ) { 
+        int reqStatus = responseObj.getStatus(); 
+        if( reqStatus != status ) { 
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
             assertEquals( "Status OK", 200, status);
         } 
@@ -481,21 +488,47 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void deployModule(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
-        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        // Deploy
+        KModuleDeploymentUnit origDepUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
-        String oper = "rest/deployment/" + deploymentUnit.getIdentifier() + "/deploy" + "?strategy=" + strategy.toString();
+        String oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/deploy" + "?strategy=" + strategy.toString();
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
-        
         ClientRequest restRequest = createRequest(requestFactory, urlString);
         
         System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
         ClientResponse<?> responseObj = restRequest.post();
         System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
-        responseObj = checkResponse(responseObj);
         
-        KModuleDeploymentUnit restDeploymentUnit = responseObj.getEntity(KModuleDeploymentUnit.class);
-        assertEquals("Deployment unit identifier", deploymentUnit.getIdentifier(), restDeploymentUnit.getIdentifier());
-        assertEquals("Deployment unit strategy", strategy, deploymentUnit.getStrategy() );
+        responseObj = checkResponse(responseObj, 202);
+        JaxbDeploymentJobResult depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        assertEquals("Deployment unit status", true, depJobResult.isSuccess());
+        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depJobResult.getDeploymentUnit().getIdentifier());
+        assertEquals("Deployment unit strategy", strategy.toString(), depJobResult.getDeploymentUnit().getStrategy().toString());
+        
+        // Get
+        oper = "rest/deployment/" + origDepUnit.getIdentifier();
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.get());
+        JaxbDeploymentUnit depUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depUnit.getIdentifier());
+        if( depUnit.getStatus().equals(JaxbDeploymentStatus.DEPLOYING) ) { 
+            logger.info("SLEEPING!");
+            Thread.sleep(15000);
+            responseObj = checkResponse(restRequest.get());
+            depUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+            assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depUnit.getIdentifier());
+        }
+        assertEquals("Deployment unit strategy", strategy.toString(), depUnit.getStrategy().toString() );
+        
+        // Undeploy
+        oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
+        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
+        responseObj = checkResponse(restRequest.post(), 202);
+        System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
+        depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
     }
     
 }
