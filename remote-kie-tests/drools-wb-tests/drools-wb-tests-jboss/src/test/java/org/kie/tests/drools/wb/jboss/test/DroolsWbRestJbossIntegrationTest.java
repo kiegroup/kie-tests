@@ -1,11 +1,18 @@
 package org.kie.tests.drools.wb.jboss.test;
 
+import static org.junit.Assert.*;
+import static org.kie.tests.drools.wb.jboss.TestConstants.PASSWORD;
+import static org.kie.tests.drools.wb.jboss.TestConstants.USER;
+
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -23,27 +30,16 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.drools.wb.jboss.base.DroolsWbWarJbossDeploy;
-import org.kie.workbench.common.services.shared.rest.CompileProjectRequest;
-import org.kie.workbench.common.services.shared.rest.CreateOrCloneRepositoryRequest;
-import org.kie.workbench.common.services.shared.rest.CreateOrganizationalUnitRequest;
-import org.kie.workbench.common.services.shared.rest.CreateProjectRequest;
-import org.kie.workbench.common.services.shared.rest.Entity;
-import org.kie.workbench.common.services.shared.rest.JobResult;
-import org.kie.workbench.common.services.shared.rest.JobStatus;
-import org.kie.workbench.common.services.shared.rest.OrganizationalUnit;
-import org.kie.workbench.common.services.shared.rest.RepositoryRequest;
-import org.kie.workbench.common.services.shared.rest.RepositoryResponse;
+import org.kie.workbench.common.services.shared.rest.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.Assert.*;
-import static org.kie.tests.drools.wb.jboss.TestConstants.*;
 
 @RunAsClient
 @RunWith(Arquillian.class)
 public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
 
     private static Logger logger = LoggerFactory.getLogger(DroolsWbRestJbossIntegrationTest.class);
+    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
     
     @ArquillianResource
     URL deploymentUrl;
@@ -81,7 +77,9 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         newRepo.setDescription("repo for testing rest services");
         newRepo.setRequestType("new");
         addToRequestBody(restRequest, newRepo);
+        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
         responseObj = checkResponse(restRequest.post());
+        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
         
         CreateOrCloneRepositoryRequest createJobRequest = responseObj.getEntity(CreateOrCloneRepositoryRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createJobRequest));
@@ -100,7 +98,9 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         String testProjectName = "test-project";
         project.setName(testProjectName);
         addToRequestBody(restRequest, project);
+        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
         responseObj = checkResponse(restRequest.post());
+        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
@@ -127,7 +127,9 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         String projectName = UUID.randomUUID().toString();
         project.setName(projectName);
         addToRequestBody(restRequest, project);
+        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
         responseObj = checkResponse(restRequest.post());
+        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
@@ -138,14 +140,14 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         String mavenOperBase = "rest/repositories/" + repoName + "/projects/" + projectName + "/maven/";
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + mavenOperBase + "compile").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
+        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
         responseObj = checkResponse(restRequest.post());
+        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
         CompileProjectRequest compileRequest = responseObj.getEntity(CompileProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(compileRequest));
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
-        
-        
     }
     
     private void waitForJobToComplete(String jobId, JobStatus jobStatus, ClientRequestFactory requestFactory) throws Exception {
@@ -178,7 +180,9 @@ public class DroolsWbRestJbossIntegrationTest extends DroolsWbWarJbossDeploy {
         orgUnit.setName(UUID.randomUUID().toString());
         orgUnit.setOwner(this.getClass().getSimpleName());
         addToRequestBody(restRequest, orgUnit);
+        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
         responseObj = checkResponse(restRequest.post());
+        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
         CreateOrganizationalUnitRequest createOURequest = responseObj.getEntity(CreateOrganizationalUnitRequest.class);
 
         // rest/jobs/{jobId}

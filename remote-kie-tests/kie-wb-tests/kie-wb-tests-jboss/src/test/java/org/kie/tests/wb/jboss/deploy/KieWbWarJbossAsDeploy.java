@@ -8,7 +8,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.kie.tests.wb.base.test.objects.AbstractDeploy;
+import org.kie.tests.wb.base.test.AbstractDeploy;
 
 public class KieWbWarJbossAsDeploy extends AbstractDeploy {
 

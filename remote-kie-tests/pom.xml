@@ -15,10 +15,12 @@
   <description>Integration tests involving remote interfaces</description>
 
   <modules>
-    <module>jbpm-console-tests</module>
     <module>drools-wb-tests</module>
     <module>kie-wb-tests</module>
+    <!-- under development
+    <module>jbpm-console-tests</module>
     <module>kie-drools-wb-tests</module>
+    -->
   </modules>
 
   <properties>
