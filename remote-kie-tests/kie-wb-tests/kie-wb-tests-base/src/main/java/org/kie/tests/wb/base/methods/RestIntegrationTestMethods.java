@@ -37,7 +37,6 @@ import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.util.Base64;
-import org.jbpm.kie.services.api.DeploymentUnit.RuntimeStrategy;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
@@ -52,6 +51,7 @@ import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
@@ -487,18 +487,74 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
     }
     
-    public void deployModule(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception { 
-        // Deploy
+    public void deployModule(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
+        long restCallDurationLimit = 2000;
+        long sleep = 5000;
+        
         KModuleDeploymentUnit origDepUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
-        String oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/deploy" + "?strategy=" + strategy.toString();
+        
+        // Get (has it been deployed?)
+        String oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/";
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
+        ClientResponse<?> responseObj = restRequest.get();
+        int status = responseObj.getStatus();
+        boolean undeployTested = false;
+        long before = System.currentTimeMillis();
+        long after = System.currentTimeMillis();
+        long duration = 0;
+        JaxbDeploymentUnit jaxbDepUnit = null;
+        JaxbDeploymentStatus depStatus = null;
         
-        System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
-        ClientResponse<?> responseObj = restRequest.post();
-        System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
-        
+        // Undeploy if has been deployed
+        if( status == 200 ) { 
+            jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+            depStatus = jaxbDepUnit.getStatus();
+            boolean undeployed = false;
+            if( depStatus == JaxbDeploymentStatus.UNDEPLOYED
+                    || depStatus == JaxbDeploymentStatus.NONEXISTENT ) { 
+                undeployed = true;
+            } 
+
+            if( ! undeployed ) { 
+                undeployTested = true;
+                // Exists, so undeploy
+                oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
+                urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+                restRequest = createRequest(requestFactory, urlString);
+
+                System.out.println( "BEFORE: " + sdf.format((before = System.currentTimeMillis())));
+                responseObj = checkResponse(restRequest.post(), 202);
+                System.out.println( "AFTER:  " + sdf.format((after = System.currentTimeMillis())));
+                assertTrue("Call took longer than " + restCallDurationLimit/1000 + " seconds", duration < restCallDurationLimit);
+
+                while( ! undeployed ) { 
+                    logger.info( "Sleeping for " + sleep /1000 + " seconds");
+                    Thread.sleep(sleep);
+                    oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/";
+                    urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+                    restRequest = createRequest(requestFactory, urlString);
+                    responseObj = restRequest.get();
+                    status = responseObj.getStatus();
+                    if( status == 200 ) { 
+                        undeployed = true;
+                        jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+                        assertEquals( "GroupId", GROUP_ID, jaxbDepUnit.getGroupId());
+                        assertEquals( "ArtifactId", ARTIFACT_ID, jaxbDepUnit.getArtifactId());
+                        assertEquals( "Version", VERSION, jaxbDepUnit.getVersion());
+                        logger.info(jaxbDepUnit.getIdentifier() + " : " + depStatus.toString());
+                        if( depStatus == JaxbDeploymentStatus.UNDEPLOYED
+                                || depStatus == JaxbDeploymentStatus.NONEXISTENT ) { 
+                            undeployed = true;
+                        } 
+                    } else if( status == 404 ) { 
+                        undeployed = true;
+                    }
+                }
+            }
+        }
+
         responseObj = checkResponse(responseObj, 202);
         JaxbDeploymentJobResult depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
         assertEquals("Deployment unit status", true, depJobResult.isSuccess());
@@ -510,25 +566,27 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         responseObj = checkResponse(restRequest.get());
-        JaxbDeploymentUnit depUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depUnit.getIdentifier());
-        if( depUnit.getStatus().equals(JaxbDeploymentStatus.DEPLOYING) ) { 
+        jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), jaxbDepUnit.getIdentifier());
+        if( jaxbDepUnit.getStatus().equals(JaxbDeploymentStatus.DEPLOYING) ) { 
             logger.info("SLEEPING!");
             Thread.sleep(15000);
             responseObj = checkResponse(restRequest.get());
-            depUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-            assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depUnit.getIdentifier());
+            jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+            assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), jaxbDepUnit.getIdentifier());
         }
-        assertEquals("Deployment unit strategy", strategy.toString(), depUnit.getStrategy().toString() );
+        assertEquals("Deployment unit strategy", strategy.toString(), jaxbDepUnit.getStrategy().toString() );
         
-        // Undeploy
-        oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
-        responseObj = checkResponse(restRequest.post(), 202);
-        System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
-        depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        if( ! undeployTested ) { 
+            // Undeploy
+            oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
+            urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+            restRequest = createRequest(requestFactory, urlString);
+            System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
+            responseObj = checkResponse(restRequest.post(), 202);
+            System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
+            depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        }
     }
     
 }

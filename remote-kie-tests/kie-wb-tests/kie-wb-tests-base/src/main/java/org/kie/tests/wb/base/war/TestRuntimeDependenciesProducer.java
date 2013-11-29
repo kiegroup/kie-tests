@@ -9,12 +9,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManagerFactory;
 
-import org.jbpm.kie.services.api.DeploymentService;
 import org.jbpm.kie.services.api.IdentityProvider;
 import org.jbpm.kie.services.api.Kjar;
 import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
 import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
 import org.jbpm.shared.services.cdi.Selectable;
+import org.kie.internal.deployment.DeploymentService;
 import org.kie.internal.runtime.manager.RuntimeEnvironment;
 import org.kie.internal.runtime.manager.cdi.qualifier.PerProcessInstance;
 import org.kie.internal.runtime.manager.cdi.qualifier.PerRequest;

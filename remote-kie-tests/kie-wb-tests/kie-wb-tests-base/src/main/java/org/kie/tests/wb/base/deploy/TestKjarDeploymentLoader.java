@@ -7,11 +7,11 @@ import javax.ejb.Startup;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.jbpm.kie.services.api.DeployedUnit;
-import org.jbpm.kie.services.api.DeploymentService;
-import org.jbpm.kie.services.api.DeploymentUnit.RuntimeStrategy;
 import org.jbpm.kie.services.api.Kjar;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.kie.internal.deployment.DeployedUnit;
+import org.kie.internal.deployment.DeploymentService;
+import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
