@@ -32,13 +32,15 @@ import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
 import org.kie.services.client.deployment.KieModuleDeploymentHelper;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.kie.tests.wb.base.test.objects.Person;
+import org.kie.tests.wb.base.test.objects.Request;
 
 public class AbstractDeploy {
 
     protected static void createAndDeployTestKJarToMaven() { 
         KieModuleDeploymentHelper.newFluentInstance()
        .addResourceFilePath("repo/test/")
-       .addClass(MyType.class)
+       .addClass(MyType.class, Person.class, Request.class)
        .setGroupId(GROUP_ID).setArtifactId(ARTIFACT_ID).setVersion(VERSION)
        .setKBaseName(KBASE_NAME).setKieSessionname(KSESSION_NAME)
        .createKieJarAndDeployToMaven();

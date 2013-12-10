@@ -53,6 +53,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
+import org.kie.services.client.api.RestRequestHelper;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
@@ -111,17 +112,27 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         int reqStatus = responseObj.getStatus(); 
         if( reqStatus != status ) { 
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
-            assertEquals( "Status OK", 200, status);
+            assertEquals( "Status OK", status, reqStatus);
         } 
         return responseObj;
     }
     
-    private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) { 
+    private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception { 
+        long before, after;
+        System.out.println( "BEFORE: " + sdf.format((before = System.currentTimeMillis())));
+        ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
+        System.out.println( "AFTER:  " + sdf.format((after = System.currentTimeMillis())));
+        assertTrue("Call took longer than " + restCallDurationLimit/1000 + " seconds", 
+                (after - before) < restCallDurationLimit);
+        return responseObj;
+    }
+    
+    private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) throws Exception { 
         ClientRequest restRequest = requestFactory.createRequest(urlString);
         if( mediaType.equals(MediaType.APPLICATION_XML) ) {
             restRequest.accept(mediaType);
         }
-        logger.debug( ">> " + urlString);
+        logger.debug( ">> " + restRequest.getUri());
         return restRequest;
     }
     
@@ -249,8 +260,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         logger.debug("Now expecting failure");
         try {
-        	taskService.complete(taskId, taskUserId, null);
-        	fail( "Should not be able to complete task " + taskId + " a second time.");
+            taskService.complete(taskId, taskUserId, null);
+            fail( "Should not be able to complete task " + taskId + " a second time.");
         } catch (Throwable t) {
             logger.info("The above exception was an expected part of the test.");
             // do nothing
@@ -438,7 +449,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
  
     public void remoteApiSerialization(URL deploymentUrl, String user, String password) throws Exception { 
         RemoteRestRuntimeFactory restSessionFactory 
-        = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
+            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
@@ -487,106 +498,127 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
     }
     
-    public void deployModule(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        long restCallDurationLimit = 2000;
-        long sleep = 5000;
+    private long restCallDurationLimit = 2000;
+    private long sleep = 5000;
+    
+    public void deployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
+        ClientRequestFactory requestFactory = RestRequestHelper.createRequestFactory(deploymentUrl, user, password);
         
-        KModuleDeploymentUnit origDepUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        JaxbDeploymentUnit jaxbDepUnit = null;
+        JaxbDeploymentJobResult jaxbJobResult = null;
+        JaxbDeploymentStatus jaxbDepStatus = null;
+        
+        String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
         RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
         
         // Get (has it been deployed?)
-        String oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/";
+        String oper = "rest/deployment/" + deploymentId + "/";
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
         ClientResponse<?> responseObj = restRequest.get();
-        int status = responseObj.getStatus();
-        boolean undeployTested = false;
-        long before = System.currentTimeMillis();
-        long after = System.currentTimeMillis();
-        long duration = 0;
-        JaxbDeploymentUnit jaxbDepUnit = null;
-        JaxbDeploymentStatus depStatus = null;
         
-        // Undeploy if has been deployed
-        if( status == 200 ) { 
-            jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-            depStatus = jaxbDepUnit.getStatus();
-            boolean undeployed = false;
-            if( depStatus == JaxbDeploymentStatus.UNDEPLOYED
-                    || depStatus == JaxbDeploymentStatus.NONEXISTENT ) { 
-                undeployed = true;
-            } 
-
-            if( ! undeployed ) { 
-                undeployTested = true;
-                // Exists, so undeploy
-                oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
-                urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
-                restRequest = createRequest(requestFactory, urlString);
-
-                System.out.println( "BEFORE: " + sdf.format((before = System.currentTimeMillis())));
-                responseObj = checkResponse(restRequest.post(), 202);
-                System.out.println( "AFTER:  " + sdf.format((after = System.currentTimeMillis())));
-                assertTrue("Call took longer than " + restCallDurationLimit/1000 + " seconds", duration < restCallDurationLimit);
-
-                while( ! undeployed ) { 
-                    logger.info( "Sleeping for " + sleep /1000 + " seconds");
-                    Thread.sleep(sleep);
-                    oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/";
-                    urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
-                    restRequest = createRequest(requestFactory, urlString);
-                    responseObj = restRequest.get();
-                    status = responseObj.getStatus();
-                    if( status == 200 ) { 
-                        undeployed = true;
-                        jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                        assertEquals( "GroupId", GROUP_ID, jaxbDepUnit.getGroupId());
-                        assertEquals( "ArtifactId", ARTIFACT_ID, jaxbDepUnit.getArtifactId());
-                        assertEquals( "Version", VERSION, jaxbDepUnit.getVersion());
-                        logger.info(jaxbDepUnit.getIdentifier() + " : " + depStatus.toString());
-                        if( depStatus == JaxbDeploymentStatus.UNDEPLOYED
-                                || depStatus == JaxbDeploymentStatus.NONEXISTENT ) { 
-                            undeployed = true;
-                        } 
-                    } else if( status == 404 ) { 
-                        undeployed = true;
-                    }
-                }
-            }
+        if( ! checkUndeployed(responseObj) ) { 
+            testUndeploy(deploymentId, deploymentUrl, requestFactory);
         }
 
-        responseObj = checkResponse(responseObj, 202);
-        JaxbDeploymentJobResult depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
-        assertEquals("Deployment unit status", true, depJobResult.isSuccess());
-        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), depJobResult.getDeploymentUnit().getIdentifier());
-        assertEquals("Deployment unit strategy", strategy.toString(), depJobResult.getDeploymentUnit().getStrategy().toString());
-        
-        // Get
-        oper = "rest/deployment/" + origDepUnit.getIdentifier();
+        // Deploy
+        oper = "rest/deployment/" + deploymentId + "/deploy?strategy=" + strategy.toString();
         urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
-        jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-        assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), jaxbDepUnit.getIdentifier());
-        if( jaxbDepUnit.getStatus().equals(JaxbDeploymentStatus.DEPLOYING) ) { 
-            logger.info("SLEEPING!");
-            Thread.sleep(15000);
-            responseObj = checkResponse(restRequest.get());
-            jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-            assertEquals("Deployment unit identifier", origDepUnit.getIdentifier(), jaxbDepUnit.getIdentifier());
-        }
-        assertEquals("Deployment unit strategy", strategy.toString(), jaxbDepUnit.getStrategy().toString() );
+        responseObj = checkResponsePostTime(restRequest, 202);
+        jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        jaxbDepUnit = jaxbJobResult.getDeploymentUnit();
+        jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
+        assertEquals("Deployment unit status", strategy, jaxbDepUnit.getStrategy());
+        assertEquals("Deployment unit status", JaxbDeploymentStatus.DEPLOYING, jaxbDepStatus);
+
+        waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestFactory);
+    }
+
+    public void deploySeveralModulesAndOtherDeployTests(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
+
+    }
+
+    private void testUndeploy(String deploymentId, URL deploymentUrl, ClientRequestFactory requestFactory ) throws Exception {
+        // Exists, so undeploy
+        String oper = "rest/deployment/" + deploymentId + "/undeploy";
+        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+        ClientRequest restRequest = createRequest(requestFactory, urlString);
+
+        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 202);
+
+        JaxbDeploymentJobResult jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        assertEquals( "Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY" );
+        logger.info( "UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString()
+        + "]" + jaxbJobResult.getExplanation() );
         
-        if( ! undeployTested ) { 
-            // Undeploy
-            oper = "rest/deployment/" + origDepUnit.getIdentifier() + "/undeploy";
-            urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
-            restRequest = createRequest(requestFactory, urlString);
-            System.out.println( "BEFORE: " + sdf.format(new Date(System.currentTimeMillis())) );
-            responseObj = checkResponse(restRequest.post(), 202);
-            System.out.println( "AFTER:  " + sdf.format(new Date(System.currentTimeMillis())) );
-            depJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestFactory);
+    }
+
+    private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy,
+            URL deploymentUrl, ClientRequestFactory requestFactory ) throws Exception {
+        boolean success = false;
+        while( ! success ) { 
+            String oper = "rest/deployment/" + deploymentId + "/";
+            String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper ).toExternalForm();
+            ClientRequest restRequest = createRequest(requestFactory, urlString);
+            ClientResponse<?> responseObj = restRequest.get();
+            if( deploy ) { 
+                success = checkDeployed(responseObj);
+            } else { 
+                success = checkUndeployed(responseObj);
+            }
+            if( ! success ) { 
+                logger.info( "Sleeping for " + sleep /1000 + " seconds");
+                Thread.sleep(sleep);
+            }
         }
+    }
+
+    private boolean checkUndeployed(ClientResponse<?> responseObj) { 
+        int status = responseObj.getStatus();
+        try { 
+            if( status == 200 ) { 
+                JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
+                if( jaxbDepStatus == JaxbDeploymentStatus.UNDEPLOYED
+                        || jaxbDepStatus == JaxbDeploymentStatus.NONEXISTENT ) { 
+                    return true;
+                } 
+            } else if( status == 404 ) { 
+                return true;
+            }
+            return false;        
+        } finally { 
+            responseObj.releaseConnection();
+        }
+    }
+
+    private boolean checkDeployed(ClientResponse<?> responseObj) { 
+        int status = responseObj.getStatus();
+        try { 
+            if( status == 200 ) { 
+                JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
+                if( jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED ) { 
+                    return true;
+                } 
+            } else { 
+                return false;
+            }
+            return false;
+        } finally { 
+            responseObj.releaseConnection();
+        }
+    }
+
+    private JaxbDeploymentStatus checkJaxbDeploymentUnitAndGetStatus(JaxbDeploymentUnit jaxbDepUnit, String groupId, String artifactId, String version) { 
+        assertEquals( "GroupId", GROUP_ID, jaxbDepUnit.getGroupId());
+        assertEquals( "ArtifactId", ARTIFACT_ID, jaxbDepUnit.getArtifactId());
+        assertEquals( "Version", VERSION, jaxbDepUnit.getVersion());
+        JaxbDeploymentStatus jaxbDepStatus = jaxbDepUnit.getStatus();
+        logger.info(jaxbDepUnit.getIdentifier() + " : " + jaxbDepStatus.toString());
+        return jaxbDepUnit.getStatus();
     }
     
 }

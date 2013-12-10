@@ -13,7 +13,7 @@
 
   <name>KIE Workbench Integration Tests :: JBoss EAP 6</name>
 
-  <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
+  <!-- IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 
   <!-- 
   == test setup ==
@@ -295,7 +295,7 @@
       </properties>
       <build>
         <plugins>
-          <!-- testing with jboss AS 7 -->
+
           <!-- 1. install server in the build/target dir -->
           <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
@@ -321,6 +321,7 @@
               </execution>
             </executions>
           </plugin>
+
           <!-- 2. install files with user/password information in the server dir -->
           <plugin>
             <artifactId>maven-resources-plugin</artifactId>
@@ -344,6 +345,7 @@
               </execution>
             </executions>
           </plugin>
+
           <!-- 3. modify server configuration -->
           <plugin>
             <groupId>com.google.code.maven-replacer-plugin</groupId>
@@ -356,42 +358,42 @@
                   <goal>replace</goal>
                 </goals>
                 <configuration>
-                  <file>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</file>
-                  <outputFile>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</outputFile>
-                  <replacements>
-                    <!-- BROKEN: FIX ME!
-                    <replacement>
-                      <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
-                      <value>&lt;security-settings&gt;
-                        &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="admin"/&gt;
-                        &lt;permission type="consume" roles="admin"/&gt;</value>
-                    </replacement>
-                    <replacement>
-                      <token>periodic-rotating-file-handler&gt;</token>
-                      <value>periodic-rotating-file-handler&gt;
-                        &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
-                        &lt;formatter&gt;
-                        &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
-                        &lt;/formatter&gt;
-                        &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
-                        &lt;suffix value=".yyyy-MM-dd"/&gt;
-                        &lt;append value="true"/&gt;
-                        &lt;/periodic-rotating-file-handler&gt;</value>
-                    </replacement>
-                    <replacement>
-                        <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
-                        <value>&lt;root-logger&gt;
-                        &lt;level name="DEBUG"/&gt;
-                        </value>
-                    </replacement>
-                    -->
-                    <replacement>
-                        <token>&lt;handlers&gt;</token>
-                        <value>&lt;handlers&gt;
-                        &lt;handler name="DEBUGFILE"/&gt;</value>
-                    </replacement>
-                  </replacements>
+                  <basedir>${project.build.directory}/${jboss.server.name}/standalone/configuration</basedir>
+                 <includes>
+                    <include>standalone-full.xml</include>
+                 </includes>
+                 <replacements>
+                   <replacement>
+                     <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
+                     <value>&lt;security-settings&gt;
+                       &lt;security-setting match="#"&gt;
+                       &lt;permission type="send" roles="admin"/&gt;
+                       &lt;permission type="consume" roles="admin"/&gt;</value>
+                   </replacement>
+                   <replacement>
+                     <token>periodic-rotating-file-handler&gt;</token>
+                     <value>periodic-rotating-file-handler&gt;
+                       &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
+                       &lt;formatter&gt;
+                       &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
+                       &lt;/formatter&gt;
+                       &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
+                       &lt;suffix value=".yyyy-MM-dd"/&gt;
+                       &lt;append value="true"/&gt;
+                       &lt;/periodic-rotating-file-handler&gt;</value>
+                   </replacement>
+                   <replacement>
+                       <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
+                       <value>&lt;root-logger&gt;
+                       &lt;level name="DEBUG"/&gt;
+                       </value>
+                   </replacement>
+                   <replacement>
+                       <token>&lt;handlers&gt;</token>
+                       <value>&lt;handlers&gt;
+                       &lt;handler name="DEBUGFILE"/&gt;</value>
+                   </replacement>
+                 </replacements>
                 </configuration>
               </execution>
               <execution>
@@ -416,4 +418,3 @@
     </profile>
   </profiles>
 </project>
-

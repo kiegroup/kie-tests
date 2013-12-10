@@ -31,6 +31,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
@@ -38,11 +39,11 @@ import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy {
+public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("eap-6_1");
+       return createTestWar("eap-6_1");
     }
 
     @ArquillianResource
@@ -52,14 +53,22 @@ public class JbossEapBasicAuthRestIntegrationTest extends KieWbWarJbossEapDeploy
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
-        Thread.sleep(1000);
+        long sleep = 1000;
+        logger.info("Waiting " + sleep/1000 + " secs for tx's on server to close.");
+        Thread.sleep(sleep);
+    }
+
+    @BeforeClass
+    public static void waitForDeployedKmodulesToLoad() throws InterruptedException { 
+        long sleep = 2000;
+        logger.info("Waiting " + sleep/1000 + " secs for KieModules to deploy and load..");
+        Thread.sleep(sleep);
     }
    
     @Test
     @InSequence(1)
     public void testDeployment() throws Exception { 
-        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.deployModule(deploymentUrl, requestFactory);
+        restTests.deployModuleForOtherTests(deploymentUrl, USER, PASSWORD);
     }
     
     @Test

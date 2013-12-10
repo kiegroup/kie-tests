@@ -16,6 +16,7 @@ public class TestConstants {
     public static final String SCRIPT_TASK_VAR_PROCESS_ID   = "org.jbpm.scripttask.var";
     public static final String SINGLE_HUMAN_TASK_PROCESS_ID = "org.jboss.qa.bpms.HumanTask";
     public static final String OBJECT_VARIABLE_PROCESS_ID   = "org.jboss.qa.bpms.ObjectVariableProcess";
+    public static final String RULE_TASK_PROCESS_ID         = "com.bpms.flood.RuleTask";
    
     /**
      * User/password
@@ -60,7 +61,7 @@ public class TestConstants {
  
     public static final String KJAR_DEPLOYMENT_ID;
     static { 
-        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION, KBASE_NAME, KSESSION_NAME);
+        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         KJAR_DEPLOYMENT_ID = deploymentUnit.getIdentifier();
     }
 

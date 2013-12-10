@@ -24,60 +24,106 @@ import java.net.URL;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapBasicAuthJmsIntegrationTest extends KieWbWarJbossEapDeploy {
+public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("eap-6_1");
+       return createTestWar("eap-6_1");
     }
 
     @ArquillianResource
     URL deploymentUrl;
 
     private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    
+    @Rule
+    public TestName testName;
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
-        Thread.sleep(1000);
+        long sleep = 1000;
+        logger.info("Waiting " + sleep/1000 + " secs for tx's on server to close.");
+        Thread.sleep(sleep);
+    }
+
+    @BeforeClass
+    public static void waitForDeployedKmodulesToLoad() throws InterruptedException { 
+        long sleep = 2000;
+        logger.info("Waiting " + sleep/1000 + " secs for KieModules to deploy and load..");
+        Thread.sleep(sleep);
     }
 
     @Test
+    @InSequence(1)
+    public void deployTestDeployment() throws Exception {
+        printTestName();
+        restTests.deployModuleForOtherTests(deploymentUrl, USER, PASSWORD);
+    }
+
+    /**
+    @Test
+    @InSequence(2)
     public void testJmsStartProcess() throws Exception {
+        printTestName();
         jmsTests.commandsStartProcess(USER, PASSWORD);
     }
 
     @Test
+    @InSequence(2)
     public void testJmsRemoteApiHumanTaskProcess() throws Exception {
+        printTestName();
         jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
     }
 
     @Test
+    @InSequence(2)
     public void testJmsRemoteApiExceptions() throws Exception {
+        printTestName();
         jmsTests.remoteApiException(USER, PASSWORD);
     }
     
     @Test
+    @InSequence(2)
     public void testJmsNoProcessInstanceFound() throws Exception {
+        printTestName();
         jmsTests.remoteApiNoProcessInstanceFound(USER, PASSWORD);
     }
     
     @Test
+    @InSequence(2)
     public void testCompleteSimpleHumanTask() throws Exception {
+        printTestName();
         jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(USER, PASSWORD);
+    }
+    */
+    @Test
+    @InSequence(2)
+    public void testExtraJaxbClasses() throws Exception {
+        printTestName();
+        jmsTests.remoteApiExtraJaxbClasses(USER, PASSWORD);
     }
     
     @Test
-    public void testExtraJaxbClasses() throws Exception {
-        jmsTests.remoteApiExtraJaxbClasses(USER, PASSWORD);
+    @InSequence(2)
+    public void testRuleTaskNullPointer() throws Exception { 
+        printTestName();
+        jmsTests.ruleTaskNullPointer(USER, PASSWORD);
     }
+    
 }

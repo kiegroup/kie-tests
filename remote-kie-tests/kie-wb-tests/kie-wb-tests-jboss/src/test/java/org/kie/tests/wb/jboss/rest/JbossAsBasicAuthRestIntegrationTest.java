@@ -59,7 +59,7 @@ public class JbossAsBasicAuthRestIntegrationTest extends KieWbWarJbossAsDeploy {
     @InSequence(1)
     public void testDeployment() throws Exception { 
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        restTests.deployModule(deploymentUrl, requestFactory);
+        restTests.deployModuleForOtherTests(deploymentUrl, requestFactory);
     }
     
     @Test

@@ -249,6 +249,39 @@
       </plugin>
 
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>reserve-network-ports</id>
+            <goals>
+              <goal>reserve-network-port</goal>
+            </goals>
+            <phase>initialize</phase>
+            <configuration>
+              <portNames>
+                <portName>jboss.server.port</portName>
+                <portName>jboss.mgmt.server.port</portName>
+              </portNames>
+              <outputFile>src/test/resources/port.properties</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <jboss.server.port>${jboss.server.port}</jboss.server.port>
+            <jboss.mgmt.server.port>${jboss.mgmt.server.port}</jboss.mgmt.server.port>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
@@ -267,138 +300,130 @@
         </executions>
         <configuration>
           <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
+          <systemPropertyVariables>
+            <jboss.server.port>${jboss.server.port}</jboss.server.port>
+            <jboss.mgmt.server.port>${jboss.mgmt.server.port}</jboss.mgmt.server.port>
+          </systemPropertyVariables>
         </configuration>
+      </plugin>
+
+      <!-- testing with jboss AS 7 -->
+      <!-- 1. install server in the build/target dir -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-jboss</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.jboss.as</groupId>
+                  <artifactId>jboss-as-dist</artifactId>
+                  <version>${version.org.jboss.as.dist}</version>
+                  <type>zip</type>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- 2. install files with user/password information in the server dir -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-user-config</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/test/resources-jboss-as7/config</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+              <overwrite>true</overwrite>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- 3. modify server configuration -->
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <executions>
+          <execution>
+            <id>fix-jboss-standalone-xml</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <file>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</file>
+              <outputFile>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</outputFile>
+              <replacements>
+                <!-- allow jms queue creation via arquillian server task -->
+                <replacement>
+                  <token>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;\n\s*&lt;journal</token>
+                  <value>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;
+                    &lt;jmx-management-enabled&gt;true&lt;/jmx-management-enabled&gt;
+                    &lt;journal</value>
+                </replacement>
+                <replacement>
+                  <!-- Service jboss.pojo."org.jboss.netty.internal.LoggerConfigurator".DESCRIBED is already registered -->
+                  <token>&lt;extension module="org.jboss.as.pojo"/&gt;</token>
+                  <value></value>
+                </replacement>
+                <replacement>
+                  <token>&lt;subsystem xmlns="urn:jboss:domain:pojo:1.0"/&gt;</token>
+                  <value></value>
+                </replacement>
+                <replacement>
+                  <!--  AUTO-FORMAT: the following line must not be broken up! -->
+                  <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
+                  <value>&lt;security-settings&gt;
+                &lt;security-setting match="#"&gt;
+                    &lt;permission type="send" roles="admin"/&gt;
+                    &lt;permission type="consume" roles="admin"/&gt;</value>
+                </replacement>
+                <replacement>
+                  <token>periodic-rotating-file-handler&gt;</token>
+                  <value>periodic-rotating-file-handler&gt;
+                    &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
+                    &lt;formatter&gt;
+                    &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
+                    &lt;/formatter&gt;
+                    &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
+                    &lt;suffix value=".yyyy-MM-dd"/&gt;
+                    &lt;append value="true"/&gt;
+                    &lt;/periodic-rotating-file-handler&gt;</value>
+                </replacement>
+                <replacement>
+                    <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
+                    <value>&lt;root-logger&gt;
+                    &lt;level name="DEBUG"/&gt;
+                    </value>
+                </replacement>
+                <replacement>
+                    <token>&lt;handlers&gt;</token>
+                    <value>&lt;handlers&gt;
+                    &lt;handler name="DEBUGFILE"/&gt;</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>integration-tests</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <!-- testing with jboss AS 7 -->
-          <!-- 1. install server in the build/target dir -->
-          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>unpack-jboss</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>unpack</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>org.jboss.as</groupId>
-                      <artifactId>jboss-as-dist</artifactId>
-                      <version>${version.org.jboss.as.dist}</version>
-                      <type>zip</type>
-                      <overWrite>false</overWrite>
-                      <outputDirectory>${project.build.directory}</outputDirectory>
-                    </artifactItem>
-                  </artifactItems>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- 2. install files with user/password information in the server dir -->
-          <plugin>
-            <artifactId>maven-resources-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>copy-user-config</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>src/test/resources-jboss-as7/config</directory>
-                      <filtering>false</filtering>
-                    </resource>
-                  </resources>
-                  <overwrite>true</overwrite>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- 3. modify server configuration -->
-          <plugin>
-            <groupId>com.google.code.maven-replacer-plugin</groupId>
-            <artifactId>replacer</artifactId>
-            <executions>
-              <execution>
-                <id>fix-jboss-standalone-xml</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>replace</goal>
-                </goals>
-                <configuration>
-                  <file>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</file>
-                  <outputFile>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</outputFile>
-                  <replacements>
-                    <!-- allow jms queue creation via arquillian server task -->
-                    <replacement>
-                      <token>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;\n\s*&lt;journal</token>
-                      <value>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;
-                        &lt;jmx-management-enabled&gt;true&lt;/jmx-management-enabled&gt;
-                        &lt;journal</value>
-                    </replacement>
-                    <replacement>
-                      <!-- Service jboss.pojo."org.jboss.netty.internal.LoggerConfigurator".DESCRIBED is already registered -->
-                      <token>&lt;extension module="org.jboss.as.pojo"/&gt;</token>
-                      <value></value>
-                    </replacement>
-                    <replacement>
-                      <token>&lt;subsystem xmlns="urn:jboss:domain:pojo:1.0"/&gt;</token>
-                      <value></value>
-                    </replacement>
-                    <replacement>
-                      <!--  AUTO-FORMAT: the following line must not be broken up! -->
-                      <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
-                      <value>&lt;security-settings&gt;
-                    &lt;security-setting match="#"&gt;
-                        &lt;permission type="send" roles="admin"/&gt;
-                        &lt;permission type="consume" roles="admin"/&gt;</value>
-                    </replacement>
-                    <replacement>
-                      <token>periodic-rotating-file-handler&gt;</token>
-                      <value>periodic-rotating-file-handler&gt;
-                        &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
-                        &lt;formatter&gt;
-                        &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
-                        &lt;/formatter&gt;
-                        &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
-                        &lt;suffix value=".yyyy-MM-dd"/&gt;
-                        &lt;append value="true"/&gt;
-                        &lt;/periodic-rotating-file-handler&gt;</value>
-                    </replacement>
-                    <replacement>
-                        <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
-                        <value>&lt;root-logger&gt;
-                        &lt;level name="DEBUG"/&gt;
-                        </value>
-                    </replacement>
-                    <replacement>
-                        <token>&lt;handlers&gt;</token>
-                        <value>&lt;handlers&gt;
-                        &lt;handler name="DEBUGFILE"/&gt;</value>
-                    </replacement>
-                  </replacements>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
 

@@ -41,6 +41,7 @@ import javax.naming.NamingException;
 
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
@@ -48,9 +49,12 @@ import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.GetTasksOwnedCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
 import org.kie.api.command.Command;
+import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkflowProcessInstance;
+import org.kie.api.runtime.rule.FactHandle;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
@@ -68,6 +72,8 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.kie.tests.wb.base.test.objects.Person;
+import org.kie.tests.wb.base.test.objects.Request;
 
 public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
@@ -393,19 +399,36 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Process instance did not complete..", 0, response.getResponses().size());
     }
     
-    public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
-        // Via the remote api
-        
-        // setup
+    public void remoteApiExtraJaxbClasses(String user, String password) throws Exception { 
+        // Remote API setup
         RemoteJmsRuntimeEngineFactory remoteSessionFactory 
             = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
         RemoteRuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
-        KieSession ksession = engine.getKieSession();
         
+        /**
+         * MyType
+         */
+        testParamSerialization(engine, new MyType("variable", 29));
+        
+        /**
+         * Float
+         */
+        testParamSerialization(engine, new Float(23.01));
+        
+        /**
+         * Float []
+         */
+        testParamSerialization(engine, new Float [] { 39.391f });
+    }
+    
+    private void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("myobject", new MyType("Hello World!", 21));
-        long procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        parameters.put("myobject", param);
+        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
         
+        /**
+         * Check that MyType was correctly deserialized on server side
+         */
         List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
@@ -414,23 +437,37 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             }
         }
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
-        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
-        
-        parameters.clear(); 
-        parameters.put("myobject", new Float[]{0.2F});
-        procInstId = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
-        
-        varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
-        thisProcInstVarLog = null;
-        for( VariableInstanceLog varLog : varLogList ) {
-            if( varLog.getProcessInstanceId() == procInstId ) { 
-                thisProcInstVarLog = varLog;
-            }
-        }
-        assertEquals( "type", thisProcInstVarLog.getVariableId() );
-        logger.info("'type' var value: " + thisProcInstVarLog.getValue() );
+        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
     }
-
+    
+    public void ruleTaskNullPointer(String user, String password) { 
+        // setup
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+        RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
+        KieSession ksession = runtimeEngine.getKieSession();
+        
+        // Setup facts
+        Person person = new Person("guest", "Dluhoslav Chudobny");
+        person.setAge(25); // >= 18
+        Request request = new Request("1");
+        request.setPersonId("guest");
+        request.setAmount(500); // < 1000
+       
+        // Insert facts
+        ksession.insert(person);
+        FactHandle factHandle = ksession.insert(request);
+        
+        // Start process
+        ProcessInstance pi = ksession.startProcess(TestConstants.RULE_TASK_PROCESS_ID);
+        ksession.insert((WorkflowProcessInstance) pi);
+        ksession.fireAllRules();
+        
+        // Check
+        assertEquals("Poor customer", ((Request)ksession.getObject(factHandle)).getInvalidReason());
+        assertNull(ksession.getProcessInstance(pi.getId()));
+    }
+    
     // Helper methods -------------------------------------------------------------------------------------------------------------
 
     

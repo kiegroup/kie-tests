@@ -11,12 +11,17 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
 import org.kie.tests.wb.base.test.AbstractDeploy;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KieWbWarJbossEapDeploy extends AbstractDeploy {
 
-    protected static final String PROCESS_ID = "org.jbpm.humantask";
+    protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
     
-    protected static WebArchive createWarWithTestDeploymentLoader(String classifier) {
+    protected static WebArchive createTestWar(String classifier) {
+        // Deploy test deployment
+        createAndDeployTestKJarToMaven();
+        
         // Import kie-wb war
         File [] warFile = 
                 Maven.resolver()
@@ -32,12 +37,25 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         war.addClass(TestKjarDeploymentLoader.class);
         
         // Replace kie-services-remote jar with the one we just generated
-        war.delete("WEB-INF/lib/kie-services-remote-" + projectVersion + ".jar");
-        war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
-        war.delete("WEB-INF/lib/jbpm-kie-services-" + projectVersion + ".jar");
+        String [][] jarsToReplace = { 
+                { "org.kie.remote", "kie-services-remote" },
+                { "org.kie.remote", "kie-services-client" },
+                { "org.jbpm", "jbpm-kie-services" },
+                { "org.kie", "kie-internal" }
+        };
+        
+        for( String [] jar : jarsToReplace ) { 
+            logger.info( "Deleting " + jar[1] + " from test war");
+            war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
+        }
+        String [] jarsArg = new String[jarsToReplace.length];
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+           jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+           logger.info("About to resolve " + jarsArg[i]);
+        }
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve("org.kie.remote:kie-services-remote", "org.kie.remote:kie-services-client", "org.jbpm:jbpm-kie-services")
+                .resolve(jarsArg)
                 .withoutTransitivity()
                 .asFile();
         war.addAsLibraries(kieRemoteDeps);
@@ -45,13 +63,12 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
        
-        // extra JAXB classes / own classes tests
-        war.addClass(MyType.class);
-        
-        // Deploy test deployment
-        createAndDeployTestKJarToMaven();
-        
         return war;
     }
 
+    protected void printTestName() { 
+        StackTraceElement ste = new Throwable().getStackTrace()[1];
+        logger.info( "] Starting " + ste.getMethodName());
+    }
+    
 }
