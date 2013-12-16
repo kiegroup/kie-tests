@@ -1,22 +1,29 @@
 kie-tests
 =========
 
-Repository for integration tests and other tests involving multiple projects. 
+Repository for tests involving multiple projects as well as tests that might not fit into specific
+modules. Please feel free to add any tests!
 
-In general, when adding modules (at any level) to this repo, try to keep the following structure in mind: 
+In general, when adding modules (at any level) to this repo, try to keep the following structure 
+in mind: 
 
-- Root level modules should be named after what they're testing: 
-  - "kie-wb-tests"
-  - "jbpm-tests"
-  - "dashboard-tests"
-  and etc. 
+- Root level modules should be named after what they're testing. For example:  
+  - "remote-kie-tests"
+  - "core-kie-tests"
 
-- Nested modules should be named after the specific types of tests that they are: 
-  - "kie-wb-tests/kie-wb-tests-jboss"
-  - "jbpm-tests/jbpm-concurrency-tests"
-  and etc.. 
-  
-Thanks! 
+- Nested modules should be named after the specific types of tests that they include. For example:
+  - "core-kie-tests/core-marshalling-kie-tests/jbpm-marshalling-kie-tests"
+
+The format here is: `<type test>`-kie-tests. 
+
+- However, if the tests are aimed at a specific war or application, please name them after the
+  application, followed by the platform that they test. For example:   
+  - "remote-kie-tests/drools-wb-tests/drools-wb-tests-jboss"
+
+Using this naming system ('nomenclature') means it's easier for other developers to quickly 
+find existing tests or otherwise create new tests or modules in the appropriate place. 
+
+Thanks!
 
 Developing Drools and jBPM
 ==========================

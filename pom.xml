@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.kie</groupId>
     <artifactId>kie-parent-with-dependencies</artifactId>
-    <version>6.0.0-SNAPSHOT</version>
+    <version>6.1.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.kie.tests</groupId>
@@ -39,8 +39,14 @@
   </licenses>
 
   <modules>
-    <module>kie-wb-tests</module>
+    <module>core-kie-tests</module>
+    <module>remote-kie-tests</module>
   </modules>
+
+  <properties>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
+  </properties>
 
   <repositories>
     <!-- Bootstrap repository to locate the parent pom when the parent pom has not been build locally. -->
