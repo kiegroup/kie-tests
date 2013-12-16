@@ -514,8 +514,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         JaxbDeploymentJobResult jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
         assertEquals( "Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY" );
-        logger.info( "UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString()
-        + "]" + jaxbJobResult.getExplanation() );
+//        logger.info( "UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]" + jaxbJobResult.getExplanation() );
         
         waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestFactory);
     }
