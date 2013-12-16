@@ -15,6 +15,10 @@ public class Request implements Serializable {
 	private String invalidReason;
 	private boolean canceled;
 
+	public Request() { 
+	   // default required for JAXB 
+	}
+	
 	public Request(String id) {
 		this.id = id;
 	}

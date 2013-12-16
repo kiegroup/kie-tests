@@ -76,7 +76,6 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
         restTests.deployModuleForOtherTests(deploymentUrl, USER, PASSWORD);
     }
 
-    /**
     @Test
     @InSequence(2)
     public void testJmsStartProcess() throws Exception {
@@ -111,7 +110,7 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
         printTestName();
         jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(USER, PASSWORD);
     }
-    */
+
     @Test
     @InSequence(2)
     public void testExtraJaxbClasses() throws Exception {
@@ -121,9 +120,7 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
     
     @Test
     @InSequence(2)
-    public void testRuleTaskNullPointer() throws Exception { 
-        printTestName();
-        jmsTests.ruleTaskNullPointer(USER, PASSWORD);
+    public void testRemoteApiRuleTaskProcess() throws Exception { 
+        jmsTests.remoteApiRuleTaskProcess(USER, PASSWORD);
     }
-    
 }

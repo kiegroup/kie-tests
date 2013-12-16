@@ -144,4 +144,10 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
         restTests.remoteApiExtraJaxbClasses(deploymentUrl, requestFactory, USER, PASSWORD);
     }
+    
+    @Test
+    @InSequence(2)
+    public void testRemoteApiRuleTaskProcess() throws Exception { 
+        restTests.remoteApiRuleTaskProcess(deploymentUrl, USER, PASSWORD);
+    }
 }

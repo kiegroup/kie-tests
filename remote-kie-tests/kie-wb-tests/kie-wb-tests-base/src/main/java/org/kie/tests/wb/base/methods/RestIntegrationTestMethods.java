@@ -25,7 +25,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +70,6 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
-import org.kie.tests.wb.base.test.objects.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -457,52 +455,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiExtraJaxbClasses(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password) throws Exception { 
-        
         // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory 
             = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         
-        /**
-         * MyType
-         */
-        testParamSerialization(engine, new MyType("variable", 29));
-        
-        /**
-         * Float
-         */
-        testParamSerialization(engine, new Float(23.01));
-        
-        /**
-         * Float []
-         */
-        testParamSerialization(engine, new Float [] { 39.391f });
-    }
-    
-    private void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("myobject", param);
-        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
-        
-        /**
-         * Check that MyType was correctly deserialized on server side
-         */
-        List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
-        VariableInstanceLog thisProcInstVarLog = null;
-        for( VariableInstanceLog varLog : varLogList ) {
-            if( varLog.getProcessInstanceId() == procInstId ) { 
-                thisProcInstVarLog = varLog;
-            }
-        }
-        assertEquals( "type", thisProcInstVarLog.getVariableId() );
-        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        testExtraJaxbClassSerialization(engine);
     }
     
     private long restCallDurationLimit = 2000;
     private long sleep = 5000;
     
     public void deployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
-        ClientRequestFactory requestFactory = RestRequestHelper.createRequestFactory(deploymentUrl, user, password);
+        ClientRequestFactory requestFactory = RestRequestHelper.createRestRequestFactory(deploymentUrl, user, password);
         
         JaxbDeploymentUnit jaxbDepUnit = null;
         JaxbDeploymentJobResult jaxbJobResult = null;
@@ -536,7 +501,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void deploySeveralModulesAndOtherDeployTests(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-
+        fail("Unfinished!");
     }
 
     private void testUndeploy(String deploymentId, URL deploymentUrl, ClientRequestFactory requestFactory ) throws Exception {
@@ -621,4 +586,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return jaxbDepUnit.getStatus();
     }
     
+    public void remoteApiRuleTaskProcess(URL deploymentUrl, String user, String password) { 
+        // Remote API setup
+        RemoteRestRuntimeFactory restSessionFactory 
+            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
+        RemoteRuntimeEngine runtimeEngine = restSessionFactory.newRuntimeEngine();
+        
+        // runTest
+        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
+    }
+        
+
 }
