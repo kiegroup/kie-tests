@@ -1,8 +1,10 @@
 package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.methods.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,11 +12,16 @@ import java.util.Map;
 import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
+import org.jbpm.services.task.commands.GetTaskCommand;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.runtime.rule.FactHandle;
+import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.test.objects.Person;
@@ -115,4 +122,6 @@ public class AbstractIntegrationTestMethods {
             }
         }
     }
+
+
 }
