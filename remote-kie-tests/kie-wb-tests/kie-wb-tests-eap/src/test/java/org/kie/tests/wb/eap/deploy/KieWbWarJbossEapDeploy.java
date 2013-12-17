@@ -19,6 +19,10 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
     
     protected static WebArchive createTestWar(String classifier) {
+        return createTestWar(classifier, false);
+    }
+    
+    protected static WebArchive createTestWar(String classifier, boolean testPostgres) {
         // Deploy test deployment
         createAndDeployTestKJarToMaven();
         
@@ -37,8 +41,10 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         war.addClass(TestKjarDeploymentLoader.class);
         
         // Replace persistence.xml with postgres version
-        war.delete("WEB-INF/classes/META-INF/persistence.xml");
-        war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
+        if( testPostgres ) { 
+            war.delete("WEB-INF/classes/META-INF/persistence.xml");
+            war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
+        }
         
         // Replace kie-services-remote jar with the one we just generated
         String [][] jarsToReplace = { 
