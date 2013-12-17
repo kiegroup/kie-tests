@@ -485,7 +485,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private long sleep = 5000;
 
     public void deployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
-        ClientRequestFactory requestFactory = RestRequestHelper.createRestRequestFactory(deploymentUrl, user, password);
+        ClientRequestFactory requestFactory = RestRequestHelper.createRequestFactory(deploymentUrl, user, password);
 
         JaxbDeploymentUnit jaxbDepUnit = null;
         JaxbDeploymentJobResult jaxbJobResult = null;
