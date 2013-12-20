@@ -50,8 +50,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote" },
                 { "org.kie.remote", "kie-services-client" },
-                { "org.jbpm", "jbpm-kie-services" },
-                { "org.kie", "kie-internal" }
+                { "org.jbpm", "jbpm-human-task-core" }
         };
         
         for( String [] jar : jarsToReplace ) { 

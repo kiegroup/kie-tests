@@ -541,7 +541,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy, URL deploymentUrl,
             ClientRequestFactory requestFactory) throws Exception {
         boolean success = false;
-        while (!success) {
+        int tries = 0;
+        while (!success && tries++ < MAX_TRIES) {
             String oper = "rest/deployment/" + deploymentId + "/";
             String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
             ClientRequest restRequest = createRequest(requestFactory, urlString);
@@ -625,8 +626,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         logger.debug("Started process instance: " + processInstance + " " + (processInstance == null ? "" : processInstance.getId()));
 
         TaskService taskService = engine.getTaskService();
-        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long taskId = findTaskId(processInstance.getId(), tasks);
+        List<Long> tasks = taskService.getTasksByProcessInstanceId(processInstance.getId());
+        assertEquals("Incorrect number of tasks for started process: ", 1, tasks.size());
+        long taskId = tasks.get(0);
 
         // Get it via the command
         JaxbCommandResponse<?> response = executeCommand(requestFactory, deploymentId, new GetTaskCommand(taskId));
