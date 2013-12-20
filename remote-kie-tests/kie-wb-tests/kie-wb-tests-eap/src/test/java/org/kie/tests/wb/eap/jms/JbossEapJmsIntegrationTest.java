@@ -43,7 +43,7 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createTestWar("eap-6_1");
+       return createTestWar("eap-6_1", true);
     }
 
     @ArquillianResource

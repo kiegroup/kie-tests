@@ -327,6 +327,23 @@
                   <overwrite>true</overwrite>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-postgres-module</id>
+                <phase>process-test-resources</phase>
+                <goals> 
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                    <outputDirectory>${project.build.directory}/${jboss.server.name}/modules</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/test/resources-eap-6/modules</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                  <overwrite>true</overwrite>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 
@@ -376,6 +393,33 @@
                        <token>&lt;handlers&gt;</token>
                        <value>&lt;handlers&gt;
                        &lt;handler name="DEBUGFILE"/&gt;</value>
+                   </replacement>
+                   <replacement>
+                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
+                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true" use-ccm="true"&gt;
+                    &lt;connection-url&gt;jdbc:postgresql://localhost:5432/jbpm5&lt;/connection-url&gt;
+                    &lt;driver&gt;org.postgresql&lt;/driver&gt;
+                    &lt;pool&gt;
+                        &lt;min-pool-size&gt;2&lt;/min-pool-size&gt;
+                        &lt;max-pool-size&gt;20&lt;/max-pool-size&gt;
+                        &lt;prefill&gt;true&lt;/prefill&gt;
+                    &lt;/pool&gt;
+                    &lt;security&gt;
+                        &lt;user-name&gt;jbpm5&lt;/user-name&gt;
+                        &lt;password&gt;jbpm5&lt;/password&gt;
+                    &lt;/security&gt;
+                    &lt;validation&gt;
+                        &lt;check-valid-connection-sql&gt;SELECT 1&lt;/check-valid-connection-sql&gt;
+                    &lt;/validation&gt;
+                &lt;/datasource&gt;
+                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
+                   </replacement>
+                   <replacement>
+                      <token>&lt;driver name="h2"</token>
+                      <value>&lt;driver name="org.postgresql" module="org.postgresql"&gt;
+                        &lt;xa-datasource-class&gt;org.postgresql.xa.PGXADataSource&lt;/xa-datasource-class&gt;
+                    &lt;/driver&gt;
+                    &lt;driver name="h2"</value>
                    </replacement>
                  </replacements>
                 </configuration>
