@@ -394,6 +394,7 @@
                        <value>&lt;handlers&gt;
                        &lt;handler name="DEBUGFILE"/&gt;</value>
                    </replacement>
+                   <!-- postgres
                    <replacement>
                        <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
                        <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true" use-ccm="true"&gt;
@@ -421,6 +422,7 @@
                     &lt;/driver&gt;
                     &lt;driver name="h2"</value>
                    </replacement>
+                    -->
                  </replacements>
                 </configuration>
               </execution>

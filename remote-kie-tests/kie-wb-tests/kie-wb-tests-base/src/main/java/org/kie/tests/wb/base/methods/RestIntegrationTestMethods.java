@@ -61,6 +61,7 @@ import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
+import org.kie.services.client.serialization.jaxb.impl.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
@@ -128,6 +129,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) throws Exception {
         ClientRequest restRequest = requestFactory.createRequest(urlString);
+        restRequest.accept(mediaType);
         if (mediaType.equals(MediaType.APPLICATION_XML)) {
             restRequest.accept(mediaType);
         }
@@ -205,6 +207,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ClientResponse<?> responseObj = checkResponse(restRequest.post());
 
         JaxbCommandsResponse cmdsResp = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
+        assertFalse("Exception received!", cmdsResp.getResponses().get(0) instanceof JaxbExceptionResponse );
         long procInstId = ((ProcessInstance) cmdsResp.getResponses().get(0)).getId();
 
         // query tasks
@@ -498,7 +501,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         String oper = "rest/deployment/" + deploymentId + "/";
         String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = restRequest.get();
+        ClientResponse<?> responseObj = checkResponse(restRequest.get());
 
         if (!checkUndeployed(responseObj)) {
             testUndeploy(deploymentId, deploymentUrl, requestFactory);
@@ -622,7 +625,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
 
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        ProcessInstance processInstance = null;
+        try { 
+            processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        } catch( Exception e ) { 
+           fail( "Unable to start process: " + e.getMessage());
+        }
         logger.debug("Started process instance: " + processInstance + " " + (processInstance == null ? "" : processInstance.getId()));
 
         TaskService taskService = engine.getTaskService();
