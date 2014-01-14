@@ -38,6 +38,7 @@ import javax.naming.NamingException;
 
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -158,7 +159,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     // Tests ----------------------------------------------------------------------------------------------------------------------
 
     public void commandsStartProcess(String user, String password) throws Exception {
-        // send cmd
+        // send cmd: start process
         Command<?> cmd = new StartProcessCommand(HUMAN_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
         JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
@@ -403,6 +404,30 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
 
         runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
+    }
+    
+    public void remoteApiInitiatorIdentityTest(String user, String password) { 
+        // setup
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+        RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
+
+        KieSession ksession = runtimeEngine.getKieSession();
+        ProcessInstance procInst = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        long procId = procInst.getId();
+       
+        List<ProcessInstanceLog> procLogs = runtimeEngine.getAuditLogService().findActiveProcessInstances(HUMAN_TASK_PROCESS_ID);
+        boolean procLogFound = false;
+        for( ProcessInstanceLog log : procLogs ) { 
+            if( log == null ) { 
+                continue;
+            }
+            if( log.getProcessInstanceId() == procId ) { 
+                procLogFound = true;
+                assertNotEquals("The identity should not be unknown!", "unknown", log.getIdentity());
+            }
+        }
+        assertTrue( "Process instance log could not be found.", procLogFound);
     }
     
 }

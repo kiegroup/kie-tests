@@ -43,7 +43,7 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createTestWar("eap-6_1", true);
+       return createTestWar("eap-6_1", false);
     }
 
     @ArquillianResource
@@ -122,5 +122,11 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
     @InSequence(2)
     public void testRemoteApiRuleTaskProcess() throws Exception { 
         jmsTests.remoteApiRuleTaskProcess(USER, PASSWORD);
+    }
+    
+    @Test
+    @InSequence(2)
+    public void testRemoteApiStartProcessInstanceInitiator() throws Exception { 
+        jmsTests.remoteApiInitiatorIdentityTest(USER, PASSWORD);
     }
 }
