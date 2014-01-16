@@ -33,6 +33,7 @@
       <groupId>org.drools</groupId>
       <artifactId>drools-wb-distribution-wars</artifactId>
       <classifier>jboss-as7.0</classifier>
+      <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
     </dependency>
