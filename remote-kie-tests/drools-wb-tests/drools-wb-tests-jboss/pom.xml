@@ -151,9 +151,6 @@
   <profiles>
     <profile>
       <id>integration-tests</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <build>
         <plugins>
           <!-- testing with jboss AS 7 -->
