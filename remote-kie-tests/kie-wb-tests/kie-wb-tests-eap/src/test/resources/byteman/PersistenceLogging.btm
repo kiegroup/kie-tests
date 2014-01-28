@@ -1,0 +1,69 @@
+#
+# A byteman script which prints a stacktrace whenever UserTransaction.begin is called
+#
+########################################################################
+#
+# Rule to trace class load
+#
+# DO traceStack(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n", 75)
+# DO traceStack("====================================================================\n", 75)
+#
+# DO traceStack(">>> BEGIN:\n", 25 );
+# DO traceln(">>> BEGIN:" );
+#
+
+RULE UserTransaction.begin trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD begin
+AT EXIT
+IF TRUE
+DO traceStack(">>> BEGIN:\n", 10);
+ENDRULE
+
+RULE UserTransaction.commit trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD commit
+AT ENTRY
+IF TRUE
+DO traceStack("=== COMMIT:\n", 10);
+ENDRULE
+
+RULE UserTransaction.rollback trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD rollback
+AT ENTRY
+IF TRUE
+DO traceStack("XXX ROLLBACK:\n", 10);
+ENDRULE
+
+RULE UserTransaction.rollbackOnly trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD setRollbackOnly
+AT ENTRY
+IF TRUE
+DO traceStack("xxx SET ROLLBACK ONLY:\n", 10);
+ENDRULE
+
+RULE EntityManager.close trace 
+CLASS org.hibernate.ejb.EntityManagerImpl
+METHOD close
+AT ENTRY
+IF TRUE
+DO traceStack("{{{ CLOSE:\n", 10);
+ENDRULE
+
+RULE EntityManagerFactory.createEntityManager trace 
+CLASS org.hibernate.ejb.EntityManagerFactoryImpl
+METHOD createEntityManager
+AT EXIT
+IF TRUE
+DO traceStack("}}} CREATE:\n", 10);
+ENDRULE
+
+RULE JPAWorkingMemoryDbLogger constructor
+CLASS org.jbpm.process.audit.JPAWorkingMemoryDbLogger
+METHOD <init>(javax.persistence.EntityManagerFactory)
+AT EXIT
+IF TRUE
+DO traceStack("-=- JPAWorkingMemoryDbLogger:\n", 30);
+ENDRULE

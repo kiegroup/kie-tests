@@ -10,7 +10,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.deploy.TestKjarDeploymentLoader;
 import org.kie.tests.wb.base.test.AbstractDeploy;
-import org.kie.tests.wb.base.test.objects.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,10 +18,10 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
     
     protected static WebArchive createTestWar(String classifier) {
-        return createTestWar(classifier, false);
+        return createTestWar(classifier, null);
     }
     
-    protected static WebArchive createTestWar(String classifier, boolean testPostgres) {
+    protected static WebArchive createTestWar(String classifier, String database) {
         // Deploy test deployment
         createAndDeployTestKJarToMaven();
         
@@ -41,17 +40,21 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         war.addClass(TestKjarDeploymentLoader.class);
         
         // Replace persistence.xml with postgres version
-        if( testPostgres ) { 
+        if( database != null ) { 
             war.delete("WEB-INF/classes/META-INF/persistence.xml");
-            war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
-        }
+            if( "oracle".equals(database) ) { 
+                war.addAsResource("META-INF/persistence-oracle.xml", "META-INF/persistence.xml");
+            } else if( "postgresql".equals(database) || "postgres".equals(database) ) { 
+                war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
+            } else { 
+                throw new IllegalArgumentException("Unknown database type: " + database );
+            }
+        } 
         
         // Replace kie-services-remote jar with the one we just generated
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-client" },
-                { "org.jbpm", "jbpm-kie-services" },
-                { "org.jbpm", "jbpm-console-ng-business-domain-backend" }
+                { "org.kie.remote", "kie-services-client" }
         };
         
         for( String [] jar : jarsToReplace ) { 

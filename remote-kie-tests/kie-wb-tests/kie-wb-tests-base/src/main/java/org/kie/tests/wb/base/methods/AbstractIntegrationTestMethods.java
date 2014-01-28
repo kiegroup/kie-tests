@@ -33,7 +33,7 @@ public class AbstractIntegrationTestMethods {
 
     protected static Logger logger = LoggerFactory.getLogger(AbstractIntegrationTestMethods.class);
    
-    protected final static int MAX_TRIES = 5;
+    protected final static int MAX_TRIES = 3;
     
     protected long findTaskId(long procInstId, List<TaskSummary> taskSumList) { 
         long taskId = -1;

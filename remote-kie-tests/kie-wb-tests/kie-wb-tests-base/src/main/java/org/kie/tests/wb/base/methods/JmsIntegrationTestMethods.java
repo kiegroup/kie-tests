@@ -21,7 +21,9 @@ import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -79,7 +81,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     public JmsIntegrationTestMethods(String deploymentId) { 
         this.deploymentId = deploymentId;
-        this.remoteInitialContext = getRemoteInitialContext();
+        this.remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
     }
     
     // Helper methods ------------------------------------------------------------------------------------------------------------
@@ -89,12 +91,12 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * 
      * @return a remote {@link InitialContext} instance
      */
-    private static InitialContext getRemoteInitialContext() {
+    private static InitialContext getRemoteInitialContext(String user, String password) {
         Properties initialProps = new Properties();
         initialProps.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         initialProps.setProperty(InitialContext.PROVIDER_URL, "remote://localhost:4447");
-        initialProps.setProperty(InitialContext.SECURITY_PRINCIPAL, USER );
-        initialProps.setProperty(InitialContext.SECURITY_CREDENTIALS, PASSWORD );
+        initialProps.setProperty(InitialContext.SECURITY_PRINCIPAL, user );
+        initialProps.setProperty(InitialContext.SECURITY_CREDENTIALS, password );
         
         for (Object keyObj : initialProps.keySet()) {
             String key = (String) keyObj;
@@ -430,4 +432,88 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertTrue( "Process instance log could not be found.", procLogFound);
     }
     
+    public void remoteApiRunEvaluationProcess() throws Exception {
+        RemoteJmsRuntimeEngineFactory jmsSessionFactory 
+            = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", remoteInitialContext, KRIS_USER, KRIS_PASSWORD);
+ 
+        RuntimeEngine engine = jmsSessionFactory.newRuntimeEngine();
+         
+        KieSession ksession = engine.getKieSession();
+        TaskService taskService = engine.getTaskService();
+         
+        // start a new process instance
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("employee", KRIS_USER);
+        params.put("reason", "Yearly performance evaluation");
+        String processid = "evaluation";
+        ProcessInstance processInstance = 
+            ksession.startProcess(processid, params);
+        long procInstId = processInstance.getId();
+        logger.debug("Process '" +  processid + "' started [instance: " + procInstId + "]");
+         
+        // complete Self Evaluation
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(KRIS_USER, "en-UK");
+        assertEquals(1, tasks.size());
+        TaskSummary task = tasks.get(0);
+        logger.debug("'" + KRIS_USER + "' completing task " + task.getName() + ": " + task.getDescription());
+        taskService.start(task.getId(), KRIS_USER);
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("performance", "exceeding");
+        taskService.complete(task.getId(), KRIS_USER, results);
+         
+        InitialContext johnRemoteInitialContext = getRemoteInitialContext(JOHN_USER, JOHN_PASSWORD);
+        jmsSessionFactory = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", johnRemoteInitialContext, JOHN_USER, JOHN_PASSWORD);
+        engine = jmsSessionFactory.newRuntimeEngine();
+        ksession = engine.getKieSession();
+        taskService = engine.getTaskService();
+         
+        // john from HR
+        tasks = taskService.getTasksAssignedAsPotentialOwner(JOHN_USER, "en-UK");
+        assertEquals(1, tasks.size());
+        task = tasks.get(0);
+        logger.debug("'" + JOHN_USER + "' completing task " + task.getName() + ": " + task.getDescription());
+        taskService.claim(task.getId(), JOHN_USER);
+        taskService.start(task.getId(), JOHN_USER);
+        results = new HashMap<String, Object>();
+        results.put("performance", "acceptable");
+        taskService.complete(task.getId(), JOHN_USER, results);
+         
+        jmsSessionFactory = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", remoteInitialContext, MARY_USER, MARY_PASSWORD);
+        engine = jmsSessionFactory.newRuntimeEngine();
+        ksession = engine.getKieSession();
+        taskService = engine.getTaskService();
+         
+        // mary from PM
+        tasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, "en-UK");
+        assertEquals(1, tasks.size());
+        task = tasks.get(0);
+        logger.debug("'" + MARY_USER + "' completing task " + task.getName() + ": " + task.getDescription());
+        taskService.claim(task.getId(), MARY_USER);
+        taskService.start(task.getId(), MARY_USER);
+        results = new HashMap<String, Object>();
+        results.put("performance", "outstanding");
+        taskService.complete(task.getId(), MARY_USER, results);
+         
+        assertProcessInstanceCompleted(procInstId,  ksession);
+        logger.debug("'" + processid + "' process instance [" + procInstId + "] completed!");
+    }
+
+    private void assertProcessInstanceCompleted(long procId, KieSession ksession) { 
+        ProcessInstance processInstance = ksession.getProcessInstance(procId); 
+        assertTrue( "Process instance " + procId + " has not completed!",
+                processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED );
+    }
+
+    public void remoteApiStartScriptProcess(String user, String password) {
+        // setup
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, user, password);
+        RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
+        KieSession ksession = runtimeEngine.getKieSession();
+
+        // start process
+        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
+        int procStatus = procInst.getState();
+
+        assertEquals("Incorrect process status: " + procStatus , ProcessInstance.STATE_COMPLETED,  procStatus);
+    }
 }

@@ -22,8 +22,10 @@ public class TestConstants {
      * User/password
      */
     
-    public static final String USER = "mary";
-    public static final String PASSWORD = "mary123@";
+    public static final String KRIS_USER = "krisv";
+    public static final String KRIS_PASSWORD = "krisv123@";
+    public static final String MARY_USER = "mary";
+    public static final String MARY_PASSWORD = "mary123@";
     public static final String SALA_USER = "salaboy";
     public static final String SALA_PASSWORD = "sala123@";
     public static final String JOHN_USER = "john";

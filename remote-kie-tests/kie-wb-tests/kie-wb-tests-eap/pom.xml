@@ -192,9 +192,9 @@
 
     <!-- maven's broken -->
     <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-guice</artifactId>
-      <version>3.0.3</version>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-persistence-jpa</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -297,6 +297,26 @@
                   </artifactItems>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-byteman-agent</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.jboss.byteman</groupId>
+                      <artifactId>byteman</artifactId>
+                      <version>2.1.4.1</version>
+                      <type>jar</type>
+                      <overWrite>true</overWrite>
+                      <outputDirectory>target/</outputDirectory>
+                      <destFileName>byteman.jar</destFileName>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 
@@ -370,7 +390,7 @@
                      <value>periodic-rotating-file-handler&gt;
                        &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
                        &lt;formatter&gt;
-                       &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
+                       &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%C] (%t) %s%E%n"/&gt;
                        &lt;/formatter&gt;
                        &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
                        &lt;suffix value=".yyyy-MM-dd"/&gt;
@@ -388,6 +408,11 @@
                        <value>&lt;handlers&gt;
                        &lt;handler name="DEBUGFILE"/&gt;</value>
                    </replacement>
+                   <replacement>
+                       <token>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</token>
+                       <value>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=TRUE</value>
+                   </replacement>
+
                    <!-- postgres
                    <replacement>
                        <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
@@ -417,6 +442,28 @@
                     &lt;driver name="h2"</value>
                    </replacement>
                     -->
+                   
+                   <!-- oracle
+                    <replacement>
+                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
+                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true"&gt;
+                    &lt;connection-url&gt;jdbc:oracle:thin:@localhost:1521:jbpm5&lt;/connection-url&gt;
+                    &lt;driver-class&gt;oracle.jdbc.OracleDriver&lt;/driver-class&gt;
+                    &lt;driver&gt;com.oracle&lt;/driver&gt;
+                    &lt;security&gt;
+                      &lt;user-name&gt;jbpm5&lt;/user-name&gt;
+                      &lt;password&gt;jbpm5&lt;/password&gt;
+                    &lt;/security&gt;
+                 &lt;/datasource&gt;
+                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
+                   </replacement>
+                   <replacement>
+                      <token>&lt;driver name="h2"</token>
+                      <value>&lt;driver name="com.oracle" module="com.oracle"/&gt;
+                    &lt;driver name="h2"</value>
+                   </replacement>
+                   -->
+
                  </replacements>
                 </configuration>
               </execution>

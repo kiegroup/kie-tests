@@ -13,7 +13,10 @@
       <property name="jbossHome">target/${jboss.server.name}</property>
       <property name="allowConnectingToRunningServer">false</property>
       <property name="serverConfig">${jboss.server.config.file.name:standalone-full.xml}</property>
-      <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m</property>
+      <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m
+      -javaagent:target/byteman.jar=script:src/test/resources/byteman/PersistenceLogging.btm,boot:target/byteman.jar,boot:target/${jboss.server.name}/jboss-modules.jar 
+      -Dorg.jboss.byteman.transform.all 
+      -Djboss.modules.system.pkgs=org.jboss.byteman</property>
     </configuration>
   </container>
 

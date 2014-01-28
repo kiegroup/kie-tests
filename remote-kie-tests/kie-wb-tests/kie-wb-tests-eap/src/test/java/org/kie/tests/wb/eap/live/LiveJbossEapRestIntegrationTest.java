@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.eap.rest;
+package org.kie.tests.wb.eap.live;
 
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
@@ -23,30 +23,29 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
-@RunAsClient
-@RunWith(Arquillian.class)
-public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
+@Ignore
+public class LiveJbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
 
-    @Deployment(testable = false, name = "kie-wb-basic-auth")
-    public static Archive<?> createWar() {
-        return createTestWar("eap-6_1");
+    private URL deploymentUrl; 
+    
+    public LiveJbossEapRestIntegrationTest() { 
+        try { 
+         deploymentUrl = new URL("http://localhost:8080/business-central/");
+        } catch(Exception e) { 
+            e.printStackTrace();
+        }
     }
-
-    @ArquillianResource
-    URL deploymentUrl;
 
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, MediaType.APPLICATION_JSON);
 
@@ -84,14 +83,6 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
     }
 
     @Test
-    @InSequence(2)
-    public void testRestHistoryLogs() throws Exception {
-        printTestName();
-        restTests.urlsHistoryLogs(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        restTests.urlsStartScriptProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
     @InSequence(3)
     public void testRestExecuteStartProcess() throws Exception {
         printTestName();
@@ -113,7 +104,14 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
     }
 
     @Test
-    @InSequence(7)
+    @InSequence(2)
+    public void testRestHistoryLogs() throws Exception {
+        printTestName();
+        restTests.urlsHistoryLogs(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+
+//    @Test
+//    @InSequence(7)
     public void testRestDataServicesCoupling() throws Exception {
         printTestName();
         restTests.urlsDataServiceCoupling(deploymentUrl, MARY_USER, MARY_PASSWORD);

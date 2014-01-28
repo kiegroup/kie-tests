@@ -21,6 +21,8 @@ import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.URL;
 
+import javax.ws.rs.core.MediaType;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -29,9 +31,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
@@ -43,7 +43,7 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     @Deployment(testable = false, name="kie-wb-basic-auth")
     public static Archive<?> createWar() {
-       return createTestWar("eap-6_1", false);
+       return createTestWar("eap-6_1");
     }
 
     @ArquillianResource
@@ -51,9 +51,6 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
 
     private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
-    
-    @Rule
-    public TestName testName;
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException { 
@@ -73,60 +70,66 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
     @InSequence(1)
     public void deployTestDeployment() throws Exception {
         printTestName();
-        restTests.deployModuleForOtherTests(deploymentUrl, USER, PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE);
     }
 
     @Test
     @InSequence(2)
     public void testJmsStartProcess() throws Exception {
         printTestName();
-        jmsTests.commandsStartProcess(USER, PASSWORD);
+        jmsTests.commandsStartProcess(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testJmsRemoteApiHumanTaskProcess() throws Exception {
         printTestName();
-        jmsTests.remoteApiHumanTaskProcess(USER, PASSWORD);
+        jmsTests.remoteApiHumanTaskProcess(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testJmsRemoteApiExceptions() throws Exception {
         printTestName();
-        jmsTests.remoteApiException(USER, PASSWORD);
+        jmsTests.remoteApiException(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testJmsNoProcessInstanceFound() throws Exception {
         printTestName();
-        jmsTests.remoteApiNoProcessInstanceFound(USER, PASSWORD);
+        jmsTests.remoteApiNoProcessInstanceFound(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testCompleteSimpleHumanTask() throws Exception {
         printTestName();
-        jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(USER, PASSWORD);
+        jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testExtraJaxbClasses() throws Exception {
         printTestName();
-        jmsTests.remoteApiExtraJaxbClasses(USER, PASSWORD);
+        jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testRemoteApiRuleTaskProcess() throws Exception { 
-        jmsTests.remoteApiRuleTaskProcess(USER, PASSWORD);
+        jmsTests.remoteApiRuleTaskProcess(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testRemoteApiStartProcessInstanceInitiator() throws Exception { 
-        jmsTests.remoteApiInitiatorIdentityTest(USER, PASSWORD);
+        jmsTests.remoteApiInitiatorIdentityTest(MARY_USER, MARY_PASSWORD);
     }
+    
+//    @Test
+//    @InSequence(2)
+//    public void testRemoteApiRunEvaluationProcess() throws Exception { 
+//        jmsTests.remoteApiRunEvaluationProcess();
+//    }
 }
