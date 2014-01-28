@@ -31,18 +31,31 @@ import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.net.util.Base64;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.jboss.resteasy.client.ClientExecutor;
 import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
-import org.jboss.resteasy.util.Base64;
+import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
+import org.jboss.resteasy.spi.ReaderException;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.jbpm.process.audit.AuditLogService;
+import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
+import org.jbpm.process.audit.event.AuditEvent;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
+import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
+import org.jgroups.util.UUID;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -69,6 +82,8 @@ import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanc
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
+import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
@@ -85,6 +100,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private final String deploymentId;
     private String mediaType;
 
+    private int timeout = 10;
+    
+    public RestIntegrationTestMethods(String deploymentId, String mediaType, int timeout) {
+       this(deploymentId, mediaType);
+       this.timeout = timeout;
+    }
+    
     public RestIntegrationTestMethods(String deploymentId, String mediaType) {
         this.deploymentId = deploymentId;
         this.mediaType = mediaType;
@@ -99,6 +121,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+
+    private long restCallDurationLimit = 2000;
+
+    private long sleep = 5000;
 
     /**
      * Helper methods
@@ -118,23 +144,23 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return responseObj;
     }
 
-    private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception {
-        long before, after;
-        System.out.println("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
-        ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
-        System.out.println("AFTER:  " + sdf.format((after = System.currentTimeMillis())));
-        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
-        return responseObj;
+    private ClientResponse<?> get(ClientRequest restRequest) throws Exception {
+        logger.debug(">> [GET]  " + restRequest.getUri());
+        return checkResponse(restRequest.get());
     }
 
-    private ClientRequest createRequest(ClientRequestFactory requestFactory, String urlString) throws Exception {
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
-        restRequest.accept(mediaType);
-        if (mediaType.equals(MediaType.APPLICATION_XML)) {
-            restRequest.accept(mediaType);
-        }
-        logger.debug(">> " + restRequest.getUri());
-        return restRequest;
+    private ClientResponse<?> post(ClientRequest restRequest) throws Exception {
+        logger.debug(">> [POST/" + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
+        return checkResponse(restRequest.post());
+    }
+
+    private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception {
+        long before, after;
+        logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
+        ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
+        logger.debug("AFTER: " + sdf.format((after = System.currentTimeMillis())));
+        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
+        return responseObj;
     }
 
     private void addToRequestBody(ClientRequest restRequest, Object obj) throws Exception {
@@ -151,99 +177,98 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * Test methods
      */
 
-    public void urlsStartHumanTaskProcess(URL deploymentUrl, ClientRequestFactory requestFactory,
-            ClientRequestFactory taskRequestFactory) throws Exception {
+    public void urlsStartHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        RestRequestHelper queryRequestHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD, timeout);
+
         // Start process
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId
-                + "/process/org.jbpm.humantask/start").toExternalForm();
-        ClientRequest restRequest = createRequest(taskRequestFactory, urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/org.jbpm.humantask/start");
+        ClientResponse<?> responseObj = post(restRequest);
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?status=Reserved&processInstanceId="
-                + procInstId).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
+        restRequest = queryRequestHelper.createRequest("task/query?status=Reserved&processInstanceId=" + procInstId);
+        responseObj = get(restRequest);
 
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
                 .getEntity(JaxbTaskSummaryListResponse.class);
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
+        for( String potOwner : taskSum.getPotentialOwners() ) { 
+           System.out.println( "pot owner: " + potOwner); 
+        }
 
         // get task info
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
+        restRequest = requestHelper.createRequest("task/" + taskId);
+        responseObj = get(restRequest);
         JaxbTask task = (JaxbTask) responseObj.getEntity(JaxbTask.class);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
 
         // start task
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/start").toExternalForm();
-        restRequest = createRequest(taskRequestFactory, urlString);
-        responseObj = checkResponse(restRequest.post());
+        restRequest = requestHelper.createRequest("task/" + taskId + "/start");
+        responseObj = post(restRequest);
         JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        assertNotNull("Response from task start is null.", resp);
 
         // get task info
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
+        restRequest = requestHelper.createRequest("task/" + taskId);
+        responseObj = get(restRequest);
     }
 
-    public void commandsStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String originalMedia = this.mediaType;
+    public void commandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        helper.setMediaType(MediaType.APPLICATION_XML_TYPE);
+
+        String originalType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML;
 
         // Start process
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/execute")
-                .toExternalForm();
-
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
-        JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, new StartProcessCommand("org.jbpm.humantask"));
+        String executeOp = "runtime/" + deploymentId + "/execute";
+        ClientRequest restRequest = helper.createRequest(executeOp);
+        JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, new StartProcessCommand(HUMAN_TASK_PROCESS_ID));
         addToRequestBody(restRequest, commandMessage);
 
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        logger.debug(">> [startProcess] " + restRequest.getUri());
+        ClientResponse<?> responseObj = post(restRequest);
 
         JaxbCommandsResponse cmdsResp = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
-        assertFalse("Exception received!", cmdsResp.getResponses().get(0) instanceof JaxbExceptionResponse );
+        assertFalse("Exception received!", cmdsResp.getResponses().get(0) instanceof JaxbExceptionResponse);
         long procInstId = ((ProcessInstance) cmdsResp.getResponses().get(0)).getId();
 
         // query tasks
-        restRequest = createRequest(requestFactory, urlString);
+        restRequest = helper.createRequest(executeOp);
         commandMessage = new JaxbCommandsRequest(deploymentId, new GetTasksByProcessInstanceIdCommand(procInstId));
         addToRequestBody(restRequest, commandMessage);
 
-        logger.debug(">> [getTasksByProcessInstanceId] " + urlString);
-        responseObj = checkResponse(restRequest.post());
+        logger.debug(">> [getTasksByProcessInstanceId] " + restRequest.getUri());
+        responseObj = post(restRequest);
         JaxbCommandsResponse cmdResponse = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
         List<?> list = (List<?>) cmdResponse.getResponses().get(0).getResult();
         long taskId = (Long) list.get(0);
 
         // start task
 
-        logger.debug(">> [startTask] " + urlString);
-        restRequest = requestFactory.createRequest(urlString);
+        logger.debug(">> [startTask] " + restRequest.getUri());
+        restRequest = helper.createRequest(executeOp);
         commandMessage = new JaxbCommandsRequest(new StartTaskCommand(taskId, taskUserId));
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
-        responseObj = checkResponse(restRequest.post());
+        responseObj = post(restRequest);
         responseObj.releaseConnection();
 
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/execute").toExternalForm();
-
-        restRequest = requestFactory.createRequest(urlString);
+        restRequest = helper.createRequest("task/execute");
         commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, null));
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
-        logger.debug(">> [completeTask] " + urlString);
-        checkResponse(restRequest.post());
+        logger.debug(">> [completeTask] " + restRequest.getUri());
+        post(restRequest);
 
         // TODO: check that above has completed?
-        this.mediaType = originalMedia;
+        this.mediaType = originalType;
     }
 
     public void remoteApiHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
@@ -281,15 +306,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
-    public void commandsTaskCommands(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password)
-            throws Exception {
+    public void commandsTaskCommands(URL deploymentUrl, String user, String password) throws Exception {
+
         RuntimeEngine runtimeEngine = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password).newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
 
         long processInstanceId = processInstance.getId();
-        JaxbCommandResponse<?> response = executeCommand(requestFactory, deploymentId, new GetTasksByProcessInstanceIdCommand(
-                processInstanceId));
+        JaxbCommandResponse<?> response = executeCommand(deploymentUrl, user, password, deploymentId,
+                new GetTasksByProcessInstanceIdCommand(processInstanceId));
 
         long taskId = ((JaxbLongListResponse) response).getResult().get(0);
         assertTrue("task id is less than 0", taskId > 0);
@@ -298,16 +323,17 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         params.put("userId", taskUserId);
     }
 
-    private JaxbCommandResponse<?> executeCommand(ClientRequestFactory requestFactory, String deploymentId, Command<?> command)
+    private JaxbCommandResponse<?> executeCommand(URL appUrl, String user, String password, String deploymentId, Command<?> command)
             throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(appUrl, user, password, timeout);
+
         String originalMediaType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML;
 
         List<Command<?>> commands = new ArrayList<Command<?>>();
         commands.add(command);
 
-        ClientRequest restRequest = requestFactory.createRelativeRequest("rest/runtime/" + deploymentId + "/execute");
-        logger.info(">> " + restRequest.getUri());
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/execute");
 
         JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(commands);
         assertNotNull("Commands are null!", commandMessage.getCommands());
@@ -315,6 +341,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         addToRequestBody(restRequest, commandMessage);
 
+        logger.debug(">> [" + command.getClass().getSimpleName() + "] " + restRequest.getUri());
         ClientResponse<JaxbCommandsResponse> responseObj = restRequest.post(JaxbCommandsResponse.class);
         checkResponse(responseObj);
 
@@ -324,93 +351,152 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return cmdsResp.getResponses().get(0);
     }
 
-    public void urlsHistoryLogs(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/"
-                + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal").toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
+    public void urlsHistoryLogs(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
 
-        // Get and check response
-        logger.debug(">> " + urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        // Start process
+        ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
+        logger.debug(">> " + restRequest.getUri());
+        ClientResponse<?> responseObj = post(restRequest);
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/history/instance/"
-                + procInstId + "/variable/x").toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
-        logger.debug(">> [history/variables]" + urlString);
-        responseObj = checkResponse(restRequest.get());
-        JaxbHistoryLogList logList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
-        List<AbstractJaxbHistoryObject> varLogList = logList.getHistoryLogList();
-        assertEquals("Incorrect number of variable logs", 4, varLogList.size());
+        // instances/
+        {
+            String histOp = "/history/instances";
+            restRequest = helper.createRequest("runtime/" + deploymentId + histOp);
+            logger.debug(">> [history] " + restRequest.getUri());
+            responseObj = get(restRequest);
+            JaxbHistoryLogList runtimeResult = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+            List<AuditEvent> runtimeLogList = runtimeResult.getResult();
 
-        for (AbstractJaxbHistoryObject<?> log : logList.getHistoryLogList()) {
-            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) log;
+            restRequest = helper.createRequest(histOp);
+            logger.debug(">> [runtime] " + restRequest.getUri());
+            responseObj = get(restRequest);
+            JaxbHistoryLogList historyResult = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+            List<AuditEvent> historyLogList = runtimeResult.getResult();
+
+            assertEquals("command name", historyResult.getCommandName(), runtimeResult.getCommandName());
+            assertEquals("list size", historyLogList.size(), runtimeLogList.size());
+
+            for (AuditEvent event : historyLogList) {
+                assertTrue("ProcessInstanceLog", event instanceof ProcessInstanceLog);
+                ProcessInstanceLog procLog = (ProcessInstanceLog) event;
+                Object[][] out = { { procLog.getDuration(), "duration" }, { procLog.getEnd(), "end date" },
+                        { procLog.getExternalId(), "externalId" }, { procLog.getId(), "id" },
+                        { procLog.getIdentity(), "identity" }, { procLog.getOutcome(), "outcome" },
+                        { procLog.getParentProcessInstanceId(), "parent proc id" }, { procLog.getProcessId(), "process id" },
+                        { procLog.getProcessInstanceId(), "process instance id" }, { procLog.getProcessName(), "process name" },
+                        { procLog.getProcessVersion(), "process version" }, { procLog.getStart(), "start date" },
+                        { procLog.getStatus(), "status" } };
+                for (int i = 0; i < out.length; ++i) {
+                    // System.out.println(out[i][1] + ": " + out[i][0]);
+                }
+            }
+        }
+        // instance/{procInstId}
+
+        // instance/{procInstId}/child
+
+        // instance/{procInstId}/node
+
+        // instance/{procInstId}/variable
+
+        // instance/{procInstId}/node/{nodeId}
+
+        // instance/{procInstId}/variable/{variable}
+        restRequest = helper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/x");
+        logger.debug(">> [runtime]" + restRequest.getUri());
+        responseObj = get(restRequest);
+        JaxbHistoryLogList historyLogList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        List<AbstractJaxbHistoryObject> historyVarLogList = historyLogList.getHistoryLogList();
+        
+        restRequest = helper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/x");
+        logger.debug(">> [runtime]" + restRequest.getUri());
+        responseObj = get(restRequest);
+        JaxbHistoryLogList runtimeLogList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        List<AbstractJaxbHistoryObject> runtimeVarLogList = runtimeLogList.getHistoryLogList();
+        assertTrue("Incorrect number of variable logs: " + runtimeVarLogList.size(), 4 <= runtimeVarLogList.size());
+
+        assertEquals( "runtime/history list size", historyVarLogList.size(), runtimeVarLogList.size());
+        
+        for(int i = 0; i < runtimeVarLogList.size(); ++i) {
+            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) runtimeVarLogList.get(i);
+            JaxbVariableInstanceLog historyVarLog = (JaxbVariableInstanceLog) historyVarLogList.get(i);
+            assertEquals(historyVarLog.getValue(), varLog.getValue());
             assertEquals("Incorrect variable id", "x", varLog.getVariableId());
             assertEquals("Incorrect process id", SCRIPT_TASK_VAR_PROCESS_ID, varLog.getProcessId());
             assertEquals("Incorrect process instance id", procInstId, varLog.getProcessInstanceId().longValue());
         }
+
+        // process/{procDefId}
+
+        // variable/{varId}
+
+        // variable/{varId}/{value}
+
+        // runtime/{depId}/history/variable/{varId}/instances
+
+        // runtime/{depId}/history/variable/{varId}/value/{val}/instances
+
     }
 
-    public void urlsDataServiceCoupling(URL deploymentUrl, ClientRequestFactory requestFactory, String user) throws Exception {
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/"
-                + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal").toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
+    public void urlsDataServiceCoupling(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/"
+                + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
 
         // Get and check response
-        logger.debug(">> " + urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        logger.debug(">> " + restRequest.getUri());
+        ClientResponse<?> responseObj = post(restRequest);
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/data/process/instance/" + procInstId).toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
-        logger.debug(">> [data/process instance]" + urlString);
-        responseObj = checkResponse(restRequest.get());
+        restRequest = requestHelper.createRequest("data/process/instance/" + procInstId);
+        logger.debug(">> [data/process instance]" + restRequest.getUri());
+        responseObj = get(restRequest);
         JaxbProcessInstanceSummary summary = (JaxbProcessInstanceSummary) responseObj.getEntity(JaxbProcessInstanceSummary.class);
         assertEquals("Incorrect initiator.", user, summary.getInitiator());
     }
 
-    public void urlsJsonJaxbStartProcess(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
+    public void urlsJsonJaxbStartProcess(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+
         // XML
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId
-                + "/process/org.jbpm.humantask/start").toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
-        logger.debug(">> " + urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        String startProcessOper = "runtime/" + deploymentId + "/process/org.jbpm.humantask/start";
+        ClientRequest restRequest = requestHelper.createRequest(startProcessOper);
+        restRequest.accept(MediaType.APPLICATION_XML_TYPE);
+        logger.debug(">> " + restRequest.getUri());
+        ClientResponse<?> responseObj = post(restRequest);
         String result = (String) responseObj.getEntity(String.class);
         assertTrue("Doesn't start like a JAXB string!", result.startsWith("<"));
 
         // JSON
-        restRequest = requestFactory.createRequest(urlString);
+        restRequest = requestHelper.createRequest(startProcessOper);
         restRequest.accept(MediaType.APPLICATION_JSON_TYPE);
-        logger.debug(">> " + urlString);
-        responseObj = checkResponse(restRequest.post());
+        logger.debug(">> " + restRequest.getUri());
+        responseObj = post(restRequest);
         result = (String) responseObj.getEntity(String.class);
         assertTrue("Doesn't start like a JSON string!", result.startsWith("{"));
     }
 
-    public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String originalMedia = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML;
+    public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        requestHelper.setMediaType(MediaType.APPLICATION_XML_TYPE);
 
         // Start process
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/"
-                + HUMAN_TASK_VAR_PROCESS_ID + "/start?map_userName=John").toExternalForm();
-
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID
+                + "/start?map_userName=John");
+        ClientResponse<?> responseObj = post(restRequest);
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/query?processInstanceId=" + procInstId)
-                .toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
+        restRequest = requestHelper.createRequest("task/query?processInstanceId=" + procInstId);
+        responseObj = get(restRequest);
 
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
                 .getEntity(JaxbTaskSummaryListResponse.class);
@@ -418,25 +504,25 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long taskId = taskSum.getId();
 
         // start task
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/start").toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.post());
+        restRequest = requestHelper.createRequest("task/" + taskId + "/start");
+        responseObj = post(restRequest);
         JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        assertNotNull("Response from task start operation is null.", resp);
 
         // complete task
         String georgeVal = "George";
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/task/" + taskId + "/complete?map_outUserName="
-                + georgeVal).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.post());
+        restRequest = requestHelper.createRequest("task/" + taskId + "/complete?map_outUserName=" + georgeVal);
+        responseObj = post(restRequest);
         resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
 
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/history/instance/"
-                + procInstId + "/variable/userName").toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
-        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/userName");
+        responseObj = get(restRequest);
+        responseObj.releaseConnection();
+        
+        restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
+        responseObj = get(restRequest);
 
+        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for (AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList) {
@@ -446,9 +532,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             }
         }
         assertTrue("'userName' var with value '" + georgeVal + "' not found!", georgeFound);
-
-        this.mediaType = originalMedia;
-
     }
 
     public void urlsHttpURLConnectionAcceptHeaderIsFixed(URL deploymentUrl, String user, String password) throws Exception {
@@ -457,26 +540,32 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         String authString = user + ":" + password;
-        byte[] authEncBytes = Base64.encodeBytesToBytes(authString.getBytes());
+        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
         String authStringEnc = new String(authEncBytes);
         connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
-
         connection.setRequestMethod("POST");
 
+        logger.debug(">> [POST] " + url.toExternalForm());
         connection.connect();
+        if (200 != connection.getResponseCode()) {
+            logger.warn(connection.getContent().toString());
+        }
         assertEquals(200, connection.getResponseCode());
     }
 
     public void remoteApiSerialization(URL deploymentUrl, String user, String password) throws Exception {
+        // setup
         RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
+       
+        // start process
+        ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
+        assertTrue("No process instances started.", processInstances != null && processInstances.size() > 0);
     }
 
-    public void remoteApiExtraJaxbClasses(URL deploymentUrl, ClientRequestFactory requestFactory, String user, String password)
-            throws Exception {
+    public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
@@ -484,116 +573,77 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         testExtraJaxbClassSerialization(engine);
     }
 
-    private long restCallDurationLimit = 2000;
-    private long sleep = 5000;
-
-    public void deployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
-        ClientRequestFactory requestFactory = RestRequestHelper.createRequestFactory(deploymentUrl, user, password);
-
-        JaxbDeploymentUnit jaxbDepUnit = null;
-        JaxbDeploymentJobResult jaxbJobResult = null;
-        JaxbDeploymentStatus jaxbDepStatus = null;
+    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, MediaType mediaType, boolean undeploy)
+            throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, 10);
 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
-        RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
+        RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
         // Get (has it been deployed?)
-        String oper = "rest/deployment/" + deploymentId + "/";
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.get());
+        ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
 
-        if (!checkUndeployed(responseObj)) {
-            testUndeploy(deploymentId, deploymentUrl, requestFactory);
-        }
-
+        if (isDeployed(restRequest.get())) {
+            if( undeploy ) { 
+                undeploy(deploymentId, deploymentUrl, requestHelper);
+            }
+        } 
+            
         // Deploy
-        oper = "rest/deployment/" + deploymentId + "/deploy?strategy=" + strategy.toString();
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponsePostTime(restRequest, 202);
-        jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
-        jaxbDepUnit = jaxbJobResult.getDeploymentUnit();
-        jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
-        assertEquals("Deployment unit status", strategy, jaxbDepUnit.getStrategy());
-        assertEquals("Deployment unit status", JaxbDeploymentStatus.DEPLOYING, jaxbDepStatus);
-
-        waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestFactory);
+        deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
+        waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
+        
+        requestHelper.createRequest("deployments/");
     }
 
-    public void deploySeveralModulesAndOtherDeployTests(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        fail("Unfinished!");
-    }
-
-    private void testUndeploy(String deploymentId, URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
+    private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
+        logger.info("undeploy");
         // Exists, so undeploy
-        String oper = "rest/deployment/" + deploymentId + "/undeploy";
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
+        ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/undeploy");
 
         ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 202);
 
         JaxbDeploymentJobResult jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
         assertEquals("Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY");
-        // logger.info( "UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]" +
-        // jaxbJobResult.getExplanation() );
+        logger.info("UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]"
+                + jaxbJobResult.getExplanation());
 
-        waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestFactory);
+        waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestHelper);
     }
 
     private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy, URL deploymentUrl,
-            ClientRequestFactory requestFactory) throws Exception {
+            RestRequestHelper requestHelper) throws Exception {
         boolean success = false;
         int tries = 0;
         while (!success && tries++ < MAX_TRIES) {
-            String oper = "rest/deployment/" + deploymentId + "/";
-            String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
-            ClientRequest restRequest = createRequest(requestFactory, urlString);
+            ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
+            logger.debug(">> " + restRequest.getUri());
             ClientResponse<?> responseObj = restRequest.get();
             if (deploy) {
-                success = checkDeployed(responseObj);
-            } else {
-                success = checkUndeployed(responseObj);
+                success = isDeployed(responseObj);
             }
             if (!success) {
                 logger.info("Sleeping for " + sleep / 1000 + " seconds");
                 Thread.sleep(sleep);
             }
         }
+        KieSession ksession = null;
+        ProcessInstance pi = null;
     }
 
-    private boolean checkUndeployed(ClientResponse<?> responseObj) {
+    private boolean isDeployed(ClientResponse<?> responseObj) {
         int status = responseObj.getStatus();
         try {
             if (status == 200) {
                 JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID,
-                        VERSION);
+                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
                 if (jaxbDepStatus == JaxbDeploymentStatus.UNDEPLOYED || jaxbDepStatus == JaxbDeploymentStatus.NONEXISTENT) {
-                    return true;
+                    return false;
                 }
-            } else if (status == 404) {
-                return true;
-            }
-            return false;
-        } finally {
-            responseObj.releaseConnection();
-        }
-    }
-
-    private boolean checkDeployed(ClientResponse<?> responseObj) {
-        int status = responseObj.getStatus();
-        try {
-            if (status == 200) {
-                JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID,
-                        VERSION);
                 if (jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
                     return true;
                 }
-            } else {
-                return false;
-            }
+            } 
             return false;
         } finally {
             responseObj.releaseConnection();
@@ -605,8 +655,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("GroupId", GROUP_ID, jaxbDepUnit.getGroupId());
         assertEquals("ArtifactId", ARTIFACT_ID, jaxbDepUnit.getArtifactId());
         assertEquals("Version", VERSION, jaxbDepUnit.getVersion());
-        JaxbDeploymentStatus jaxbDepStatus = jaxbDepUnit.getStatus();
-        logger.info(jaxbDepUnit.getIdentifier() + " : " + jaxbDepStatus.toString());
         return jaxbDepUnit.getStatus();
     }
 
@@ -619,19 +667,21 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
     }
 
-    public void remoteApiGetTaskInstance(ClientRequestFactory requestFactory, URL deploymentUrl, String user, String password) throws Exception {
+    public void remoteApiGetTaskInstance(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
         // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
 
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = null;
-        try { 
+        try {
             processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-        } catch( Exception e ) { 
-           fail( "Unable to start process: " + e.getMessage());
+        } catch (Exception e) {
+            fail("Unable to start process: " + e.getMessage());
         }
-        logger.debug("Started process instance: " + processInstance + " " + (processInstance == null ? "" : processInstance.getId()));
+        logger.debug("Started process instance: " + processInstance + " "
+                + (processInstance == null ? "" : processInstance.getId()));
 
         TaskService taskService = engine.getTaskService();
         List<Long> tasks = taskService.getTasksByProcessInstanceId(processInstance.getId());
@@ -639,25 +689,217 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long taskId = tasks.get(0);
 
         // Get it via the command
-        JaxbCommandResponse<?> response = executeCommand(requestFactory, deploymentId, new GetTaskCommand(taskId));
+        JaxbCommandResponse<?> response = executeCommand(deploymentUrl, user, password, deploymentId, new GetTaskCommand(taskId));
         Task task = (Task) response.getResult();
         checkReturnedTask(task, taskId);
-        
+
         // Get it via the URL
-        ClientRequest restRequest = requestFactory.createRelativeRequest("rest/task/" + taskId );
-        ClientResponse<?> responseObj = checkResponse(restRequest.get());
-        JaxbTask jaxbTask  = responseObj.getEntity(JaxbTask.class);
+        ClientRequest restRequest = requestHelper.createRequest("task/" + taskId);
+        ClientResponse<?> responseObj = get(restRequest);
+        JaxbTask jaxbTask = responseObj.getEntity(JaxbTask.class);
         checkReturnedTask((Task) jaxbTask, taskId);
-        
+
         // Get it via the remote API
         task = engine.getTaskService().getTaskById(taskId);
         checkReturnedTask(task, taskId);
     }
-    
-    private void checkReturnedTask(Task task, long taskId) { 
+
+    private void checkReturnedTask(Task task, long taskId) {
         assertNotNull("Could not retrietve task " + taskId, task);
         assertEquals("Incorrect task rertrieved", taskId, task.getId().longValue());
         TaskData taskData = task.getTaskData();
         assertNotNull(taskData);
+    }
+
+    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
+            RuntimeStrategy strategy, MediaType mediaType) throws Exception {
+        logger.info("deploy");
+        // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
+
+        // Create request
+        String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", userId, password).getBytes()).trim();
+        String url = appUrl.toExternalForm() + "rest/deployment/" + deploymentId + "/deploy";
+        if (strategy.equals(RuntimeStrategy.SINGLETON)) {
+            url += "?strategy=" + strategy.toString();
+        }
+
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getCredentialsProvider().setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+                new UsernamePasswordCredentials(userId, password));
+        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
+        ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
+
+        ClientRequest request = factory.createRequest(url).header("Authorization", AUTH_HEADER).accept(mediaType)
+                .followRedirects(true);
+        logger.debug(">> " + request.getUri());
+
+        // ADDED CODE TO CHECK RESPONSE TIME
+        long before, after;
+        logger.debug("BEFORE POST: " + sdf.format((before = System.currentTimeMillis())));
+
+        // POST request
+        JaxbDeploymentJobResult result = null;
+        ClientResponse<JaxbDeploymentJobResult> response = null;
+        try {
+            response = request.post(JaxbDeploymentJobResult.class);
+        } catch (Exception ex) {
+            logger.error("POST operation failed.", ex);
+            fail("POST operation failed.");
+        }
+        if (response == null) {
+            fail("Response is null!");
+        }
+
+        // ADDED CODE TO CHECK RESPONSE TIME
+        logger.debug("AFTER POST:  " + sdf.format((after = System.currentTimeMillis())));
+        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
+
+        // Retrieve request
+        try {
+            String contentType = response.getHeaders().getFirst("Content-Type");
+            if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
+                result = response.getEntity();
+            } else {
+                logger.error("Response body: {}",
+                // get response as string
+                        response.getEntity(String.class)
+                        // improve HTML readability
+                                .replaceAll("><", ">\n<"));
+                fail("Unexpected content-type: " + contentType);
+            }
+        } catch (ReaderException ex) {
+            response.resetStream();
+            logger.error("Bad entity: [{}]", response.getEntity(String.class));
+            fail("Bad entity: " + ex.getMessage());
+        } catch (Exception ex) {
+            logger.error("Unmarshalling failed.", ex);
+            fail("Unmarshalling entity failed: " + ex.getMessage());
+        }
+
+        assertTrue("The deployment unit was not created successfully.", result.isSuccess());
+
+        return result;
+    }
+
+    public void urlsStartScriptProcess(URL deploymentUrl, String user, String password) throws Exception {
+        // Remote API setup
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_PROCESS_ID
+                + "/start");
+
+        // Start process
+        ClientResponse<?> responseObj = post(restRequest);
+        ProcessInstance procInst = responseObj.getEntity(JaxbProcessInstanceResponse.class).getResult();
+
+        int procStatus = procInst.getState();
+        assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
+    }
+
+    public void urlsCloneAndDeployJbpmPlaygroundEvaluationProject() {
+        // https://github.com/droolsjbpm/jbpm-playground.git
+
+    }
+    
+    public void urlsRetrieveTaskContent(URL deploymentUrl, String user, String password) throws Exception {
+        // Remote API setup
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + TASK_CONTENT_PROCESS_ID + "/start");
+
+        // Start process
+        ClientResponse<?> responseObj = post(restRequest);
+        ProcessInstance procInst = responseObj.getEntity(JaxbProcessInstanceResponse.class).getResult();
+
+        int procStatus = procInst.getState();
+        assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_ACTIVE, procStatus);
+
+        // Get taskId
+        restRequest = requestHelper.createRequest("task/query?processInstanceId=" + procInst.getId());
+        responseObj = get(restRequest);
+        JaxbTaskSummaryListResponse taskSumList = responseObj.getEntity(JaxbTaskSummaryListResponse.class);
+        assertFalse( "No tasks found!", taskSumList.getResult().isEmpty() );
+        TaskSummary taskSum = taskSumList.getResult().get(0);
+        long taskId = taskSum.getId();
+        
+        restRequest = requestHelper.createRequest("task/" + taskId + "/content");
+        responseObj = get(restRequest);
+        JaxbContent content = responseObj.getEntity(JaxbContent.class);
+        assertNotNull( "No content retrieved!", content.getContentMap() );
+        assertEquals( "reviewer", content.getContentMap().get("GroupId"));
+    }
+    
+    public void urlsVariableHistory(URL deploymentUrl, String user, String password) throws Exception {
+        // Remote API setup
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+       
+        String varId = "myobject";
+        
+        ClientRequest restRequest 
+            = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
+        ClientResponse<?> responseObj = post(restRequest);
+        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        long procInstId = procInstResp.getResult().getId();
+       
+        // var
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/variable/" + varId);
+        responseObj = get(restRequest);
+        JaxbHistoryLogList jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
+        if (jhll != null) {
+            List<AuditEvent> history = jhll.getResult();
+            for (AuditEvent ae : history) {
+                viLogs.add((VariableInstanceLog) ae);
+            }
+        }
+
+        assertNotNull("Empty VariableInstanceLog list.", viLogs);
+        assertEquals("VariableInstanceLog list size",  viLogs.size(), 1);
+        VariableInstanceLog vil = viLogs.get(0);
+        assertNotNull("Empty VariableInstanceLog instance.", vil);
+        assertEquals("Process instance id", vil.getProcessInstanceId(), procInstId);
+        assertEquals("Variable id", vil.getVariableId(), "myobject");
+        assertEquals("Variable value", vil.getValue(), "10"); 
+       
+        // proc log
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/variable/" + varId + "/instances");
+        responseObj = get(restRequest);
+        jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        
+        assertNotNull("Empty ProcesInstanceLog list", jhll);
+        List<ProcessInstanceLog> piLogs = new ArrayList<ProcessInstanceLog>();
+        if (jhll != null) {
+            List<AuditEvent> history = jhll.getResult();
+            for (AuditEvent ae : history) {
+                piLogs.add((ProcessInstanceLog) ae);
+            }
+        }
+        assertNotNull("Empty ProcesInstanceLog list", piLogs);
+        assertEquals("ProcessInstanceLog list size", piLogs.size(), 1);
+        ProcessInstanceLog pi = piLogs.get(0);
+        assertNotNull(pi);
+        assertEquals(procInstId, pi.getId());
+    }
+    
+    public void urlsGetDeployments(URL deploymentUrl, String user, String password) throws Exception {
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        String authString = user + ":" + password;
+        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+        String authStringEnc = new String(authEncBytes);
+        connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        connection.setRequestMethod("GET");
+
+        logger.debug(">> [GET] " + url.toExternalForm());
+        connection.connect();
+        if (200 != connection.getResponseCode()) {
+            logger.warn(connection.getContent().toString());
+        }
+        assertEquals(200, connection.getResponseCode());
+        Class<?> [] classes = { JaxbDeploymentUnitList.class };
+        JaxbDeploymentUnitList depList = (JaxbDeploymentUnitList) connection.getContent(classes);
+        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
     }
 }

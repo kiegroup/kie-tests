@@ -134,6 +134,12 @@
       <version>0.9.9-RC1</version>
     </dependency>
 
+    <dependency>
+      <groupId>commons-net</groupId>
+      <artifactId>commons-net</artifactId>
+      <version>3.3</version>
+    </dependency>
+
     <!-- TEST -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -147,8 +153,7 @@
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-bpmn2</artifactId>
-      <classifier>tests</classifier>
+      <artifactId>jbpm-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

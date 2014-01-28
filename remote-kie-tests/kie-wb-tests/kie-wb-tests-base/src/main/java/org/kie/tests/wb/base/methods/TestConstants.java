@@ -17,13 +17,16 @@ public class TestConstants {
     public static final String SINGLE_HUMAN_TASK_PROCESS_ID = "org.jboss.qa.bpms.HumanTask";
     public static final String OBJECT_VARIABLE_PROCESS_ID   = "org.jboss.qa.bpms.ObjectVariableProcess";
     public static final String RULE_TASK_PROCESS_ID         = "com.bpms.flood.RuleTask";
+    public static final String TASK_CONTENT_PROCESS_ID      = "org.kie.remote.test.usertask.UserTask";
    
     /**
      * User/password
      */
     
-    public static final String USER = "mary";
-    public static final String PASSWORD = "mary123@";
+    public static final String KRIS_USER = "krisv";
+    public static final String KRIS_PASSWORD = "krisv123@";
+    public static final String MARY_USER = "mary";
+    public static final String MARY_PASSWORD = "mary123@";
     public static final String SALA_USER = "salaboy";
     public static final String SALA_PASSWORD = "sala123@";
     public static final String JOHN_USER = "john";
