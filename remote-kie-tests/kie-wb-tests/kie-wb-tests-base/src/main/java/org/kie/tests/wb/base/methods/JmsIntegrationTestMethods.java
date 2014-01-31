@@ -433,75 +433,83 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void remoteApiRunEvaluationProcess() throws Exception {
-        RemoteJmsRuntimeEngineFactory jmsSessionFactory 
-            = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", remoteInitialContext, KRIS_USER, KRIS_PASSWORD);
- 
-        RuntimeEngine engine = jmsSessionFactory.newRuntimeEngine();
-         
-        KieSession ksession = engine.getKieSession();
-        TaskService taskService = engine.getTaskService();
-         
-        // start a new process instance
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("employee", KRIS_USER);
-        params.put("reason", "Yearly performance evaluation");
-        String processid = "evaluation";
-        ProcessInstance processInstance = 
-            ksession.startProcess(processid, params);
-        long procInstId = processInstance.getId();
-        logger.debug("Process '" +  processid + "' started [instance: " + procInstId + "]");
-         
-        // complete Self Evaluation
-        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(KRIS_USER, "en-UK");
-        assertEquals(1, tasks.size());
-        TaskSummary task = tasks.get(0);
-        logger.debug("'" + KRIS_USER + "' completing task " + task.getName() + ": " + task.getDescription());
-        taskService.start(task.getId(), KRIS_USER);
-        Map<String, Object> results = new HashMap<String, Object>();
-        results.put("performance", "exceeding");
-        taskService.complete(task.getId(), KRIS_USER, results);
-         
-        InitialContext johnRemoteInitialContext = getRemoteInitialContext(JOHN_USER, JOHN_PASSWORD);
-        jmsSessionFactory = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", johnRemoteInitialContext, JOHN_USER, JOHN_PASSWORD);
-        engine = jmsSessionFactory.newRuntimeEngine();
-        ksession = engine.getKieSession();
-        taskService = engine.getTaskService();
-         
-        // john from HR
-        tasks = taskService.getTasksAssignedAsPotentialOwner(JOHN_USER, "en-UK");
-        assertEquals(1, tasks.size());
-        task = tasks.get(0);
-        logger.debug("'" + JOHN_USER + "' completing task " + task.getName() + ": " + task.getDescription());
-        taskService.claim(task.getId(), JOHN_USER);
-        taskService.start(task.getId(), JOHN_USER);
-        results = new HashMap<String, Object>();
-        results.put("performance", "acceptable");
-        taskService.complete(task.getId(), JOHN_USER, results);
-         
-        jmsSessionFactory = new RemoteJmsRuntimeEngineFactory("org.jbpm:Evaluation:1.0", remoteInitialContext, MARY_USER, MARY_PASSWORD);
-        engine = jmsSessionFactory.newRuntimeEngine();
-        ksession = engine.getKieSession();
-        taskService = engine.getTaskService();
-         
-        // mary from PM
-        tasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, "en-UK");
-        assertEquals(1, tasks.size());
-        task = tasks.get(0);
-        logger.debug("'" + MARY_USER + "' completing task " + task.getName() + ": " + task.getDescription());
-        taskService.claim(task.getId(), MARY_USER);
-        taskService.start(task.getId(), MARY_USER);
-        results = new HashMap<String, Object>();
-        results.put("performance", "outstanding");
-        taskService.complete(task.getId(), MARY_USER, results);
-         
-        assertProcessInstanceCompleted(procInstId,  ksession);
-        logger.debug("'" + processid + "' process instance [" + procInstId + "] completed!");
-    }
+        String processId = "com.sample.evaluation";
+        KieSession ksession = null;
+        ProcessInstance processInstance = null;
 
-    private void assertProcessInstanceCompleted(long procId, KieSession ksession) { 
-        ProcessInstance processInstance = ksession.getProcessInstance(procId); 
+        // Kris
+        { 
+            RemoteJmsRuntimeEngineFactory jmsSessionFactory 
+                = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext, KRIS_USER, KRIS_PASSWORD);
+            RuntimeEngine engine = jmsSessionFactory.newRuntimeEngine();
+            ksession = engine.getKieSession();
+            TaskService taskService = engine.getTaskService();
+
+            // start a new process instance
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("employee", KRIS_USER);
+            params.put("reason", "Yearly performance evaluation");
+            processInstance = ksession.startProcess(processId, params);
+            long procInstId = processInstance.getId();
+            logger.debug("Process '" +  processId + "' started [instance: " + procInstId + "]");
+
+            // complete Self Evaluation
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(KRIS_USER, "en-UK");
+            assertEquals(1, tasks.size());
+            TaskSummary task = tasks.get(0);
+            logger.debug("'" + KRIS_USER + "' completing task " + task.getName() + ": " + task.getDescription());
+            taskService.start(task.getId(), KRIS_USER);
+            Map<String, Object> results = new HashMap<String, Object>();
+            results.put("performance", "exceeding");
+            taskService.complete(task.getId(), KRIS_USER, results);
+        }
+
+        // john from HR
+        {
+            InitialContext johnRemoteInitialContext = getRemoteInitialContext(JOHN_USER, JOHN_PASSWORD);
+            RemoteJmsRuntimeEngineFactory remoteJmsFactory 
+                = new RemoteJmsRuntimeEngineFactory(deploymentId, johnRemoteInitialContext, JOHN_USER, JOHN_PASSWORD);
+            RuntimeEngine engine = remoteJmsFactory.newRuntimeEngine();
+            ksession = engine.getKieSession();
+            TaskService taskService = engine.getTaskService();
+
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(JOHN_USER, "en-UK");
+            assertEquals(1, tasks.size());
+            TaskSummary task = tasks.get(0);
+            
+            logger.debug("'" + JOHN_USER + "' completing task " + task.getName() + " (" + task.getStatus() + "): " + task.getDescription());
+            // taskService.claim(task.getId(), JOHN_USER);  // NOT NEEDED!
+            taskService.start(task.getId(), JOHN_USER);
+            Map<String, Object> results = new HashMap<String, Object>();
+            results.put("performance", "acceptable");
+            taskService.complete(task.getId(), JOHN_USER, results);
+        }
+
+        // mary from PM
+        {
+            InitialContext maryRemoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
+            RemoteJmsRuntimeEngineFactory remoteJmsFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, maryRemoteInitialContext, MARY_USER, MARY_PASSWORD);
+            RuntimeEngine engine = remoteJmsFactory.newRuntimeEngine();
+            ksession = engine.getKieSession();
+            TaskService taskService = engine.getTaskService();
+
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, "en-UK");
+            assertEquals(1, tasks.size());
+            TaskSummary task = tasks.get(0);
+            
+            logger.debug("'" + MARY_USER + "' completing task " + task.getName() + ": " + task.getDescription());
+            // taskService.claim(task.getId(), MARY_USER); // NOT NEEDED!
+            taskService.start(task.getId(), MARY_USER);
+            Map<String, Object >results = new HashMap<String, Object>();
+            results.put("performance", "outstanding");
+            taskService.complete(task.getId(), MARY_USER, results);
+        }
+
+        long procId = processInstance.getId();
+        processInstance = ksession.getProcessInstance(procId);
         assertTrue( "Process instance " + procId + " has not completed!",
                 processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED );
+        logger.debug("'" + processId + "' process instance [" + procId + "] completed!");
     }
 
     public void remoteApiStartScriptProcess(String user, String password) {
@@ -516,4 +524,5 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         assertEquals("Incorrect process status: " + procStatus , ProcessInstance.STATE_COMPLETED,  procStatus);
     }
+   
 }

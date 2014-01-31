@@ -127,9 +127,9 @@ public class JbossEapJmsIntegrationTest extends KieWbWarJbossEapDeploy {
         jmsTests.remoteApiInitiatorIdentityTest(MARY_USER, MARY_PASSWORD);
     }
     
-//    @Test
-//    @InSequence(2)
-//    public void testRemoteApiRunEvaluationProcess() throws Exception { 
-//        jmsTests.remoteApiRunEvaluationProcess();
-//    }
+    @Test
+    @InSequence(2)
+    public void testRemoteApiRunEvaluationProcess() throws Exception { 
+        jmsTests.remoteApiRunEvaluationProcess();
+    }
 }
