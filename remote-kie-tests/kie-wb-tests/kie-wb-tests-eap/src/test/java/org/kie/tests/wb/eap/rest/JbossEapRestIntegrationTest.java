@@ -168,4 +168,11 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
         restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
+
+    @Test
+    @InSequence(14)
+    public void testUrlsGetTaskContent() throws Exception {
+        printTestName();
+        restTests.urlsRetrieveTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
 }

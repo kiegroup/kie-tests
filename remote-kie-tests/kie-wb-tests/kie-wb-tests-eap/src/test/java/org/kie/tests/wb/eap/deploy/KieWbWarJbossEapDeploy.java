@@ -71,6 +71,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
                 .resolve(jarsArg)
                 .withoutTransitivity()
                 .asFile();
+        logger.info( "Adding above dependencies to war libraries");
         war.addAsLibraries(kieRemoteDeps);
        
         // Add data service resource for tests
