@@ -73,7 +73,7 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
     @InSequence(1)
     public void setupDeployment() throws Exception {
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE, false);
     }
 
     @Test

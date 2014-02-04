@@ -118,6 +118,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
+    private long restCallDurationLimit = 2000;
+
+    private long sleep = 5000;
+
     /**
      * Helper methods
      */
@@ -339,14 +343,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return cmdsResp.getResponses().get(0);
     }
 
-<<<<<<< HEAD
     public void urlsHistoryLogs(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
-=======
-    public void urlsHistoryLogs(URL deploymentUrl, ClientRequestFactory requestFactory) throws Exception {
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal").toExternalForm();
-        ClientRequest restRequest = requestFactory.createRequest(urlString);
->>>>>>> 6c886ce... Modified tests to match deployment-independent history ops
 
         // Start process
         ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
@@ -356,7 +354,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
-<<<<<<< HEAD
         // instances/
         {
             String histOp = "/history/instances";
@@ -420,19 +417,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) runtimeVarLogList.get(i);
             JaxbVariableInstanceLog historyVarLog = (JaxbVariableInstanceLog) historyVarLogList.get(i);
             assertEquals(historyVarLog.getValue(), varLog.getValue());
-            
-=======
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/history/instance/" + procInstId + "/variable/x").toExternalForm();
-        restRequest = requestFactory.createRequest(urlString);
-        logger.debug(">> [history/variables]" + urlString);
-        responseObj = checkResponse(restRequest.get());
-        JaxbHistoryLogList logList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
-        List<AbstractJaxbHistoryObject> varLogList = logList.getHistoryLogList();
-        assertEquals("Incorrect number of variable logs", 4, varLogList.size());
-
-        for (AbstractJaxbHistoryObject<?> log : logList.getHistoryLogList()) {
-            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) log;
->>>>>>> 6c886ce... Modified tests to match deployment-independent history ops
             assertEquals("Incorrect variable id", "x", varLog.getVariableId());
             assertEquals("Incorrect process id", SCRIPT_TASK_VAR_PROCESS_ID, varLog.getProcessId());
             assertEquals("Incorrect process instance id", procInstId, varLog.getProcessInstanceId().longValue());
@@ -523,17 +507,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj = post(restRequest);
         resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
 
-<<<<<<< HEAD
-        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId
-                + "/variable/userName");
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/userName");
         responseObj = get(restRequest);
-=======
-        urlString = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/history/instance/" + procInstId + "/variable/userName").toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
-        responseObj = checkResponse(restRequest.get());
->>>>>>> 6c886ce... Modified tests to match deployment-independent history ops
-        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        
+        restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
+        responseObj = get(restRequest);
 
+        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for (AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList) {
@@ -584,10 +564,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         testExtraJaxbClassSerialization(engine);
     }
 
-    private long restCallDurationLimit = 2000;
-    private long sleep = 5000;
-
-    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, MediaType mediaType)
+    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, MediaType mediaType, boolean undeploy)
             throws Exception {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, 10);
 
@@ -595,28 +572,24 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
         // Get (has it been deployed?)
-<<<<<<< HEAD
         ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
 
-        logger.info("check undeployed");
-        if (checkUndeployed(restRequest.get())) {
+        if (isDeployed(restRequest.get())) {
+            if( undeploy ) { 
+                undeploy(deploymentId, deploymentUrl, requestHelper);
+            }
             // Deploy
-            logger.info("deploy");
             deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
             waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
-=======
-        String oper = "rest/deployment/" + deploymentId + "/";
-        String urlString = new URL(deploymentUrl, deploymentUrl.getPath() + oper).toExternalForm();
-        ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = restRequest.get();
-
-        if (!checkUndeployed(responseObj)) {
-            testUndeploy(deploymentId, deploymentUrl, requestFactory);
->>>>>>> 6c886ce... Modified tests to match deployment-independent history ops
-        }
+        } 
+            
+        // Deploy
+        deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
+        waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
     }
 
     private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
+        logger.info("undeploy");
         // Exists, so undeploy
         ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/undeploy");
 
@@ -639,9 +612,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.debug(">> " + restRequest.getUri());
             ClientResponse<?> responseObj = restRequest.get();
             if (deploy) {
-                success = checkDeployed(responseObj);
-            } else {
-                success = checkUndeployed(responseObj);
+                success = isDeployed(responseObj);
             }
             if (!success) {
                 logger.info("Sleeping for " + sleep / 1000 + " seconds");
@@ -650,40 +621,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
 
-    private boolean checkUndeployed(ClientResponse<?> responseObj) {
+    private boolean isDeployed(ClientResponse<?> responseObj) {
         int status = responseObj.getStatus();
         try {
-            logger.info("status: " + status);
             if (status == 200) {
                 JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID,
-                        VERSION);
-                logger.info("dep status: " + jaxbDepStatus);
+                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
                 if (jaxbDepStatus == JaxbDeploymentStatus.UNDEPLOYED || jaxbDepStatus == JaxbDeploymentStatus.NONEXISTENT) {
-                    return true;
+                    return false;
                 }
-            } else if (status == 404) {
-                return true;
-            }
-            return false;
-        } finally {
-            responseObj.releaseConnection();
-        }
-    }
-
-    private boolean checkDeployed(ClientResponse<?> responseObj) {
-        int status = responseObj.getStatus();
-        try {
-            if (status == 200) {
-                JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID,
-                        VERSION);
                 if (jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
                     return true;
                 }
-            } else {
-                return false;
-            }
+            } 
             return false;
         } finally {
             responseObj.releaseConnection();
@@ -753,6 +703,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
             RuntimeStrategy strategy, MediaType mediaType) throws Exception {
+        logger.info("deploy");
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
 
         // Create request

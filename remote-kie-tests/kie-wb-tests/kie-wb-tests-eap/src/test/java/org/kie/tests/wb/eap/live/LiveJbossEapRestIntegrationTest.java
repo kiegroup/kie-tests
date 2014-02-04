@@ -23,14 +23,11 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.junit.InSequence;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.eap.deploy.KieWbWarJbossEapDeploy;
 
@@ -72,7 +69,7 @@ public class LiveJbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
     @InSequence(1)
     public void setupDeployment() throws Exception {
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE, false);
     }
 
     @Test
