@@ -92,87 +92,93 @@ public class JbossEapRestIntegrationTest extends KieWbWarJbossEapDeploy {
     }
 
     @Test
-    @InSequence(3)
+    @InSequence(2)
     public void testRestExecuteStartProcess() throws Exception {
         printTestName();
         restTests.commandsStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(4)
+    @InSequence(2)
     public void testRestRemoteApiHumanTaskProcess() throws Exception {
         printTestName();
         restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(5)
+    @InSequence(2)
     public void testRestExecuteTaskCommands() throws Exception {
         printTestName();
         restTests.commandsTaskCommands(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(7)
+    @InSequence(2)
     public void testRestDataServicesCoupling() throws Exception {
         printTestName();
         restTests.urlsDataServiceCoupling(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(8)
+    @InSequence(2)
     public void testJsonAndXmlStartProcess() throws Exception {
         printTestName();
         restTests.urlsJsonJaxbStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(9)
+    @InSequence(2)
     public void testHumanTaskCompleteWithVariable() throws Exception {
         printTestName();
         restTests.urlsHumanTaskWithFormVariableChange(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(10)
+    @InSequence(2)
     public void testHttpURLConnection() throws Exception {
         printTestName();
         restTests.urlsHttpURLConnectionAcceptHeaderIsFixed(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(11)
+    @InSequence(2)
     public void testRemoteApiProcessInstances() throws Exception {
         printTestName();
         restTests.remoteApiSerialization(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(12)
+    @InSequence(2)
     public void testRemoteApiExtraJaxbClasses() throws Exception {
         printTestName();
         restTests.remoteApiExtraJaxbClasses(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(13)
+    @InSequence(2)
     public void testRemoteApiRuleTaskProcess() throws Exception {
         printTestName();
         restTests.remoteApiRuleTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(14)
+    @InSequence(2)
     public void testRemoteApiGetTaskInstance() throws Exception {
         printTestName();
         restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
-
     @Test
-    @InSequence(14)
+    @InSequence(2)
     public void testUrlsGetTaskContent() throws Exception {
         printTestName();
         restTests.urlsRetrieveTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+
+    @Test
+    @InSequence(2)
+    public void testUrlsVariableHistory() throws Exception {
+        printTestName();
+        restTests.urlsVariableHistory(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

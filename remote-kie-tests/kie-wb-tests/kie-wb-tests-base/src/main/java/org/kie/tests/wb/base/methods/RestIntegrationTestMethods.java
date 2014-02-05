@@ -54,6 +54,7 @@ import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
 import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
+import org.jgroups.util.UUID;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -80,6 +81,7 @@ import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanc
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
@@ -819,5 +821,56 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "No content retrieved!", content.getContentMap() );
         assertEquals( "reviewer", content.getContentMap().get("GroupId"));
     }
+    
+    public void urlsVariableHistory(URL deploymentUrl, String user, String password) throws Exception {
+        // Remote API setup
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+       
+        String varId = "myobject";
+        
+        ClientRequest restRequest 
+            = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
+        ClientResponse<?> responseObj = post(restRequest);
+        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        long procInstId = procInstResp.getResult().getId();
+       
+        // var
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/variable/" + varId);
+        responseObj = get(restRequest);
+        JaxbHistoryLogList jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
+        if (jhll != null) {
+            List<AuditEvent> history = jhll.getResult();
+            for (AuditEvent ae : history) {
+                viLogs.add((VariableInstanceLog) ae);
+            }
+        }
 
+        assertNotNull("Empty VariableInstanceLog list.", viLogs);
+        assertEquals("VariableInstanceLog list size",  viLogs.size(), 1);
+        VariableInstanceLog vil = viLogs.get(0);
+        assertNotNull("Empty VariableInstanceLog instance.", vil);
+        assertEquals("Process instance id", vil.getProcessInstanceId(), procInstId);
+        assertEquals("Variable id", vil.getVariableId(), "myobject");
+        assertEquals("Variable value", vil.getValue(), "10"); 
+       
+        // proc log
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/variable/" + varId + "/instances");
+        responseObj = get(restRequest);
+        jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        
+        assertNotNull("Empty ProcesInstanceLog list", jhll);
+        List<ProcessInstanceLog> piLogs = new ArrayList<ProcessInstanceLog>();
+        if (jhll != null) {
+            List<AuditEvent> history = jhll.getResult();
+            for (AuditEvent ae : history) {
+                piLogs.add((ProcessInstanceLog) ae);
+            }
+        }
+        assertNotNull("Empty ProcesInstanceLog list", piLogs);
+        assertEquals("ProcessInstanceLog list size", piLogs.size(), 1);
+        ProcessInstanceLog pi = piLogs.get(0);
+        assertNotNull(pi);
+        assertEquals(procInstId, pi.getId());
+    }
 }
