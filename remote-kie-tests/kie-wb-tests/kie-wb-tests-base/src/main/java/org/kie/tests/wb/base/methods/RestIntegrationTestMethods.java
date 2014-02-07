@@ -580,9 +580,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             if( undeploy ) { 
                 undeploy(deploymentId, deploymentUrl, requestHelper);
             }
-            // Deploy
-            deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
-            waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
         } 
             
         // Deploy
