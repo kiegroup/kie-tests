@@ -45,6 +45,7 @@ import org.jboss.resteasy.spi.ReaderException;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.process.audit.event.AuditEvent;
@@ -81,6 +82,7 @@ import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanc
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
+import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
@@ -142,12 +144,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return responseObj;
     }
 
-    public ClientResponse<?> get(ClientRequest restRequest) throws Exception {
+    private ClientResponse<?> get(ClientRequest restRequest) throws Exception {
         logger.debug(">> [GET]  " + restRequest.getUri());
         return checkResponse(restRequest.get());
     }
 
-    public ClientResponse<?> post(ClientRequest restRequest) throws Exception {
+    private ClientResponse<?> post(ClientRequest restRequest) throws Exception {
         logger.debug(">> [POST/" + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
         return checkResponse(restRequest.post());
     }
@@ -177,6 +179,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void urlsStartHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        RestRequestHelper queryRequestHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD, timeout);
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/org.jbpm.humantask/start");
@@ -186,13 +189,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        restRequest = requestHelper.createRequest("task/query?status=Reserved&processInstanceId=" + procInstId);
+        restRequest = queryRequestHelper.createRequest("task/query?status=Reserved&processInstanceId=" + procInstId);
         responseObj = get(restRequest);
 
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
                 .getEntity(JaxbTaskSummaryListResponse.class);
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
+        for( String potOwner : taskSum.getPotentialOwners() ) { 
+           System.out.println( "pot owner: " + potOwner); 
+        }
 
         // get task info
         restRequest = requestHelper.createRequest("task/" + taskId);
@@ -511,6 +517,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/userName");
         responseObj = get(restRequest);
+        responseObj.releaseConnection();
         
         restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
         responseObj = get(restRequest);
@@ -585,6 +592,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Deploy
         deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
         waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
+        
+        requestHelper.createRequest("deployments/");
     }
 
     private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
@@ -618,6 +627,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 Thread.sleep(sleep);
             }
         }
+        KieSession ksession = null;
+        ProcessInstance pi = null;
     }
 
     private boolean isDeployed(ClientResponse<?> responseObj) {
@@ -869,5 +880,26 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ProcessInstanceLog pi = piLogs.get(0);
         assertNotNull(pi);
         assertEquals(procInstId, pi.getId());
+    }
+    
+    public void urlsGetDeployments(URL deploymentUrl, String user, String password) throws Exception {
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        String authString = user + ":" + password;
+        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+        String authStringEnc = new String(authEncBytes);
+        connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        connection.setRequestMethod("GET");
+
+        logger.debug(">> [GET] " + url.toExternalForm());
+        connection.connect();
+        if (200 != connection.getResponseCode()) {
+            logger.warn(connection.getContent().toString());
+        }
+        assertEquals(200, connection.getResponseCode());
+        Class<?> [] classes = { JaxbDeploymentUnitList.class };
+        JaxbDeploymentUnitList depList = (JaxbDeploymentUnitList) connection.getContent(classes);
+        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
     }
 }
