@@ -76,6 +76,7 @@ public class JbossEapRemoteApiIntegrationTest extends KieWbWarJbossEapDeploy {
     public void setupDeployment() throws Exception {
         printTestName();
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE, false);
+        Thread.sleep(5000);
     }
 
     @Test
@@ -87,7 +88,7 @@ public class JbossEapRemoteApiIntegrationTest extends KieWbWarJbossEapDeploy {
     
     @Test
     @InSequence(1)
-    public void testScratch() throws Exception {
+    public void testUrlsGetDeployments() throws Exception {
         printTestName();
         restTests.urlsGetDeployments(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -181,7 +182,7 @@ public class JbossEapRemoteApiIntegrationTest extends KieWbWarJbossEapDeploy {
     @InSequence(2)
     public void testRestUrlsGetTaskContent() throws Exception {
         printTestName();
-        restTests.urlsRetrieveTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsGetTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
@@ -189,6 +190,13 @@ public class JbossEapRemoteApiIntegrationTest extends KieWbWarJbossEapDeploy {
     public void testRestUrlsVariableHistory() throws Exception {
         printTestName();
         restTests.urlsVariableHistory(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+    
+    @Test
+    @InSequence(2)
+    public void testRestUrlsRetrieveProcVar() throws Exception {
+        printTestName();
+        restTests.urlsGetRealProcessVariable(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------

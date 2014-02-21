@@ -270,7 +270,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             fail("startProcess should fail!");
         } catch( RemoteRuntimeException rre) { 
             String errMsg = rre.getMessage();
-            assertTrue( "Incorrect error message: " + errMsg, errMsg.contains("DomainNotFoundBadRequestException"));
+            assertTrue( "Incorrect error message: " + errMsg, errMsg.contains("DeploymentNotFoundException"));
         }
     }
         

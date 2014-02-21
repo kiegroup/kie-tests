@@ -45,7 +45,6 @@ import org.jboss.resteasy.spi.ReaderException;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
-import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.process.audit.event.AuditEvent;
@@ -55,7 +54,6 @@ import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
 import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
-import org.jgroups.util.UUID;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -83,11 +81,11 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobR
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
+import org.kie.tests.wb.base.test.objects.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +180,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper queryRequestHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD, timeout);
 
         // Start process
-        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/org.jbpm.humantask/start");
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start");
         ClientResponse<?> responseObj = post(restRequest);
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
@@ -196,9 +194,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .getEntity(JaxbTaskSummaryListResponse.class);
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
-        for( String potOwner : taskSum.getPotentialOwners() ) { 
-           System.out.println( "pot owner: " + potOwner); 
-        }
+        assertNotNull( "Null actual owner", taskSum.getActualOwner() );
 
         // get task info
         restRequest = requestHelper.createRequest("task/" + taskId);
@@ -479,7 +475,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         logger.debug(">> " + restRequest.getUri());
         responseObj = post(restRequest);
         result = (String) responseObj.getEntity(String.class);
-        assertTrue("Doesn't start like a JSON string!", result.startsWith("{"));
+        if( ! result.startsWith("{") ) { 
+            logger.error( "Should be JSON:\n" + result );
+            fail("Doesn't start like a JSON string!");
+        }
     }
 
     public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
@@ -562,7 +561,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // start process
         ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
-        assertTrue("No process instances started.", processInstances != null && processInstances.size() > 0);
+        assertNotNull("Null process instance list!", processInstances );
+        assertTrue("No process instances started.", processInstances.size() > 0);
     }
 
     public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception {
@@ -593,7 +593,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
         waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
         
-        requestHelper.createRequest("deployments/");
+        // Check list of deployments 
+        restRequest = requestHelper.createRequest("deployment/");
+        ClientResponse<?> responseObj = get(restRequest);
+        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
+        assertNotNull( "Null answer!", depList);
+        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
+        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
     }
 
     private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
@@ -797,12 +803,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
     }
 
-    public void urlsCloneAndDeployJbpmPlaygroundEvaluationProject() {
-        // https://github.com/droolsjbpm/jbpm-playground.git
-
-    }
     
-    public void urlsRetrieveTaskContent(URL deploymentUrl, String user, String password) throws Exception {
+    public void urlsGetTaskContent(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
 
@@ -881,25 +883,93 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull(pi);
         assertEquals(procInstId, pi.getId());
     }
+
+    private boolean testWithHttpUrlConnection = false;
     
     public void urlsGetDeployments(URL deploymentUrl, String user, String password) throws Exception {
-        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        String authString = user + ":" + password;
-        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
-        String authStringEnc = new String(authEncBytes);
-        connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
-        connection.setRequestMethod("GET");
-
-        logger.debug(">> [GET] " + url.toExternalForm());
-        connection.connect();
-        if (200 != connection.getResponseCode()) {
-            logger.warn(connection.getContent().toString());
-        }
-        assertEquals(200, connection.getResponseCode());
-        Class<?> [] classes = { JaxbDeploymentUnitList.class };
-        JaxbDeploymentUnitList depList = (JaxbDeploymentUnitList) connection.getContent(classes);
+        // test with normal RestRequestHelper
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+      
+        ClientRequest restRequest = requestHelper.createRequest("deployment/");
+        ClientResponse<?> responseObj = get(restRequest);
+        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
+        assertNotNull( "Null answer!", depList);
+        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
         assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
+        
+        // test with HttpURLConnection
+        if( testWithHttpUrlConnection ) { 
+            URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            String authString = user + ":" + password;
+            byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+            String authStringEnc = new String(authEncBytes);
+            connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+            connection.setRequestMethod("GET");
+
+            logger.debug(">> [GET] " + url.toExternalForm());
+            connection.connect();
+            if (200 != connection.getResponseCode()) {
+                logger.warn(connection.getContent().toString());
+            }
+            assertEquals(200, connection.getResponseCode());
+            Class<?> [] classes = { JaxbDeploymentUnitList.class };
+            depList = (JaxbDeploymentUnitList) connection.getContent(classes);
+            assertNotNull( "Null answer!", depList);
+            assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
+            assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
+        }
+    }
+    
+    public void urlsGetRealProcessVariable(URL deploymentUrl, String user, String password) throws Exception { 
+        // Setup
+        RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
+        RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        logger.info( "deployment url: " + deploymentUrl.toExternalForm());
+        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        
+        // Start process
+        MyType param = new MyType("variable", 29);
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("myobject", param);
+        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        
+        /**
+         * Check that MyType was correctly deserialized on server side
+         */
+        String varName = "myobject";
+        List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName(varName, false);
+        VariableInstanceLog thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) { 
+                thisProcInstVarLog = varLog;
+                break;
+            }
+        }
+        assertEquals( varName, thisProcInstVarLog.getVariableId() );
+//        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
+        ClientResponse<?> response = get(restRequest);
+        JaxbProcessInstanceResponse jaxbProcInstResp = response.getEntity(JaxbProcessInstanceResponse.class);
+        ProcessInstance procInst = jaxbProcInstResp.getResult();
+        assertNotNull( procInst );
+        assertEquals( "Unequal process instance id.", procInstId, procInst.getId());
+       
+        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName );
+        restRequest.accept(MediaType.APPLICATION_XML_TYPE);
+        response = get(restRequest);
+        
+        MyType retrievedVar = response.getEntity(MyType.class);
+        assertNotNull( "Expected filled variable.", retrievedVar);
+        assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
+        assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
+    }
+    
+
+    public void urlsCloneAndDeployJbpmPlaygroundEvaluationProject() {
+        // https://github.com/droolsjbpm/jbpm-playground.git
+
     }
 }
