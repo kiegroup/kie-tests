@@ -1,4 +1,4 @@
-package org.kie.tests.wb.jboss.deploy;
+package org.kie.tests.wb.jboss;
 
 import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 
@@ -9,12 +9,14 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.wb.base.test.AbstractDeploy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KieWbWarJbossAsDeploy extends AbstractDeploy {
 
-    protected static final String PROCESS_ID = "org.jbpm.humantask";
+    protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossAsDeploy.class);
     
-    protected static WebArchive createTestWar(String classifier) {
+    static WebArchive createTestWar(String classifier) {
         // Import kie-wb war
         File [] warFile = 
                 Maven.resolver()

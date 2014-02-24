@@ -140,6 +140,12 @@
       <version>3.3</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
     <!-- TEST -->
     <dependency>
       <groupId>ch.qos.logback</groupId>

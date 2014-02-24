@@ -72,7 +72,6 @@ import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
-import org.kie.services.client.serialization.jaxb.impl.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
@@ -83,6 +82,7 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
+import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
 import org.kie.tests.wb.base.test.objects.MyType;
@@ -96,23 +96,23 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private static final String taskUserId = "salaboy";
 
     private final String deploymentId;
-    private String mediaType;
+    private MediaType mediaType;
 
     private int timeout = 10;
     
-    public RestIntegrationTestMethods(String deploymentId, String mediaType, int timeout) {
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout) {
        this(deploymentId, mediaType);
        this.timeout = timeout;
     }
     
-    public RestIntegrationTestMethods(String deploymentId, String mediaType) {
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType) {
         this.deploymentId = deploymentId;
         this.mediaType = mediaType;
     }
 
     public RestIntegrationTestMethods(String deploymentId) {
         this.deploymentId = deploymentId;
-        this.mediaType = MediaType.APPLICATION_XML;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
@@ -143,16 +143,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     private ClientResponse<?> get(ClientRequest restRequest) throws Exception {
+        restRequest.accept(this.mediaType);
         logger.debug(">> [GET]  " + restRequest.getUri());
         return checkResponse(restRequest.get());
     }
 
     private ClientResponse<?> post(ClientRequest restRequest) throws Exception {
+        restRequest.accept(this.mediaType);
         logger.debug(">> [POST/" + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
         return checkResponse(restRequest.post());
     }
 
     private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception {
+        restRequest.accept(this.mediaType);
         long before, after;
         logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
         ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
@@ -162,10 +165,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     private void addToRequestBody(ClientRequest restRequest, Object obj) throws Exception {
-        if (mediaType.equals(MediaType.APPLICATION_XML)) {
+        if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
             String body = jaxbSerializationProvider.serialize(obj);
             restRequest.body(mediaType, body);
-        } else if (mediaType.equals(MediaType.APPLICATION_JSON)) {
+        } else if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
             String body = jsonSerializationProvider.serialize(obj);
             restRequest.body(mediaType, body);
         }
@@ -215,10 +218,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void commandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
-        helper.setMediaType(MediaType.APPLICATION_XML_TYPE);
 
-        String originalType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML;
+        MediaType originalType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
         // Start process
         String executeOp = "runtime/" + deploymentId + "/execute";
@@ -323,8 +325,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             throws Exception {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(appUrl, user, password, timeout);
 
-        String originalMediaType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML;
+        MediaType originalMediaType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
         List<Command<?>> commands = new ArrayList<Command<?>>();
         commands.add(command);
@@ -459,11 +461,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void urlsJsonJaxbStartProcess(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
-
+        MediaType origType = this.mediaType;
         // XML
         String startProcessOper = "runtime/" + deploymentId + "/process/org.jbpm.humantask/start";
         ClientRequest restRequest = requestHelper.createRequest(startProcessOper);
-        restRequest.accept(MediaType.APPLICATION_XML_TYPE);
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
         logger.debug(">> " + restRequest.getUri());
         ClientResponse<?> responseObj = post(restRequest);
         String result = (String) responseObj.getEntity(String.class);
@@ -471,7 +473,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // JSON
         restRequest = requestHelper.createRequest(startProcessOper);
-        restRequest.accept(MediaType.APPLICATION_JSON_TYPE);
+        this.mediaType = MediaType.APPLICATION_JSON_TYPE;
         logger.debug(">> " + restRequest.getUri());
         responseObj = post(restRequest);
         result = (String) responseObj.getEntity(String.class);
@@ -483,7 +485,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
-        requestHelper.setMediaType(MediaType.APPLICATION_XML_TYPE);
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID
@@ -582,6 +583,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // Get (has it been deployed?)
         ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
+        restRequest.accept(this.mediaType);
 
         if (isDeployed(restRequest.get())) {
             if( undeploy ) { 
@@ -624,6 +626,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         while (!success && tries++ < MAX_TRIES) {
             ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
             logger.debug(">> " + restRequest.getUri());
+            restRequest.accept(this.mediaType);
             ClientResponse<?> responseObj = restRequest.get();
             if (deploy) {
                 success = isDeployed(responseObj);
@@ -837,7 +840,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
        
         String varId = "myobject";
-        
         ClientRequest restRequest 
             = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
         ClientResponse<?> responseObj = post(restRequest);
@@ -857,7 +859,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
 
         assertNotNull("Empty VariableInstanceLog list.", viLogs);
-        assertEquals("VariableInstanceLog list size",  viLogs.size(), 1);
+        assertEquals("VariableInstanceLog list size",  4, viLogs.size());
         VariableInstanceLog vil = viLogs.get(0);
         assertNotNull("Empty VariableInstanceLog instance.", vil);
         assertEquals("Process instance id", vil.getProcessInstanceId(), procInstId);
