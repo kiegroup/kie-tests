@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.eap;
+package org.kie.tests.wb.jboss;
 
-import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
+import static org.kie.tests.wb.jboss.KieWbWarJbossAsDeploy.createTestWar;
 
 import javax.ws.rs.core.MediaType;
 
@@ -30,18 +30,20 @@ import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-basic-auth")
     public static Archive<?> createWar() {
-        return createTestWar("eap-6_1");
+        return createTestWar("jboss-as7");
     }
- 
+
     public boolean doDeploy() { 
-        return false;
+        return true;
     }
- 
-    public MediaType getMediaType() { 
+
+    @Override
+    public MediaType getMediaType() {
         return MediaType.APPLICATION_JSON_TYPE;
     }
+
 }

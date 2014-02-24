@@ -56,7 +56,8 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
-import org.kie.services.client.api.command.RemoteRuntimeException;
+import org.kie.services.client.api.command.exception.RemoteApiException;
+import org.kie.services.client.api.command.exception.RemoteCommunicationException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
@@ -268,8 +269,8 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         try { 
             ksession.startProcess(HUMAN_TASK_PROCESS_ID);
             fail("startProcess should fail!");
-        } catch( RemoteRuntimeException rre) { 
-            String errMsg = rre.getMessage();
+        } catch( RemoteApiException rae) { 
+            String errMsg = rae.getMessage();
             assertTrue( "Incorrect error message: " + errMsg, errMsg.contains("DeploymentNotFoundException"));
         }
     }
