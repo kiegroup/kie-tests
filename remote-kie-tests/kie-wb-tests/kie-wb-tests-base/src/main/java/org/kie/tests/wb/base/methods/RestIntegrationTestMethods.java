@@ -96,23 +96,36 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private static final String taskUserId = "salaboy";
 
     private final String deploymentId;
-    private MediaType mediaType;
+    private final boolean tomcatInstance;
 
-    private int timeout = 10;
+    private MediaType mediaType;
+    private final int timeout;
+    private static final int DEFAULT_TIMEOUT = 10;
+    
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance) {
+        if( mediaType == null ) { 
+            mediaType = MediaType.APPLICATION_XML_TYPE;
+        }
+        if( tomcatInstance == null ) { 
+           tomcatInstance = false; 
+        }
+        
+        this.deploymentId = deploymentId;
+        this.mediaType = mediaType;
+        this.timeout = timeout;
+        this.tomcatInstance = tomcatInstance;
+    }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout) {
-       this(deploymentId, mediaType);
-       this.timeout = timeout;
+       this(deploymentId, mediaType, timeout, null);
     }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType) {
-        this.deploymentId = deploymentId;
-        this.mediaType = mediaType;
+        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null);
     }
 
     public RestIntegrationTestMethods(String deploymentId) {
-        this.deploymentId = deploymentId;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
+        this(deploymentId, null, DEFAULT_TIMEOUT, null);
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
@@ -137,7 +150,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         int reqStatus = responseObj.getStatus();
         if (reqStatus != status) {
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
-            assertEquals("Status OK", status, reqStatus);
+            fail("Incorrect status: " + reqStatus);
         }
         return responseObj;
     }
@@ -174,13 +187,21 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
 
+    private RestRequestHelper getRestRequestHelper(URL deploymentUrl, String user, String password) { 
+        if( tomcatInstance ) { 
+           return RestRequestHelper.newInstance(deploymentUrl, user, password, timeout, mediaType, true);
+        } else { 
+            return RestRequestHelper.newInstance(deploymentUrl, user, password, timeout, mediaType);
+        }
+    }
+    
     /**
      * Test methods
      */
 
     public void urlsStartHumanTaskProcess(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
-        RestRequestHelper queryRequestHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD, timeout);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        RestRequestHelper queryRequestHelper = getRestRequestHelper(deploymentUrl, JOHN_USER, JOHN_PASSWORD);
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start");
@@ -217,7 +238,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void commandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
 
         MediaType originalType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
@@ -323,7 +344,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private JaxbCommandResponse<?> executeCommand(URL appUrl, String user, String password, String deploymentId, Command<?> command)
             throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(appUrl, user, password, timeout);
+        RestRequestHelper requestHelper = getRestRequestHelper(appUrl, user, password);
 
         MediaType originalMediaType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
@@ -350,7 +371,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void urlsHistoryLogs(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper helper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
         ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
@@ -441,7 +462,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void urlsDataServiceCoupling(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, timeout);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/"
                 + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
 
@@ -460,7 +481,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void urlsJsonJaxbStartProcess(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         MediaType origType = this.mediaType;
         // XML
         String startProcessOper = "runtime/" + deploymentId + "/process/org.jbpm.humantask/start";
@@ -484,7 +505,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID
@@ -576,13 +597,21 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, MediaType mediaType, boolean undeploy)
             throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password, 10);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+
+        // Check list of deployments 
+        ClientRequest restRequest = requestHelper.createRequest("deployment/");
+        ClientResponse<?> responseObj = get(restRequest);
+        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
+        assertNotNull( "Null answer!", depList);
+        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
+        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
         RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
         // Get (has it been deployed?)
-        ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
+        restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
         restRequest.accept(this.mediaType);
 
         if (isDeployed(restRequest.get())) {
@@ -595,13 +624,77 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
         waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
         
-        // Check list of deployments 
-        restRequest = requestHelper.createRequest("deployment/");
-        ClientResponse<?> responseObj = get(restRequest);
-        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
-        assertNotNull( "Null answer!", depList);
-        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
-        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
+    }
+
+    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
+            RuntimeStrategy strategy, MediaType mediaType) throws Exception {
+        logger.info("deploy");
+        // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
+    
+        // Create request
+        String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", userId, password).getBytes()).trim();
+        String url = appUrl.toExternalForm() + "rest/deployment/" + deploymentId + "/deploy";
+        if (strategy.equals(RuntimeStrategy.SINGLETON)) {
+            url += "?strategy=" + strategy.toString();
+        }
+    
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getCredentialsProvider().setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+                new UsernamePasswordCredentials(userId, password));
+        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
+        ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
+    
+        ClientRequest request = factory.createRequest(url).header("Authorization", AUTH_HEADER).accept(mediaType)
+                .followRedirects(true);
+        logger.debug(">> " + request.getUri());
+    
+        // ADDED CODE TO CHECK RESPONSE TIME
+        long before, after;
+        logger.debug("BEFORE POST: " + sdf.format((before = System.currentTimeMillis())));
+    
+        // POST request
+        JaxbDeploymentJobResult result = null;
+        ClientResponse<JaxbDeploymentJobResult> response = null;
+        try {
+            response = request.post(JaxbDeploymentJobResult.class);
+        } catch (Exception ex) {
+            logger.error("POST operation failed.", ex);
+            fail("POST operation failed.");
+        }
+        if (response == null) {
+            fail("Response is null!");
+        }
+    
+        // ADDED CODE TO CHECK RESPONSE TIME
+        logger.debug("AFTER POST:  " + sdf.format((after = System.currentTimeMillis())));
+        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
+    
+        // Retrieve request
+        try {
+            String contentType = response.getHeaders().getFirst("Content-Type");
+            if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
+                result = response.getEntity();
+            } else {
+                logger.error("Response body: {}",
+                // get response as string
+                        response.getEntity(String.class)
+                        // improve HTML readability
+                                .replaceAll("><", ">\n<"));
+                fail("Unexpected content-type: " + contentType);
+            }
+        } catch (ReaderException ex) {
+            response.resetStream();
+            logger.error("Bad entity: [{}]", response.getEntity(String.class));
+            fail("Bad entity: " + ex.getMessage());
+        } catch (Exception ex) {
+            logger.error("Unmarshalling failed.", ex);
+            fail("Unmarshalling entity failed: " + ex.getMessage());
+        }
+    
+        assertTrue("The deployment unit was not created successfully.", result.isSuccess());
+    
+        return result;
     }
 
     private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
@@ -619,8 +712,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestHelper);
     }
 
-    private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy, URL deploymentUrl,
-            RestRequestHelper requestHelper) throws Exception {
+    private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy, URL deploymentUrl, RestRequestHelper requestHelper) 
+            throws Exception {
         boolean success = false;
         int tries = 0;
         while (!success && tries++ < MAX_TRIES) {
@@ -654,6 +747,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 }
             } 
             return false;
+        } catch( Exception e ) { 
+           logger.error( "Unable to check if deployed: " + responseObj.getEntity(String.class)); 
+           return false;
         } finally {
             responseObj.releaseConnection();
         }
@@ -677,7 +773,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiGetTaskInstance(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         // Remote API setup
         RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
@@ -720,80 +816,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull(taskData);
     }
 
-    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
-            RuntimeStrategy strategy, MediaType mediaType) throws Exception {
-        logger.info("deploy");
-        // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
-
-        // Create request
-        String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", userId, password).getBytes()).trim();
-        String url = appUrl.toExternalForm() + "rest/deployment/" + deploymentId + "/deploy";
-        if (strategy.equals(RuntimeStrategy.SINGLETON)) {
-            url += "?strategy=" + strategy.toString();
-        }
-
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        httpClient.getCredentialsProvider().setCredentials(
-                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
-                new UsernamePasswordCredentials(userId, password));
-        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
-        ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
-
-        ClientRequest request = factory.createRequest(url).header("Authorization", AUTH_HEADER).accept(mediaType)
-                .followRedirects(true);
-        logger.debug(">> " + request.getUri());
-
-        // ADDED CODE TO CHECK RESPONSE TIME
-        long before, after;
-        logger.debug("BEFORE POST: " + sdf.format((before = System.currentTimeMillis())));
-
-        // POST request
-        JaxbDeploymentJobResult result = null;
-        ClientResponse<JaxbDeploymentJobResult> response = null;
-        try {
-            response = request.post(JaxbDeploymentJobResult.class);
-        } catch (Exception ex) {
-            logger.error("POST operation failed.", ex);
-            fail("POST operation failed.");
-        }
-        if (response == null) {
-            fail("Response is null!");
-        }
-
-        // ADDED CODE TO CHECK RESPONSE TIME
-        logger.debug("AFTER POST:  " + sdf.format((after = System.currentTimeMillis())));
-        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
-
-        // Retrieve request
-        try {
-            String contentType = response.getHeaders().getFirst("Content-Type");
-            if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
-                result = response.getEntity();
-            } else {
-                logger.error("Response body: {}",
-                // get response as string
-                        response.getEntity(String.class)
-                        // improve HTML readability
-                                .replaceAll("><", ">\n<"));
-                fail("Unexpected content-type: " + contentType);
-            }
-        } catch (ReaderException ex) {
-            response.resetStream();
-            logger.error("Bad entity: [{}]", response.getEntity(String.class));
-            fail("Bad entity: " + ex.getMessage());
-        } catch (Exception ex) {
-            logger.error("Unmarshalling failed.", ex);
-            fail("Unmarshalling entity failed: " + ex.getMessage());
-        }
-
-        assertTrue("The deployment unit was not created successfully.", result.isSuccess());
-
-        return result;
-    }
-
     public void urlsStartScriptProcess(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
 
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_PROCESS_ID
                 + "/start");
@@ -809,7 +834,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     public void urlsGetTaskContent(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
 
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + TASK_CONTENT_PROCESS_ID + "/start");
 
@@ -837,7 +862,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     public void urlsVariableHistory(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
        
         String varId = "myobject";
         ClientRequest restRequest 
@@ -886,11 +911,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals(procInstId, pi.getId());
     }
 
-    private boolean testWithHttpUrlConnection = false;
+    private boolean testWithHttpUrlConnection = true;
     
     public void urlsGetDeployments(URL deploymentUrl, String user, String password) throws Exception {
         // test with normal RestRequestHelper
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
       
         ClientRequest restRequest = requestHelper.createRequest("deployment/");
         ClientResponse<?> responseObj = get(restRequest);
@@ -929,7 +954,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RemoteRestRuntimeFactory restSessionFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         logger.info( "deployment url: " + deploymentUrl.toExternalForm());
-        RestRequestHelper requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         
         // Start process
         MyType param = new MyType("variable", 29);
