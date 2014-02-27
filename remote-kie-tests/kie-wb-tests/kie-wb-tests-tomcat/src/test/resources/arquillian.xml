@@ -9,10 +9,18 @@
 
   <container qualifier="tomcat" default="true">
     <configuration>
-      <property name="tomcatHome">target/tomcat-embedded-7</property>
-      <property name="workDir">work</property>
-      <property name="bindHttpPort">8888</property>
+      <property name="startupTimeoutInSeconds">10</property>
       <property name="unpackArchive">true</property>
+       
+      <!-- tomcat setup --> 
+      <property name="catalinaHome">target/apache-tomcat-${version.org.apache.tomcat}</property>
+      <property name="javaVmArguments">-Xmx1024m  -XX:MaxPermSize=512m -Dbtm.root=${tomcat.home} -Dbitronix.tm.configuration=${tomcat.home}/conf/btm-config.properties</property>
+      <property name="bindHttpPort">8080</property>
+      
+      <!-- deploy --> 
+      <property name="user">tomcat</property>
+      <property name="pass">tomcat</property>
+      <property name="serverConfig">server.xml</property>
     </configuration>
   </container>
 </arquillian>
