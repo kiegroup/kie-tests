@@ -32,16 +32,26 @@ import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 @RunWith(Arquillian.class)
 public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-basic-auth")
+    @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
         return createTestWar("eap-6_1");
     }
  
     public boolean doDeploy() { 
-        return false;
+        return true;
     }
  
     public MediaType getMediaType() { 
-        return MediaType.APPLICATION_JSON_TYPE;
+        return MediaType.APPLICATION_XML_TYPE;
+    }
+
+    @Override
+    public boolean jmsQueuesAvailable() {
+        return true;
+    }
+
+    @Override
+    public boolean useFormBasedAuth() {
+        return false;
     }
 }

@@ -30,10 +30,15 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public abstract boolean doDeploy();
     public abstract MediaType getMediaType();
     public abstract boolean jmsQueuesAvailable();
+    public abstract boolean useFormBasedAuth();
    
     public AbstractRemoteApiIntegrationTest() { 
-         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType());
-         jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth());
+         if( jmsQueuesAvailable() ) { 
+             jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+         } else { 
+             jmsTests = null;
+         }
     }
     
     @AfterClass

@@ -33,4 +33,14 @@ public class LiveJbossEapRestIntegrationTest extends AbstractRemoteApiIntegratio
         return MediaType.APPLICATION_JSON_TYPE;
     }
 
+    @Override
+    public boolean jmsQueuesAvailable() {
+        return true;
+    }
+
+    @Override
+    public boolean useFormBasedAuth() {
+        return false;
+    }
+
 }
