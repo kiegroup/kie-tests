@@ -16,6 +16,7 @@
   <properties>
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
+    <version.org.antlr>3.1.1</version.org.antlr>
   </properties>
 
   <dependencies>
@@ -85,6 +86,24 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logmanager</groupId>
+      <artifactId>jboss-logmanager</artifactId>
+      <version>1.4.0.Final</version>
+      <scope>test</scope>
+    </dependency>
+    
     <!-- libs necessary for kie-wb -->
     <dependency>
       <groupId>org.codehaus.btm</groupId>
@@ -116,6 +135,19 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <version>1.7.2</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- BZ-1070502, etc -->
+    <dependency>
+      <groupId>org.hibernate.common</groupId>
+      <artifactId>hibernate-commons-annotations</artifactId>
+      <version>4.0.1.Final</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr</artifactId>
+      <version>3.1.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -166,6 +198,25 @@
                   <outputDirectory>${project.build.directory}</outputDirectory>
                 </artifactItem>
               </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>check-kie-wb-war</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-wb-distribution-wars</artifactId>
+                  <classifier>tomcat7</classifier>
+                  <type>war</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/deployments</outputDirectory>
             </configuration>
           </execution>
           <execution>

@@ -16,12 +16,9 @@
 
   <modules>
     <module>kie-wb-tests-base</module>
-    <module>kie-wb-tests-eap</module>
     <module>kie-wb-tests-jboss</module>
-<!--
-    Not finished yet.. 
     <module>kie-wb-tests-tomcat</module>
--->
+    <module>kie-wb-tests-eap</module>
   </modules>
 
   <properties>

@@ -17,84 +17,42 @@
  */
 package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
-
-import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@RunAsClient
 @RunWith(Arquillian.class)
-public class TomcatRemoteApiIntegrationTest {
-
-    private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteApiIntegrationTest.class);
-
-    @ArquillianResource
-    URL deploymentUrl;
-    
-    private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
+public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
         return createTestWar("tomcat7");
     }
 
-    // Test methods..
     public boolean doDeploy() {
-        return false;
+        return true;
     }
 
     public MediaType getMediaType() {
         return MediaType.APPLICATION_JSON_TYPE;
     }
 
-    // Constructor
-    private final RestIntegrationTestMethods restTests;
-
-    public TomcatRemoteApiIntegrationTest() {
-        restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType());
+    @Override
+    public boolean jmsQueuesAvailable() {
+        return false;
     }
 
-    // Tests
-    @AfterClass
-    public static void waitForTxOnServer() throws InterruptedException {
-        long sleep = 1000;
-        logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
-        Thread.sleep(sleep);
-    }
-
-    @BeforeClass
-    public static void waitForDeployedKmodulesToLoad() throws InterruptedException {
-        long sleep = 2000;
-        logger.info("Waiting " + sleep / 1000 + " secs for KieModules to deploy and load..");
-        Thread.sleep(sleep);
-    }
-
-    protected void printTestName() {
-        String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
-        System.out.println("-=> " + testName);
-    }
-
-    @Test
-    @InSequence(0)
-    public void setupDeployment() throws Exception {
-        printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE, false);
-        Thread.sleep(5000);
+    @Override
+    public boolean useFormBasedAuth() {
+        return true;
     }
 
 }

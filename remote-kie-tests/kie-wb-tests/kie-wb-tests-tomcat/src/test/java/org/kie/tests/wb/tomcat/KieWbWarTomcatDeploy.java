@@ -60,12 +60,16 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
         war.delete("WEB-INF/classes/META-INF/services/org.uberfire.security.auth.AuthenticationSource");
         war.addAsWebInfResource("war/org.uberfire.security.auth.AuthenticationSource-TOMCAT-JEE-SECURITY", 
                 "classes/META-INF/services/org.uberfire.security.auth.AuthenticationSource");
+        war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
 
         // Replace kie-services-remote jar with the one we just generated
         war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
         String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-jaxb" }
+                { "org.kie.remote", "kie-services-remote", null },
+                { "org.kie.remote", "kie-services-jaxb", null },
+                // BZ-1070502
+                { "org.hibernate.common", "hibernate-commons-annotations", null },
+                { "org.antlr", "antlr", "3.1.1" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         String oldClientJar = "kie-services-client";
@@ -77,6 +81,9 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
         }
         for( int i = 0; i < jarsToReplace.length; ++i ) { 
             jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+            if( jarsToReplace[i][2] != null ) { 
+                jarsArg[i] += ":" + jarsToReplace[i][2];
+            }
             logger.info("About to resolve " + jarsArg[i]);
         }
 
