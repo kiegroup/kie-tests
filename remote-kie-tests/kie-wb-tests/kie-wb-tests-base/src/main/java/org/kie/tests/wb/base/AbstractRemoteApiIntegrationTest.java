@@ -189,6 +189,13 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         restTests.urlsGetRealProcessVariable(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
+   
+    @Test
+    @InSequence(2)
+    public void testRestRemoteApiHumanTaskGroupId() throws Exception { 
+        printTestName();
+        restTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
+    }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
     
@@ -262,5 +269,13 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
         jmsTests.remoteApiRunEvaluationProcess();
+    }
+   
+    @Test
+    @InSequence(2)
+    public void testJmsRemoteApiHumanTaskGroupId() throws Exception { 
+        printTestName();
+        Assume.assumeTrue(jmsQueuesAvailable());
+        jmsTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
     }
 }

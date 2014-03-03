@@ -32,7 +32,7 @@ import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 @RunWith(Arquillian.class)
 public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-basic-auth")
+    @Deployment(testable = false, name = "kie-wb-jboss")
     public static Archive<?> createWar() {
         return createTestWar("jboss-as7");
     }
@@ -46,4 +46,13 @@ public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
         return MediaType.APPLICATION_JSON_TYPE;
     }
 
+    @Override
+    public boolean jmsQueuesAvailable() {
+        return true;
+    }
+
+    @Override
+    public boolean useFormBasedAuth() {
+        return false;
+    }
 }

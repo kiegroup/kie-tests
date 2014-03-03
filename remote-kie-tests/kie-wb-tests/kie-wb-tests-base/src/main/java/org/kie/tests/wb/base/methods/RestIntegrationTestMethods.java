@@ -65,6 +65,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
@@ -1054,4 +1055,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // https://github.com/droolsjbpm/jbpm-playground.git
 
     }
+    
+    
+    public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
+       RemoteRuntimeEngineFactory krisRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD);
+       RemoteRuntimeEngineFactory maryRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD);
+       RemoteRuntimeEngineFactory johnRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD);
+       runHumanTaskGroupIdTest(krisRemoteEngineFactory, johnRemoteEngineFactory, maryRemoteEngineFactory);
+    }
+    
 }

@@ -20,6 +20,7 @@ package org.kie.tests.wb.base.methods;
 import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +56,7 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.api.command.exception.RemoteCommunicationException;
@@ -525,5 +527,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         assertEquals("Incorrect process status: " + procStatus , ProcessInstance.STATE_COMPLETED,  procStatus);
     }
-   
+  
+    public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
+       InitialContext krisContext = getRemoteInitialContext(KRIS_USER, KRIS_PASSWORD);
+       RemoteRuntimeEngineFactory krisRemoteEngineFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, krisContext, KRIS_USER, KRIS_PASSWORD);
+       InitialContext maryContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
+       RemoteRuntimeEngineFactory maryRemoteEngineFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, maryContext, MARY_USER, MARY_PASSWORD);
+       InitialContext johnContext = getRemoteInitialContext(JOHN_USER, JOHN_PASSWORD);
+       RemoteRuntimeEngineFactory johnRemoteEngineFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, johnContext, JOHN_USER, JOHN_PASSWORD);
+       runHumanTaskGroupIdTest(krisRemoteEngineFactory, johnRemoteEngineFactory, maryRemoteEngineFactory);
+    }
 }
