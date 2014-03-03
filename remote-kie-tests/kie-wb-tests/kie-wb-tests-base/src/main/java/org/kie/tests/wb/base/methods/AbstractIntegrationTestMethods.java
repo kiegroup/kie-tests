@@ -1,8 +1,7 @@
 package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.*;
-import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +21,7 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.test.objects.Person;
@@ -124,6 +124,76 @@ public class AbstractIntegrationTestMethods {
             }
         }
     }
+   
+    public void runHumanTaskGroupIdTest(RemoteRuntimeEngineFactory krisRuntimeEngineFactory, 
+            RemoteRuntimeEngineFactory johnRuntimeEngineFactory, RemoteRuntimeEngineFactory maryRuntimeEngineFactory) {
 
+        RuntimeEngine engine = krisRuntimeEngineFactory.newRuntimeEngine();
+        KieSession ksession = engine.getKieSession();
 
+        // start a new process instance
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("employee", "krisv");
+        params.put("reason", "Yearly performance evaluation");
+        ProcessInstance processInstance = ksession.startProcess(EVALUTAION_PROCESS_ID, params);
+        long procInstId = processInstance.getId();
+        System.out.println("Process started ...");
+
+        // complete Self Evaluation
+        {
+            String user = "krisv";
+            TaskService taskService = engine.getTaskService();
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
+            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            assertNotNull("Unable to find " + user + "'s task", task);
+            System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
+            taskService.start(task.getId(), user);
+            Map<String, Object> results = new HashMap<String, Object>();
+            results.put("performance", "exceeding");
+            taskService.complete(task.getId(), user, results);
+        }
+
+        // john from HR
+        { 
+            String user = "john";
+            TaskService taskService = johnRuntimeEngineFactory.newRuntimeEngine().getTaskService();
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
+            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            assertNotNull("Unable to find " + user + "'s task", task);
+            System.out.println("'john' completing task " + task.getName() + ": " + task.getDescription());
+//            taskService.claim(task.getId(), user);
+            taskService.start(task.getId(), user);
+            Map<String, Object> results = new HashMap<String, Object>();
+            results.put("performance", "acceptable");
+            taskService.complete(task.getId(), user, results);
+        }
+
+        // mary from PM
+        {
+            String user = "mary";
+            TaskService taskService = maryRuntimeEngineFactory.newRuntimeEngine().getTaskService();
+            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
+            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            assertNotNull("Unable to find " + user + "'s task", task);
+            System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
+//            taskService.claim(task.getId(), user);
+            taskService.start(task.getId(), user);
+            Map<String, Object> results = new HashMap<String, Object>();
+            results.put("performance", "outstanding");
+            taskService.complete(task.getId(), user,  results);
+        }
+
+        //  assertProcessInstanceCompleted(processInstance.getId(), ksession);
+        System.out.println("Process instance completed");
+    }
+
+    private TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) { 
+        TaskSummary result = null;
+        for( TaskSummary krisTask : tasks ) { 
+            if( krisTask.getProcessInstanceId() == procInstId ) { 
+                result = krisTask;
+            }
+         }
+        return result;
+    }
 }
