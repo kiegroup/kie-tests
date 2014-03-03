@@ -38,7 +38,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public boolean doDeploy() { 
-        return false;
+        return true;
     }
  
     public MediaType getMediaType() { 
