@@ -317,6 +317,25 @@
                   </artifactItems>
                 </configuration>
               </execution>
+                <execution>
+            <id>check-kie-wb-war</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-wb-distribution-wars</artifactId>
+                  <classifier>tomcat7</classifier>
+                  <type>war</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/deployments</outputDirectory>
+            </configuration>
+          </execution>
             </executions>
           </plugin>
 
