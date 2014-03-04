@@ -328,7 +328,7 @@
                 <artifactItem>
                   <groupId>org.kie</groupId>
                   <artifactId>kie-wb-distribution-wars</artifactId>
-                  <classifier>tomcat7</classifier>
+                  <classifier>eap-6_1</classifier>
                   <type>war</type>
                   <overWrite>false</overWrite>
                 </artifactItem>

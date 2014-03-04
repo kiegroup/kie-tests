@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jboss.resteasy.client.ClientRequest;
+import org.jboss.resteasy.client.ClientResponse;
 import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
@@ -22,6 +24,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
+import org.kie.services.client.api.RestRequestHelper;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.test.objects.Person;
@@ -196,4 +199,5 @@ public class AbstractIntegrationTestMethods {
          }
         return result;
     }
+
 }
