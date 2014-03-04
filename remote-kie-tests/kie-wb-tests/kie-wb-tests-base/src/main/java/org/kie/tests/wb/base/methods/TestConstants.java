@@ -19,6 +19,7 @@ public class TestConstants {
     public static final String RULE_TASK_PROCESS_ID         = "com.bpms.flood.RuleTask";
     public static final String TASK_CONTENT_PROCESS_ID      = "org.kie.remote.test.usertask.UserTask";
     public static final String EVALUTAION_PROCESS_ID        = "com.sample.evaluation";
+    public static final String GROUP_ASSSIGNMENT_PROCESS_ID = "org.jboss.qa.bpms.GroupAssignmentHumanTask";
    
     /**
      * User/password

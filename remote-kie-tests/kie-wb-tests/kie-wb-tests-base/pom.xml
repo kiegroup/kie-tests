@@ -148,11 +148,6 @@
 
     <!-- TEST -->
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-bpmn2</artifactId>
       <scope>test</scope>
@@ -163,6 +158,8 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- TEST: persistence -->
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
@@ -178,7 +175,22 @@
       <artifactId>btm</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- TEST: logging -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
+  <build>
+    <testResources>
+        <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+        </testResource>
+    </testResources>
+  </build>
 </project>
 
