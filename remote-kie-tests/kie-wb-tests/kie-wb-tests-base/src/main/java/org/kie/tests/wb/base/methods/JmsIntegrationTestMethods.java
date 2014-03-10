@@ -171,6 +171,13 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     // Tests ----------------------------------------------------------------------------------------------------------------------
 
+    public void commandsSimpleStartProcess(String user, String password) throws Exception {
+        // send cmd: start process
+        Command<?> cmd = new StartProcessCommand(SCRIPT_TASK_PROCESS_ID);
+        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
+        sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+    }
+    
     public void commandsStartProcess(String user, String password) throws Exception {
         // send cmd: start process
         Command<?> cmd = new StartProcessCommand(HUMAN_TASK_PROCESS_ID);

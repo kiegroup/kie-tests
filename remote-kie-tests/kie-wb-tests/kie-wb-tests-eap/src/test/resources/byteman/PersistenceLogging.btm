@@ -68,14 +68,6 @@ IF TRUE
 DO traceln("}}} JOIN TX: " + System.identityHashCode($this) );
 ENDRULE
 
-RULE JPAWorkingMemoryDbLogger constructor
-CLASS org.jbpm.process.audit.JPAWorkingMemoryDbLogger
-METHOD <init>(javax.persistence.EntityManagerFactory)
-AT EXIT
-IF TRUE
-DO traceln("-=- JPAWorkingMemoryDbLogger");
-ENDRULE
-
 RULE EntityManagerFactory constructor trace 
 CLASS org.hibernate.ejb.EntityManagerFactoryImpl
 METHOD <init>

@@ -26,6 +26,9 @@
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
 
+    <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
+    
+    <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
     <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.1</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
@@ -196,6 +199,23 @@
       <artifactId>drools-persistence-jpa</artifactId>
       <scope>test</scope>
     </dependency>
+    
+        <!-- security test -->
+    <dependency>
+      <groupId>javax.security</groupId>
+      <artifactId>jacc</artifactId>
+      <version>1.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-server</artifactId>
+      <version>${version.org.jboss.as}</version>
+      <scope>runtime</scope>
+    </dependency>
+    
+    <!-- byteman -->
+
   </dependencies>
 
   <build>
@@ -228,7 +248,7 @@
             </filesets>
           </configuration>
         </plugin>
-
+      
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
@@ -254,6 +274,54 @@
     </pluginManagement>
 
     <plugins>
+      <!-- check that byteman rules are correct -->
+      <plugin>
+        <groupId>org.jboss.byteman</groupId>
+        <artifactId>byteman-rulecheck-maven-plugin</artifactId>
+        <version>${version.org.jboss.byteman}</version>
+        <executions>
+          <execution>
+            <id>rulecheck-test</id>
+            <goals>
+              <goal>rulecheck</goal>
+            </goals>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <includes>
+                <include>**/*.btm</include>
+              </includes>
+              <verbose>true</verbose>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossts</groupId>
+            <artifactId>jbossjts</artifactId>
+            <version>4.16.4.Final</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>4.2.0.SP1</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-ejb3</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-web</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </plugin>
+      
       <!-- only run when -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -273,6 +341,7 @@
       </properties>
       <build>
         <plugins>
+
 
           <!-- 1. install server in the build/target dir -->
           <plugin>
@@ -308,7 +377,7 @@
                     <artifactItem>
                       <groupId>org.jboss.byteman</groupId>
                       <artifactId>byteman</artifactId>
-                      <version>2.1.4.1</version>
+                      <version>${version.org.jboss.byteman}</version>
                       <type>jar</type>
                       <overWrite>true</overWrite>
                       <outputDirectory>target/</outputDirectory>
@@ -374,22 +443,71 @@
                       <filtering>false</filtering>
                     </resource>
                   </resources>
-                  <overwrite>true</overwrite>
+  <overwrite>true</overwrite>
                 </configuration>
               </execution>
             </executions>
           </plugin>
 
           <!-- 3. modify server configuration -->
-          <plugin>
-            <groupId>com.google.code.maven-replacer-plugin</groupId>
-            <artifactId>replacer</artifactId>
-            <executions>
-              <execution>
-                <id>fix-jboss-standalone-xml</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>replace</goal>
+          <!-- 
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>xml-maven-plugin</artifactId>
+           <version>1.0</version>                      
+           <executions>                        
+             <execution>
+               <phase>process-test-classes</phase>
+               <goals>
+                 <goal>transform</goal>
+               </goals>
+               <configuration>                                 
+                 <transformationSets>
+                   <transformationSet>
+                     <dir>${jboss.as.home}/standalone/configuration/</dir>
+                     <outputDir>${jboss.as.home}/standalone/configuration</outputDir>
+                     <includes>
+                       <include>standalone.xml</include>
+                     </includes>
+                     <stylesheet>src/test/resources/xslt/addSecurityDomain.xslt</stylesheet>
+                   </transformationSet>
+                   <transformationSet> 
+                     <dir>${jboss.as.home}/standalone/configuration/</dir> 
+                     <outputDir>${jboss.as.home}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources/xslt/changeBindingPorts.xslt</stylesheet>
+                   </transformationSet> 
+                   <transformationSet>
+                     <dir>${jboss.as.home}/modules/org/picketlink/main</dir>
+                     <outputDir>${jboss.as.home}/modules/org/picketlink/main</outputDir>
+                     <includes>
+                       <include>module.xml</include>
+                     </includes>
+                     <stylesheet>src/test/resources/xslt/changePicketLinkModule.xslt</stylesheet>
+                     <parameters>
+                       <parameter>
+                         <name>picketlink_version</name>
+                         <value>${version.picketlink}</value>
+                       </parameter>
+                     </parameters>
+                   </transformationSet>
+                 </transformationSets>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin> 
+          -->
+         <plugin>
+           <groupId>com.google.code.maven-replacer-plugin</groupId>
+           <artifactId>replacer</artifactId>
+           <executions>
+             <execution>
+               <id>fix-jboss-standalone-xml</id>
+               <phase>process-test-resources</phase>
+               <goals>
+                 <goal>replace</goal>
                 </goals>
                 <configuration>
                   <basedir>${project.build.directory}/${jboss.server.name}/standalone/configuration</basedir>
