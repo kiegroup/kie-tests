@@ -210,12 +210,21 @@
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-server</artifactId>
-      <version>${version.org.jboss.as}</version>
+      <version>${version.org.jboss.as.dist}</version>
       <scope>runtime</scope>
     </dependency>
-    
-    <!-- byteman -->
-
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-connector</artifactId>
+      <version>${version.org.jboss.as.dist}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.msc</groupId>
+      <artifactId>jboss-msc</artifactId>
+      <version>1.0.4.GA-redhat-1</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>

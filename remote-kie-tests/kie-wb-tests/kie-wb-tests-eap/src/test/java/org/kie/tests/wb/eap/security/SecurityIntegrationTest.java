@@ -22,11 +22,16 @@ import static org.kie.tests.wb.base.methods.TestConstants.projectVersion;
 import java.io.File;
 
 import javax.ejb.EJB;
+import javax.inject.Inject;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.msc.service.ServiceContainer;
+import org.jboss.msc.service.ServiceController;
+import org.jboss.msc.service.ServiceName;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
@@ -45,6 +50,9 @@ public class SecurityIntegrationTest {
         return createTestWar("eap-6_1");
     }
 
+    @Inject
+    public ServiceContainer serviceContainer;
+  
     static WebArchive createTestWar(String classifier) {
         logger.info( "] import");
         // Import kie-wb war
@@ -62,6 +70,36 @@ public class SecurityIntegrationTest {
         // Add kjar deployer
         logger.info( "] add classes");
         war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
+       
+        // Add dependencies
+        logger.info( "] add dependencies");
+        // Replace kie-services-remote jar with the one we just generated
+        String [][] jarsToReplace = { 
+                { "org.jboss.as", "jboss-as-server" }
+//                { "org.jboss.as", "jboss-as-connector" },
+//                { "org.jboss.msc", "jboss-msc" }
+        };
+        String [] jarsArg = new String[jarsToReplace.length];
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+        }
+
+        File [] secTestDeps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve(jarsArg)
+                .withTransitivity()
+                .asFile();
+        for( File file : secTestDeps ) { 
+            logger.info( "Adding " + file.getName());
+        }
+        war.addAsLibraries(secTestDeps);
+      
+        logger.info( "] replace manifest");
+        war.delete("META-INF/MANIFEST.MF");
+        war.addAsManifestResource(
+                new StringAsset(
+                        "Dependencies: org.jboss.dmr,org.jboss.as.server,org.jboss.as.controller,org.jboss.as.controller-client\n"),
+                "MANIFEST.MF"); 
         
         logger.info( "] done");
         return war;
@@ -74,6 +112,25 @@ public class SecurityIntegrationTest {
     public void securityTest() throws Exception { 
         logger.info("-->");
         securityBean.explore();
+        logger.info("---");
+        ServiceController<?> jaccService = null;
+        if( serviceContainer != null ) { 
+            System.out.println( "But could get an injected service container!");
+            for( ServiceName serviceName : serviceContainer.getServiceNames() ) { 
+                if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+                    jaccService = serviceContainer.getService(serviceName);
+                }
+            }
+            if( jaccService != null ) { 
+                Object valueObj = jaccService.getValue();
+                System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+            } else { 
+                System.out.println( "No JaccService instance found!");
+            }
+        } else { 
+            System.out.println( "..or just a normal service container");
+            
+        }
         logger.info("<--");
     }
 }

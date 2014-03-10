@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 import javax.ejb.SessionContext;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.inject.Inject;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.Configuration;
@@ -34,6 +35,9 @@ public class SecurityBean {
     @Resource
     private SessionContext ctx;
 
+    @Inject
+    public ServiceContainer serviceContainer;
+    
     private Logger logger = LoggerFactory.getLogger(SecurityBean.class);
 
     public void explore() throws Exception {
@@ -144,15 +148,37 @@ public class SecurityBean {
     }
 
     private void lookAtJaccService() { 
-        ServiceContainer serviceContainer = CurrentServiceContainer.getServiceContainer();
+        ServiceContainer serviceContainerFromCurrent = CurrentServiceContainer.getServiceContainer();
         ServiceController<?> jaccService = null;
-        for( ServiceName serviceName : serviceContainer.getServiceNames() ) { 
-          if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
-              jaccService = serviceContainer.getService(serviceName);
-          }
+        if( serviceContainerFromCurrent != null ) { 
+            for( ServiceName serviceName : serviceContainerFromCurrent.getServiceNames() ) { 
+                if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+                    jaccService = serviceContainer.getService(serviceName);
+                }
+            }
+            Object valueObj = jaccService.getValue();
+            System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+        } else { 
+            System.out.println( "Could not get current service container!");
         }
-        Object valueObj = jaccService.getValue();
-        System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+        
+        if( serviceContainer != null ) { 
+            System.out.println( "But could get an injected service container!");
+            for( ServiceName serviceName : serviceContainer.getServiceNames() ) { 
+                if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+                    jaccService = serviceContainerFromCurrent.getService(serviceName);
+                }
+            }
+            if( jaccService != null ) { 
+                Object valueObj = jaccService.getValue();
+                System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+            } else { 
+                System.out.println( "No JaccService instance found!");
+            }
+        } else { 
+            System.out.println( "..or just a normal service container");
+            
+        }
     }
 
 }
