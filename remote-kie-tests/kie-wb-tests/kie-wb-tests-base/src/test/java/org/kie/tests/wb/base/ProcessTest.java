@@ -169,79 +169,16 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
     @Test
     public void runHumanTaskGroupIdTest() throws Exception {
-        // setup
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
         resources.put("repo/test/evaluation.bpmn2", ResourceType.BPMN2);
         RuntimeManager runtimeManager = createRuntimeManager(resources);
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
-        KieSession ksession = runtimeEngine.getKieSession();
-        TaskService taskService = runtimeEngine.getTaskService();
-
-        // start a new process instance
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("employee", "krisv");
-        params.put("reason", "Yearly performance evaluation");
-        ProcessInstance processInstance = ksession.startProcess(EVALUTAION_PROCESS_ID, params);
-        long procInstId = processInstance.getId();
-
-        // complete Self Evaluation
-        {
-            String user = "krisv";
-            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
-            assertNotNull("Unable to find " + user + "'s task", task);
-            logger.debug("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
-            taskService.start(task.getId(), user);
-            Map<String, Object> results = new HashMap<String, Object>();
-            results.put("performance", "exceeding");
-            taskService.complete(task.getId(), user, results);
-        }
-
-        // john from HR
-        {
-            String user = "john";
-            Environment env = ksession.getEnvironment();
-            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
-            assertNotNull("Unable to find " + user + "'s task", task);
-            logger.debug("'john' completing task " + task.getName() + ": " + task.getDescription());
-            // taskService.claim(task.getId(), user);
-            taskService.start(task.getId(), user);
-            Map<String, Object> results = new HashMap<String, Object>();
-            results.put("performance", "acceptable");
-            taskService.complete(task.getId(), user, results);
-        }
-
-        // mary from PM
-        {
-            String user = "mary";
-            List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            logger.debug(tasks.size() + " tasks retrieved for potential owner " + user);
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
-            assertNotNull("Unable to find " + user + "'s task", task);
-            logger.debug("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
-            // taskService.claim(task.getId(), user);
-            taskService.start(task.getId(), user);
-            Map<String, Object> results = new HashMap<String, Object>();
-            results.put("performance", "outstanding");
-            taskService.complete(task.getId(), user, results);
-        }
-
-        // assertProcessInstanceCompleted(processInstance.getId(), ksession);
-        logger.debug("Process instance completed");
+        
+        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false, false);
+        jmsTests.runHumanTaskGroupIdTest(runtimeEngine, runtimeEngine, runtimeEngine);
     }
-
-    private TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) {
-        TaskSummary result = null;
-        for (TaskSummary krisTask : tasks) {
-            if (krisTask.getProcessInstanceId() == procInstId) {
-                result = krisTask;
-            }
-        }
-        return result;
-    }
-
+    
     @Test
     public void runGroupAssignmentEngineeringTest() throws Exception {
         // setup
@@ -251,7 +188,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false);
+        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false, false);
         jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
     }
 }

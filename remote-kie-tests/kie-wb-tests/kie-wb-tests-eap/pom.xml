@@ -26,9 +26,16 @@
     <arquillian.version>1.1.1.Final</arquillian.version>
     <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
 
+    <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
+    
+    <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
     <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.1</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
+    
+    <server.keystore.password>SERVER_KEYSTORE_PASSWORD</server.keystore.password>
+    <server.truststore.password>SERVER_TRUSTSTORE_PASSWORD</server.truststore.password>
+    <client.keystore.password>CLIENT_KEYSTORE_PASSWORD</client.keystore.password>
   </properties>
 
   <dependencies>
@@ -100,7 +107,7 @@
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
-    </dependency>
+    </dependency> 
     <dependency>
       <groupId>org.jboss.shrinkwrap</groupId>
       <artifactId>shrinkwrap-api</artifactId>
@@ -196,12 +203,42 @@
       <artifactId>drools-persistence-jpa</artifactId>
       <scope>test</scope>
     </dependency>
+    
+        <!-- security test -->
+    <dependency>
+      <groupId>javax.security</groupId>
+      <artifactId>jacc</artifactId>
+      <version>1.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-server</artifactId>
+      <version>${version.org.jboss.as.dist}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-connector</artifactId>
+      <version>${version.org.jboss.as.dist}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.msc</groupId>
+      <artifactId>jboss-msc</artifactId>
+      <version>1.0.4.GA-redhat-1</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources-filtered</directory>
         <filtering>true</filtering>
       </testResource>
       <testResource>
@@ -228,7 +265,7 @@
             </filesets>
           </configuration>
         </plugin>
-
+      
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
@@ -250,10 +287,96 @@
             <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
           </configuration>
         </plugin>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>xml-maven-plugin</artifactId>
+                    <versionRange>[1.0,)</versionRange>
+                    <goals>
+                      <goal>transform</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.jboss.byteman</groupId>
+                    <artifactId>byteman-rulecheck-maven-plugin</artifactId>
+                    <versionRange>[2.0,)</versionRange>
+                    <goals>
+                      <goal>transform</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
+      <!-- check that byteman rules are correct -->
+      <plugin>
+        <groupId>org.jboss.byteman</groupId>
+        <artifactId>byteman-rulecheck-maven-plugin</artifactId>
+        <version>${version.org.jboss.byteman}</version>
+        <executions>
+          <execution>
+            <id>rulecheck-test</id>
+            <goals>
+              <goal>rulecheck</goal>
+            </goals>
+            <phase>process-test-resources</phase>
+            <configuration>
+              <includes>
+                <include>**/*.btm</include>
+              </includes>
+              <verbose>true</verbose>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.jbossts</groupId>
+            <artifactId>jbossjts</artifactId>
+            <version>4.16.4.Final</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>4.2.0.SP1</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-ejb3</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-web</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </plugin>
+      
       <!-- only run when -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -262,6 +385,27 @@
           <skipTests>${skip.integration.tests}</skipTests>
         </configuration>
       </plugin>
+      
+       <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <includes>
+              <include>**/*Test.java</include>
+            </includes>
+            <excludes>
+              <exclude>**/*IntegrationTest.java</exclude>
+            </excludes>
+            <argLine>-Xmx1024m -XX:MaxPermSize=128m -Dfile.encoding=UTF-8</argLine>
+            <systemProperties>
+              <property>
+                <name>java.util.logging.config.file</name>
+                <value>src/test/resources/logging.properties</value>
+              </property>
+            </systemProperties>
+          </configuration>
+        </plugin>
+
     </plugins>
   </build>
 
@@ -308,7 +452,7 @@
                     <artifactItem>
                       <groupId>org.jboss.byteman</groupId>
                       <artifactId>byteman</artifactId>
-                      <version>2.1.4.1</version>
+                      <version>${version.org.jboss.byteman}</version>
                       <type>jar</type>
                       <overWrite>true</overWrite>
                       <outputDirectory>target/</outputDirectory>
@@ -377,115 +521,74 @@
                   <overwrite>true</overwrite>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-ssl-files</id>
+                <phase>process-test-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration/ssl</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/test/resources/ssl/server</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                  <overwrite>true</overwrite>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 
           <!-- 3. modify server configuration -->
-          <plugin>
-            <groupId>com.google.code.maven-replacer-plugin</groupId>
-            <artifactId>replacer</artifactId>
-            <executions>
-              <execution>
-                <id>fix-jboss-standalone-xml</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>replace</goal>
-                </goals>
-                <configuration>
-                  <basedir>${project.build.directory}/${jboss.server.name}/standalone/configuration</basedir>
-                 <includes>
-                    <include>standalone-full.xml</include>
-                 </includes>
-                 <replacements>
-                   <replacement>
-                     <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
-                     <value>&lt;security-settings&gt;
-                       &lt;security-setting match="#"&gt;
-                       &lt;permission type="send" roles="admin"/&gt;
-                       &lt;permission type="consume" roles="admin"/&gt;</value>
-                   </replacement>
-                   <replacement>
-                     <token>periodic-rotating-file-handler&gt;</token>
-                     <value>periodic-rotating-file-handler&gt;
-                       &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
-                       &lt;formatter&gt;
-                       &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%C] (%t) %s%E%n"/&gt;
-                       &lt;/formatter&gt;
-                       &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
-                       &lt;suffix value=".yyyy-MM-dd"/&gt;
-                       &lt;append value="true"/&gt;
-                       &lt;/periodic-rotating-file-handler&gt;</value>
-                   </replacement>
-                   <replacement>
-                       <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
-                       <value>&lt;root-logger&gt;
-                       &lt;level name="DEBUG"/&gt;
-                       </value>
-                   </replacement>
-                   <replacement>
-                       <token>&lt;handlers&gt;</token>
-                       <value>&lt;handlers&gt;
-                       &lt;handler name="DEBUGFILE"/&gt;</value>
-                   </replacement>
-                   <replacement>
-                       <token>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</token>
-                       <value>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=TRUE</value>
-                   </replacement>
-
-                   <!-- postgres
-                   <replacement>
-                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
-                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true" use-ccm="true"&gt;
-                    &lt;connection-url&gt;jdbc:postgresql://localhost:5432/jbpm5&lt;/connection-url&gt;
-                    &lt;driver&gt;org.postgresql&lt;/driver&gt;
-                    &lt;pool&gt;
-                        &lt;min-pool-size&gt;2&lt;/min-pool-size&gt;
-                        &lt;max-pool-size&gt;20&lt;/max-pool-size&gt;
-                        &lt;prefill&gt;true&lt;/prefill&gt;
-                    &lt;/pool&gt;
-                    &lt;security&gt;
-                        &lt;user-name&gt;jbpm5&lt;/user-name&gt;
-                        &lt;password&gt;jbpm5&lt;/password&gt;
-                    &lt;/security&gt;
-                    &lt;validation&gt;
-                        &lt;check-valid-connection-sql&gt;SELECT 1&lt;/check-valid-connection-sql&gt;
-                    &lt;/validation&gt;
-                &lt;/datasource&gt;
-                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
-                   </replacement>
-                   <replacement>
-                      <token>&lt;driver name="h2"</token>
-                      <value>&lt;driver name="org.postgresql" module="org.postgresql"&gt;
-                        &lt;xa-datasource-class&gt;org.postgresql.xa.PGXADataSource&lt;/xa-datasource-class&gt;
-                    &lt;/driver&gt;
-                    &lt;driver name="h2"</value>
-                   </replacement>
-                    -->
-                   
-                   <!-- oracle
-                    <replacement>
-                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
-                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true"&gt;
-                    &lt;connection-url&gt;jdbc:oracle:thin:@localhost:1521:jbpm5&lt;/connection-url&gt;
-                    &lt;driver-class&gt;oracle.jdbc.OracleDriver&lt;/driver-class&gt;
-                    &lt;driver&gt;com.oracle&lt;/driver&gt;
-                    &lt;security&gt;
-                      &lt;user-name&gt;jbpm5&lt;/user-name&gt;
-                      &lt;password&gt;jbpm5&lt;/password&gt;
-                    &lt;/security&gt;
-                 &lt;/datasource&gt;
-                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
-                   </replacement>
-                   <replacement>
-                      <token>&lt;driver name="h2"</token>
-                      <value>&lt;driver name="com.oracle" module="com.oracle"/&gt;
-                    &lt;driver name="h2"</value>
-                   </replacement>
-                   -->
-
-                 </replacements>
-                </configuration>
-              </execution>
+         <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>xml-maven-plugin</artifactId>
+           <version>1.0</version>                      
+           <executions>                        
+             <execution>
+               <id>modify-standalone-full</id>
+               <phase>process-test-resources</phase>
+               <goals>
+                 <goal>transform</goal>
+               </goals>
+               <configuration>                                 
+                 <transformationSets>
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources-eap-6/xslt/addDebugLogging.xslt</stylesheet>
+                   </transformationSet> 
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources-eap-6/xslt/changeJmsMessagingConfig.xslt</stylesheet>
+                   </transformationSet> 
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources-eap-6/xslt/addPostgresConfig.xslt</stylesheet>
+                   </transformationSet> 
+                 </transformationSets>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin> 
+         
+         <plugin>
+           <groupId>com.google.code.maven-replacer-plugin</groupId>
+           <artifactId>replacer</artifactId>
+           <executions>
               <execution>
                 <id>fix-broken-junit-reports</id>
                 <phase>post-integration-test</phase>

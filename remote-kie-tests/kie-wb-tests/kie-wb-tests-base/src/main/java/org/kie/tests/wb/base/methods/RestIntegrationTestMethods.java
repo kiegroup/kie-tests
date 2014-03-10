@@ -109,17 +109,22 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private final String deploymentId;
     private boolean useFormBasedAuth = false;
     private boolean testWithHttpUrlConnection = true;
+    private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
     private MediaType mediaType;
     private final int timeout;
     private static final int DEFAULT_TIMEOUT = 10;
     
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance) {
+    
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance, RuntimeStrategy strategy) {
         if( mediaType == null ) { 
             mediaType = MediaType.APPLICATION_XML_TYPE;
         }
         if( tomcatInstance == null ) { 
            tomcatInstance = false; 
+        }
+        if( strategy != null ) { 
+            this.strategy = strategy;
         }
         
         this.deploymentId = deploymentId;
@@ -129,20 +134,24 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         this.testWithHttpUrlConnection = ! this.useFormBasedAuth;
     }
     
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth, RuntimeStrategy strategy) {
+       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, strategy);
+    }
+    
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth) {
-       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth);
+       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, null);
     }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout) {
-       this(deploymentId, mediaType, timeout, null);
+       this(deploymentId, mediaType, timeout, null, null);
     }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType) {
-        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null);
+        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null, null);
     }
 
     public RestIntegrationTestMethods(String deploymentId) {
-        this(deploymentId, null, DEFAULT_TIMEOUT, null);
+        this(deploymentId, null, DEFAULT_TIMEOUT, null, null);
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
@@ -277,7 +286,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
    
         // Check and do deployment 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
-        RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
     
         restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
         restRequest.accept(this.mediaType);
@@ -289,13 +297,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         } 
             
         // Deploy
-        deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
+        deploy(user, password, deploymentUrl, deploymentId);
         waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
         
     }
 
-    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
-            RuntimeStrategy strategy, MediaType mediaType) throws Exception {
+    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId) throws Exception {
         logger.info("deploy");
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
     
@@ -335,9 +342,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.error("POST operation failed.", ex);
             fail("POST operation failed.");
         }
-        if (response == null) {
-            fail("Response is null!");
-        }
+        assertNotNull("Response is null!", response);
     
         // ADDED CODE TO CHECK RESPONSE TIME
         logger.debug("AFTER POST:  " + sdf.format((after = System.currentTimeMillis())));
@@ -364,7 +369,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.error("Unmarshalling failed.", ex);
             fail("Unmarshalling entity failed: " + ex.getMessage());
         }
-    
+   
+        assertNotNull("Null response!", result);
         assertTrue("The deployment unit was not created successfully.", result.isSuccess());
     
         return result;
@@ -402,8 +408,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 Thread.sleep(sleep);
             }
         }
-        KieSession ksession = null;
-        ProcessInstance pi = null;
     }
 
     private boolean isDeployed(ClientResponse<?> responseObj) {
@@ -556,13 +560,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-
-        logger.debug("Started process instance: " + processInstance + " "
-                + (processInstance == null ? "" : processInstance.getId()));
+        assertNotNull( "Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+        
+        logger.debug("Started process instance: " + processInstance + " " + procInstId);
 
         TaskService taskService = engine.getTaskService();
         List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long taskId = findTaskId(processInstance.getId(), tasks);
+        long taskId = findTaskId(procInstId, tasks);
 
         logger.debug("Found task " + taskId);
         Task task = taskService.getTaskById(taskId);
@@ -581,7 +586,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
-        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(processInstance.getId(), statuses, "en-UK");
+        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
@@ -888,11 +893,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         } catch (Exception e) {
             fail("Unable to start process: " + e.getMessage());
         }
-        logger.debug("Started process instance: " + processInstance + " "
-                + (processInstance == null ? "" : processInstance.getId()));
+        
+        assertNotNull("Null processInstance!", processInstance);
+        long procInstId = processInstance.getId();
 
         TaskService taskService = engine.getTaskService();
-        List<Long> tasks = taskService.getTasksByProcessInstanceId(processInstance.getId());
+        List<Long> tasks = taskService.getTasksByProcessInstanceId(procInstId);
         assertEquals("Incorrect number of tasks for started process: ", 1, tasks.size());
         long taskId = tasks.get(0);
 
@@ -1104,8 +1110,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 break;
             }
         }
+        assertNotNull( "No VariableInstanceLog found!", thisProcInstVarLog);
         assertEquals( varName, thisProcInstVarLog.getVariableId() );
-//        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        Object procInstVar = thisProcInstVarLog.getValue();
+        assertNotNull("Null process instance variable!", procInstVar);
+        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), procInstVar.getClass().getName() );
         
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
         ClientResponse<?> response = get(restRequest);
@@ -1130,7 +1139,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     }
     
-    
     public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
        RemoteRuntimeEngineFactory krisRemoteEngineFactory 
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD, useFormBasedAuth );
@@ -1138,7 +1146,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD, useFormBasedAuth);
        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD, useFormBasedAuth);
-       runHumanTaskGroupIdTest(krisRemoteEngineFactory, johnRemoteEngineFactory, maryRemoteEngineFactory);
+       runHumanTaskGroupIdTest(krisRemoteEngineFactory.newRuntimeEngine(), 
+               johnRemoteEngineFactory.newRuntimeEngine(), 
+               maryRemoteEngineFactory.newRuntimeEngine());
     }
     
     public void remoteApiGroupAssignmentTest(URL deploymentUrl) throws Exception { 

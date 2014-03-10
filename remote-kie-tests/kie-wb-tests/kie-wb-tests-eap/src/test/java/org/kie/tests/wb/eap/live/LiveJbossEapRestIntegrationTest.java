@@ -20,6 +20,7 @@ package org.kie.tests.wb.eap.live;
 import javax.ws.rs.core.MediaType;
 
 import org.junit.Ignore;
+import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @Ignore
@@ -39,8 +40,18 @@ public class LiveJbossEapRestIntegrationTest extends AbstractRemoteApiIntegratio
     }
 
     @Override
+    public boolean doRestTests() {
+        return true;
+    }
+    
+    @Override
     public boolean useFormBasedAuth() {
         return false;
+    }
+
+    @Override
+    public RuntimeStrategy getStrategy() {
+        return RuntimeStrategy.SINGLETON;
     }
 
 }

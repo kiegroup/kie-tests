@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
@@ -30,10 +31,12 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public abstract boolean doDeploy();
     public abstract MediaType getMediaType();
     public abstract boolean jmsQueuesAvailable();
+    public abstract boolean doRestTests();
     public abstract boolean useFormBasedAuth();
+    public abstract RuntimeStrategy getStrategy();
    
     public AbstractRemoteApiIntegrationTest() { 
-         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth());
+         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth(), getStrategy());
          if( jmsQueuesAvailable() ) { 
              jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
          } else { 
@@ -73,6 +76,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestUrlStartHumanTaskProcess() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsStartHumanTaskProcess(deploymentUrl, SALA_USER, SALA_PASSWORD);
     }
@@ -80,6 +84,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(1)
     public void testUrlsGetDeployments() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsGetDeployments(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -87,6 +92,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestHistoryLogs() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsHistoryLogs(deploymentUrl, MARY_USER, MARY_PASSWORD);
         restTests.urlsStartScriptProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
@@ -95,6 +101,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestExecuteStartProcess() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.commandsStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -102,6 +109,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiHumanTaskProcess() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -109,6 +117,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestExecuteTaskCommands() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.commandsTaskCommands(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -116,6 +125,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestDataServicesCoupling() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsDataServiceCoupling(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -123,6 +133,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestJsonAndXmlStartProcess() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsJsonJaxbStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -130,6 +141,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestHumanTaskCompleteWithVariable() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsHumanTaskWithFormVariableChange(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -137,6 +149,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestHttpURLConnection() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsHttpURLConnectionAcceptHeaderIsFixed(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -144,6 +157,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiProcessInstances() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiSerialization(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -151,6 +165,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiExtraJaxbClasses() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiExtraJaxbClasses(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -158,6 +173,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiRuleTaskProcess() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiRuleTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -165,6 +181,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiGetTaskInstance() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -172,6 +189,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestUrlsGetTaskContent() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -179,6 +197,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestUrlsVariableHistory() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsVariableHistory(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -186,6 +205,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestUrlsRetrieveProcVar() throws Exception {
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsGetRealProcessVariable(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
@@ -193,6 +213,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestRemoteApiHumanTaskGroupId() throws Exception { 
+        Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
     }
@@ -200,6 +221,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testRestUrlsGroupAssignmentProcess() throws Exception { 
+        Assume.assumeTrue(doRestTests());
         printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
         restTests.remoteApiGroupAssignmentTest(deploymentUrl);
@@ -210,82 +232,73 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @Test
     @InSequence(2)
     public void testJmsStartProcess() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.commandsStartProcess(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testJmsRemoteApiHumanTaskProcess() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiHumanTaskProcess(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testJmsRemoteApiExceptions() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiException(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testJmsNoProcessInstanceFound() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiNoProcessInstanceFound(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testJmsCompleteSimpleHumanTask() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(MARY_USER, MARY_PASSWORD);
     }
 
     @Test
     @InSequence(2)
     public void testJmsExtraJaxbClasses() throws Exception {
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testJmsRemoteApiRuleTaskProcess() throws Exception { 
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiRuleTaskProcess(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
     public void testJmsRemoteApiStartProcessInstanceInitiator() throws Exception { 
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiInitiatorIdentityTest(MARY_USER, MARY_PASSWORD);
     }
     
     @Test
     @InSequence(2)
-    public void testJmsRemoteApiRunEvaluationProcess() throws Exception { 
-        printTestName();
-        Assume.assumeTrue(jmsQueuesAvailable());
-        jmsTests.remoteApiRunEvaluationProcess();
-    }
-   
-    @Test
-    @InSequence(2)
     public void testJmsRemoteApiHumanTaskGroupId() throws Exception { 
-        printTestName();
         Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
         jmsTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
     }
-
     
 }

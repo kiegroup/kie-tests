@@ -1,0 +1,110 @@
+#
+# A byteman script which prints a stacktrace whenever UserTransaction.begin is called
+#
+########################################################################
+#
+# Rule to trace class load
+#
+# To see the stack trace
+# DO traceStack(">>> BEGIN:\n", 25 );
+#
+# To just print the text
+# DO traceln(">>> BEGIN:" );
+#
+
+RULE JBossSecurityContext constructor stack
+CLASS org.jboss.security.plugins.JBossSecurityContext
+METHOD <init>
+AT ENTRY
+IF TRUE
+DO traceStack(">>> JBossSecurityContext: \n");
+ENDRULE
+
+RULE SecurityRolesMetaData.processSecurityRoleMetaData stack
+CLASS org.jboss.as.ejb3.security.EJBSecurityMetaData
+METHOD getSecurityRoles
+AT ENTRY
+IF TRUE
+DO traceStack(">>> getSecurityRoles: \n");
+ENDRULE
+
+RULE EJBComponentCreateService init stack
+CLASS org.jboss.as.ejb3.component.EJBComponentCreateService
+METHOD <init>
+AT ENTRY
+IF TRUE
+DO traceStack(">>> EJBComponentCreateService: \n");
+ENDRULE
+
+RULE SubjectInfo init stack
+CLASS org.jboss.security.SubjectInfo
+METHOD <init>
+AT ENTRY
+IF TRUE
+DO traceStack(">>> SubjectInfo: \n");
+ENDRULE
+
+RULE SecurityContextInterceptorHolder setSecurityDomain stack
+CLASS org.jboss.as.ejb3.security.SecurityContextInterceptorHolder
+METHOD setSecurityDomain
+AT EXIT
+IF TRUE
+DO traceStack(">>> setSecurityDomain: " + $this.securityDomain + "\n");
+ENDRULE
+
+RULE StandardContext findSecurityRoles stack
+CLASS org.apache.catalina.core.StandardContext
+METHOD findSecurityRoles()
+AT EXIT
+IF TRUE
+DO traceStack(">>> findSecurityRoles: \n");
+ENDRULE
+
+RULE WarJaccService init stack
+CLASS org.jboss.as.web.security.WarJaccService
+METHOD <init>
+AT ENTRY
+IF TRUE
+DO traceStack(">>> WarJaccService: \n");
+ENDRULE
+
+RULE WarJaccService createPermissions stack
+CLASS org.jboss.as.web.security.WarJaccService
+METHOD createPermissions
+AT EXIT
+IF TRUE
+DO traceStack(">>> createPermissions: " + $this.contextId + "\n");
+ENDRULE
+
+RULE ServiceTarget addService stack
+CLASS org.jboss.msc.service.ServiceTargetImpl
+METHOD addService
+AT ENTRY
+IF $1.toString().endsWith("jboss.security.jacc")
+DO traceStack(">>> addService: " + $1.toString() + "\n" );
+ENDRULE
+
+RULE CurrentServiceContainer setServiceContainer stack
+CLASS org.jboss.as.server.CurrentServiceContainer
+METHOD setServiceContainer
+AT ENTRY
+IF TRUE
+DO traceln(">>> setServiceContainer: " + $1);
+ENDRULE
+
+# RULE JPAWorkingMemoryDbLogger constructor
+# CLASS org.jbpm.process.audit.JPAWorkingMemoryDbLogger
+# METHOD <init>(javax.persistence.EntityManagerFactory)
+# AT EXIT
+# IF TRUE
+# DO traceln("-=- JPAWorkingMemoryDbLogger");
+# ENDRULE
+# 
+# RULE EntityManagerFactory.close trace 
+# CLASS org.hibernate.ejb.EntityManagerFactoryImpl
+# METHOD close()
+# AT ENTRY
+# IF TRUE
+# DO traceln("000 EMF CLOSE: " + System.identityHashCode($this) );
+# ENDRULE
+# 

@@ -18,7 +18,7 @@
     <!-- fix me.. 
     <module>core-marshalling-kie-tests</module>
      -->
-    <module>jbpm-special-kie-tests</module>
+    <module>jbpm-kie-tests</module>
   </modules>
 
   <dependencies>

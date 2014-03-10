@@ -11,6 +11,7 @@
 
   <logger name="org.jbpm" level="info"/>
   <logger name="org.kie.tests" level="debug"/>
+  <logger name="org.kie.services.client" level="debug" />
   
   <root level="info">
     <appender-ref ref="consoleAppender" />

@@ -44,7 +44,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             war.delete("WEB-INF/classes/META-INF/persistence.xml");
             if( "oracle".equals(database) ) { 
                 war.addAsResource("META-INF/persistence-oracle.xml", "META-INF/persistence.xml");
-            } else if( "postgresql".equals(database) || "postgres".equals(database) ) { 
+            } else if( "postgres".equals(database) ) { 
                 war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
             } else { 
                 throw new IllegalArgumentException("Unknown database type: " + database );
@@ -55,8 +55,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote" },
                 { "org.kie.remote", "kie-services-jaxb" },
-                { "org.jbpm", "jbpm-human-task-core" },
-                { "org.jbpm", "jbpm-audit" }
+                { "org.jbpm", "jbpm-human-task-core" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         for( String [] jar : jarsToReplace ) { 
@@ -78,7 +77,12 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
-       
+     
+        // <run-as> added to ejb-jar.xml
+        logger.info( "Replacing ejb-jar.xml");
+        war.delete("WEB-INF/ejb-jar.xml");
+        war.addAsWebInfResource("WEB-INF/ejb-jar.xml");
+        
         return war;
     }
 
