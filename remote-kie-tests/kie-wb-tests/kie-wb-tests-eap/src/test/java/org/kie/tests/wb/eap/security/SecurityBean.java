@@ -1,6 +1,5 @@
 package org.kie.tests.wb.eap.security;
 
-
 import java.security.Principal;
 import java.security.Provider;
 import java.security.acl.Group;
@@ -13,7 +12,11 @@ import javax.annotation.Resource;
 import javax.ejb.SessionContext;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.inject.Inject;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.Configuration;
@@ -35,9 +38,6 @@ public class SecurityBean {
     @Resource
     private SessionContext ctx;
 
-    @Inject
-    public ServiceContainer serviceContainer;
-    
     private Logger logger = LoggerFactory.getLogger(SecurityBean.class);
 
     public void explore() throws Exception {
@@ -72,7 +72,7 @@ public class SecurityBean {
     }
 
     private void exploreSubject(Subject subject) {
-        if( subject == null ) { 
+        if (subject == null) {
             throw new RuntimeException("Subject is null!");
         }
 
@@ -130,13 +130,12 @@ public class SecurityBean {
                             while (groups.hasMoreElements()) {
                                 Principal groupPrincipal = (Principal) groups.nextElement();
                                 roles.add(groupPrincipal.getName());
-
+                                logger.info("role: " + groupPrincipal.getName());
                             }
                             break;
-
                         }
-
                     }
+                    subject.getPublicCredentials().add("test");
                 }
             } else {
                 throw new RuntimeException("HEY! Where's my SUBJECT!");
@@ -147,38 +146,63 @@ public class SecurityBean {
         return roles;
     }
 
-    private void lookAtJaccService() { 
+    private void lookAtJaccService() {
         ServiceContainer serviceContainerFromCurrent = CurrentServiceContainer.getServiceContainer();
         ServiceController<?> jaccService = null;
-        if( serviceContainerFromCurrent != null ) { 
-            for( ServiceName serviceName : serviceContainerFromCurrent.getServiceNames() ) { 
-                if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
-                    jaccService = serviceContainer.getService(serviceName);
-                }
-            }
-            Object valueObj = jaccService.getValue();
-            System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
-        } else { 
-            System.out.println( "Could not get current service container!");
-        }
-        
-        if( serviceContainer != null ) { 
-            System.out.println( "But could get an injected service container!");
-            for( ServiceName serviceName : serviceContainer.getServiceNames() ) { 
-                if( serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+        if (serviceContainerFromCurrent != null) {
+            for (ServiceName serviceName : serviceContainerFromCurrent.getServiceNames()) {
+                if (serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
                     jaccService = serviceContainerFromCurrent.getService(serviceName);
                 }
             }
-            if( jaccService != null ) { 
-                Object valueObj = jaccService.getValue();
-                System.out.println( "value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
-            } else { 
-                System.out.println( "No JaccService instance found!");
+            Object valueObj = jaccService.getValue();
+            System.out.println("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+        } else {
+            System.out.println("Could not get current service container!");
+        }
+
+        ServiceContainer serviceContainer = lookupServiceContainer();
+        if (serviceContainer != null) {
+            System.out.println("But could get an injected service container!");
+            for (ServiceName serviceName : serviceContainer.getServiceNames()) {
+                if (serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+                    jaccService = serviceContainerFromCurrent.getService(serviceName);
+                }
             }
-        } else { 
-            System.out.println( "..or just a normal service container");
-            
+            if (jaccService != null) {
+                Object valueObj = jaccService.getValue();
+                logger.info("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+            } else {
+                logger.warn("No JaccService instance found!");
+            }
+        } else {
+            logger.info("..or just a normal service container");
+
         }
     }
 
+    private ServiceContainer lookupServiceContainer() {
+        BeanManager bm = getBeanManager();
+
+        Set<Bean<?>> beanSet = (Set<Bean<?>>) bm.getBeans(ServiceContainer.class);
+        if (beanSet != null && beanSet.size() > 0) {
+            Bean<ServiceContainer> bean = (Bean<ServiceContainer>) beanSet.iterator().next();
+            CreationalContext<ServiceContainer> ctx = bm.createCreationalContext(bean);
+            return (ServiceContainer) bm.getReference(bean, ServiceContainer.class, ctx); // this could be inlined, but
+                                                                                          // intentionally left this way
+        } else {
+            return null;
+        }
+
+    }
+
+    private BeanManager getBeanManager() {
+        try {
+            InitialContext initialContext = new InitialContext();
+            return (BeanManager) initialContext.lookup("java:comp/BeanManager");
+        } catch (NamingException ne) {
+            logger.error("Couldn't get BeanManager through JNDI", ne);
+            return null;
+        }
+    }
 }

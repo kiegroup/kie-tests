@@ -65,6 +65,11 @@ public class KieWbSecurityIntegrationTest {
         // Add kjar deployer
         logger.info( "] add classes");
         war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
+       
+        // <run-as> added to ejb-jar.xml
+        logger.info( "] Replace ejb-jar.xml");
+        war.delete("WEB-INF/ejb-jar.xml");
+        war.addAsWebInfResource("WEB-INF/ejb-jar.xml");
         
         logger.info( "] done");
         return war;
