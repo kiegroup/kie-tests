@@ -84,7 +84,9 @@ public class AbstractIntegrationTestMethods {
     protected void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("myobject", param);
-        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+        KieSession ksession = engine.getKieSession();
+        ProcessInstance procInst = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters);
+        long procInstId = procInst.getId();
         
         /**
          * Check that MyType was correctly deserialized on server side

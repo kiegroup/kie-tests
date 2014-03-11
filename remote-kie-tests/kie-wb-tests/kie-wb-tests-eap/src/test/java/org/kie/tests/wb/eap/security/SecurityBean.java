@@ -8,6 +8,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.SessionContext;
 import javax.ejb.Singleton;
@@ -50,17 +51,7 @@ public class SecurityBean {
             }
         }
 
-        lookAtJaccService();
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Configuration getConfiguration() {
-        Configuration config = (Configuration) java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-            public Object run() {
-                return Configuration.getConfiguration();
-            }
-        });
-        return config;
+        getGroupsForUser();
     }
 
     private Subject tryLogin() throws LoginException {
@@ -97,23 +88,6 @@ public class SecurityBean {
         }
     }
 
-    private void exploreConfigAndProvider() {
-        Configuration config = getConfiguration();
-        Provider provider = config.getProvider();
-        if (provider != null) {
-            logger.info("Name   : " + provider.getName());
-            logger.info("Version: " + provider.getVersion());
-            logger.info("Info   : " + provider.getInfo());
-            logger.info("Class  : " + provider.getClass().getName());
-        } else {
-            logger.warn("No provider could be found!");
-        }
-        logger.info("Config type: " + config.getType());
-        if (config.getParameters() != null) {
-            logger.info(config.getParameters().getClass().getName());
-        }
-    }
-
     private List<String> getGroupsForUser() {
         List<String> roles = new ArrayList<String>();
         try {
@@ -146,7 +120,10 @@ public class SecurityBean {
         return roles;
     }
 
-    private void lookAtJaccService() {
+    // ServiceContainer ----------------------------------------------------------------------------------------------------------
+   
+    @PostConstruct
+    public void lookAtJaccService() {
         ServiceContainer serviceContainerFromCurrent = CurrentServiceContainer.getServiceContainer();
         ServiceController<?> jaccService = null;
         if (serviceContainerFromCurrent != null) {

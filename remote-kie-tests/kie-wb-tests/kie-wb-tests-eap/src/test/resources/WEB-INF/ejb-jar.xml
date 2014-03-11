@@ -34,7 +34,7 @@
           <activation-config-property-value>java:/queue/KIE.SESSION</activation-config-property-value>
         </activation-config-property>
       </activation-config>
-      <!-- this is ignored by jboss eap 6.1 -->
+      <!-- this is ignored by jboss eap 6.1 (because of a bug?) -->
       <security-identity>
         <run-as>
           <role-name>admin</role-name>
@@ -55,7 +55,7 @@
           <activation-config-property-value>java:/queue/KIE.TASK</activation-config-property-value>
         </activation-config-property>
       </activation-config>
-      <!-- this is ignored by jboss eap 6.1 -->
+      <!-- this is ignored by jboss eap 6.1 (because of a bug?) -->
       <security-identity>
         <run-as>
           <role-name>admin</role-name>

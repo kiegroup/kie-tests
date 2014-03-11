@@ -62,29 +62,30 @@ public class SecurityIntegrationTest {
         // Add kjar deployer
         logger.info( "] add classes");
         war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
-       
-        // Add dependencies
-        logger.info( "] add dependencies");
-        // Replace kie-services-remote jar with the one we just generated
-        String [][] jarsToReplace = { 
-                { "org.jboss.as", "jboss-as-server" }
-//                { "org.jboss.as", "jboss-as-connector" },
-//                { "org.jboss.msc", "jboss-msc" }
-        };
-        String [] jarsArg = new String[jarsToReplace.length];
-        for( int i = 0; i < jarsToReplace.length; ++i ) { 
-            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
-        }
+     
+        boolean addDeps = false;
+        if( addDeps ) { 
+            // Add dependencies
+            logger.info( "] add dependencies");
+            // Replace kie-services-remote jar with the one we just generated
+            String [][] jarsToReplace = { 
+                    { "org.jboss.as", "jboss-as-server" }
+            };
+            String [] jarsArg = new String[jarsToReplace.length];
+            for( int i = 0; i < jarsToReplace.length; ++i ) { 
+                jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+            }
 
-        File [] secTestDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve(jarsArg)
-                .withTransitivity()
-                .asFile();
-        for( File file : secTestDeps ) { 
-            logger.info( "Adding " + file.getName());
+            File [] secTestDeps = Maven.resolver()
+                    .loadPomFromFile("pom.xml")
+                    .resolve(jarsArg)
+                    .withTransitivity()
+                    .asFile();
+            for( File file : secTestDeps ) { 
+                logger.info( "Adding " + file.getName());
+            }
+            war.addAsLibraries(secTestDeps);
         }
-        war.addAsLibraries(secTestDeps);
       
         logger.info( "] done");
         return war;

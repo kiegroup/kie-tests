@@ -43,7 +43,7 @@ public class KieWbSecurityIntegrationTest {
    
     private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
-    @Deployment(name = "kie-wb-security")
+    @Deployment(testable=false, name = "kie-wb-security")
     public static Archive<?> createWar() {
         return createTestWar("eap-6_1");
     }
@@ -65,7 +65,30 @@ public class KieWbSecurityIntegrationTest {
         // Add kjar deployer
         logger.info( "] add classes");
         war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
-       
+     
+        // Replace kie-services-remote jar with the one we just generated
+        logger.info( "] replace libs");
+        String [][] jarsToReplace = { 
+                { "org.kie.remote", "kie-services-remote" }
+        };
+        String [] jarsArg = new String[jarsToReplace.length];
+        for( String [] jar : jarsToReplace ) { 
+            war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
+        }
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+        }
+
+        File [] kieRemoteDeps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve(jarsArg)
+                .withoutTransitivity()
+                .asFile();
+        for( File file : kieRemoteDeps ) { 
+            logger.info( "Replacing " + file.getName());
+        }
+        war.addAsLibraries(kieRemoteDeps);
+        
         // <run-as> added to ejb-jar.xml
         logger.info( "] Replace ejb-jar.xml");
         war.delete("WEB-INF/ejb-jar.xml");

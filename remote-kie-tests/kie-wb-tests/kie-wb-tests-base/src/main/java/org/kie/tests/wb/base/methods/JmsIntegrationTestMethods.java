@@ -38,6 +38,7 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.security.auth.Subject;
 
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
@@ -144,6 +145,8 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             BytesMessage msg = session.createBytesMessage();
             msg.setJMSCorrelationID(corrId);
             msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE);
+            msg.setStringProperty("username", MARY_USER);
+            msg.setStringProperty("password", MARY_PASSWORD);
             String xmlStr = jaxbSerializationProvider.serialize(req);
             msg.writeUTF(xmlStr);
 
