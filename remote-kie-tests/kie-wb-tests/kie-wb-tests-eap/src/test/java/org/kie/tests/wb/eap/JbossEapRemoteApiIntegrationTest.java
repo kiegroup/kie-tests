@@ -42,7 +42,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public MediaType getMediaType() { 
-        return MediaType.APPLICATION_XML_TYPE;
+        return MediaType.APPLICATION_JSON_TYPE;
     }
 
     @Override

@@ -54,8 +54,9 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         // Replace kie-services-remote jar with the one we just generated
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-jaxb" }
-//                { "org.jbpm", "jbpm-human-task-core" }
+                { "org.kie.remote", "kie-services-jaxb" },
+                { "org.jbpm", "jbpm-human-task-core" },
+                { "org.jbpm", "jbpm-audit" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         for( String [] jar : jarsToReplace ) { 

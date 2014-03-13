@@ -83,6 +83,7 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
+import org.kie.services.client.serialization.jaxb.impl.audit.JaxbProcessInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
@@ -452,7 +453,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        restRequest = queryRequestHelper.createRequest("task/query?status=Ready&processInstanceId=" + procInstId);
+        restRequest = queryRequestHelper.createRequest("task/query?processInstanceId=" + procInstId);
         responseObj = get(restRequest);
 
         JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
@@ -750,8 +751,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertTrue("Doesn't start like a JAXB string!", result.startsWith("<"));
 
         // JSON
-        restRequest = requestHelper.createRequest(startProcessOper);
         this.mediaType = MediaType.APPLICATION_JSON_TYPE;
+        requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        restRequest = requestHelper.createRequest(startProcessOper);
         logger.debug(">> " + restRequest.getUri());
         responseObj = post(restRequest);
         result = (String) responseObj.getEntity(String.class);
@@ -759,6 +761,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.error( "Should be JSON:\n" + result );
             fail("Doesn't start like a JSON string!");
         }
+        
+        this.mediaType = origType;
     }
 
     public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
@@ -921,7 +925,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     
-    public void urlsGetTaskContent(URL deploymentUrl, String user, String password) throws Exception {
+    public void urlsGetTaskAndTaskContent(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
 
@@ -942,11 +946,22 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         TaskSummary taskSum = taskSumList.getResult().get(0);
         long taskId = taskSum.getId();
         
+        // get task content
         restRequest = requestHelper.createRequest("task/" + taskId + "/content");
         responseObj = get(restRequest);
         JaxbContent content = responseObj.getEntity(JaxbContent.class);
         assertNotNull( "No content retrieved!", content.getContentMap() );
         assertEquals( "reviewer", content.getContentMap().get("GroupId"));
+        
+        // get (JSON) task
+        MediaType origType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_JSON_TYPE;
+        restRequest = getRestRequestHelper(deploymentUrl, user, password).createRequest("task/" + taskId);
+        responseObj = get(restRequest);
+        JaxbTask jsonTask = responseObj.getEntity(JaxbTask.class);
+        assertNotNull( "No task retrieved!", jsonTask);
+        assertEquals( "task id", taskId, jsonTask.getId().intValue());
+        this.mediaType = origType;
     }
     
     public void urlsVariableHistory(URL deploymentUrl, String user, String password) throws Exception {
@@ -1158,9 +1173,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         response.releaseConnection();
 
         // assert process finished
-        request = maryReqHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId);
+        request = maryReqHelper.createRequest("history/instance/" + procInstId);
         response = get(request);
-        response.releaseConnection();
+        JaxbHistoryLogList logList = response.getEntity(JaxbHistoryLogList.class);
+        List<AuditEvent> eventLogList = logList.getResult();
+        assertEquals("Expected one history (procInst) object", 1, eventLogList.size());
+        ProcessInstanceLog procInstLog = (ProcessInstanceLog) eventLogList.get(0);
+        assertEquals( "Process instance has not completed!", ProcessInstance.STATE_COMPLETED, procInstLog.getStatus().intValue());
     }
    
     private TaskSummary getTaskSummary(RestRequestHelper requestHelper, long processInstanceId, Status status) throws Exception {

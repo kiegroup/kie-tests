@@ -92,6 +92,8 @@
               <fileset>
                 <directory>${basedir}</directory>
                 <includes>
+                  <include>*db</include>
+                  <include>btm*log</include>
                   <include>repository/</include>
                   <include>.niogit/</include>
                   <include>.index/</include>
