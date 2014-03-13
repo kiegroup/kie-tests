@@ -173,7 +173,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @InSequence(2)
     public void testRestUrlsGetTaskContent() throws Exception {
         printTestName();
-        restTests.urlsGetTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
