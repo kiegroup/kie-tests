@@ -866,6 +866,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiGetTaskInstance(URL deploymentUrl, String user, String password) throws Exception {
+        MediaType origType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
+        
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         // Remote API setup
         RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
@@ -892,7 +895,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         checkReturnedTask(task, taskId);
 
         // Get it via the URL
-        ClientRequest restRequest = requestHelper.createRequest("task/" + taskId);
+        this.mediaType = origType;
+        ClientRequest restRequest = getRestRequestHelper(deploymentUrl, user, password).createRequest("task/" + taskId);
         ClientResponse<?> responseObj = get(restRequest);
         JaxbTask jaxbTask = responseObj.getEntity(JaxbTask.class);
         checkReturnedTask((Task) jaxbTask, taskId);
