@@ -83,7 +83,6 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
-import org.kie.services.client.serialization.jaxb.impl.audit.JaxbProcessInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
@@ -584,6 +583,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void commandsTaskCommands(URL deploymentUrl, String user, String password) throws Exception {
+        MediaType origType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
+        
         RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
         RuntimeEngine runtimeEngine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
@@ -598,6 +600,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("userId", taskUserId);
+        
+        this.mediaType = origType;
     }
 
     private JaxbCommandResponse<?> executeCommand(URL appUrl, String user, String password, String deploymentId, Command<?> command)
@@ -908,7 +912,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private void checkReturnedTask(Task task, long taskId) {
         assertNotNull("Could not retrietve task " + taskId, task);
-        assertEquals("Incorrect task rertrieved", taskId, task.getId().longValue());
+        assertEquals("Incorrect task retrieved", taskId, task.getId().longValue());
         TaskData taskData = task.getTaskData();
         assertNotNull(taskData);
     }
@@ -1108,9 +1112,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     
     
     public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
-       RemoteRuntimeEngineFactory krisRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD);
-       RemoteRuntimeEngineFactory maryRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD);
-       RemoteRuntimeEngineFactory johnRemoteEngineFactory = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD);
+       RemoteRuntimeEngineFactory krisRemoteEngineFactory 
+           = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD, useFormBasedAuth );
+       RemoteRuntimeEngineFactory maryRemoteEngineFactory 
+           = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD, useFormBasedAuth);
+       RemoteRuntimeEngineFactory johnRemoteEngineFactory 
+           = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD, useFormBasedAuth);
        runHumanTaskGroupIdTest(krisRemoteEngineFactory, johnRemoteEngineFactory, maryRemoteEngineFactory);
     }
     

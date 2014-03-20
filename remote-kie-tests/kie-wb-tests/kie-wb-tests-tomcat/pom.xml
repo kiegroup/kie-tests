@@ -16,7 +16,6 @@
   <properties>
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
-    <version.org.antlr>3.1.1</version.org.antlr>
   </properties>
 
   <dependencies>
@@ -137,17 +136,11 @@
       <version>1.7.2</version>
       <scope>test</scope>
     </dependency>
+    
     <!-- BZ-1070502, etc -->
     <dependency>
-      <groupId>org.hibernate.common</groupId>
-      <artifactId>hibernate-commons-annotations</artifactId>
-      <version>4.0.1.Final</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.antlr</groupId>
-      <artifactId>antlr</artifactId>
-      <version>3.1.1</version>
+      <artifactId>ST4</artifactId>
       <scope>test</scope>
     </dependency>
 

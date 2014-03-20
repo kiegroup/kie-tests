@@ -68,8 +68,7 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
                 { "org.kie.remote", "kie-services-remote", null },
                 { "org.kie.remote", "kie-services-jaxb", null },
                 // BZ-1070502
-                { "org.hibernate.common", "hibernate-commons-annotations", null },
-                { "org.antlr", "antlr", "3.1.1" }
+                { "org.antlr", "ST4", null }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         String oldClientJar = "kie-services-client";
