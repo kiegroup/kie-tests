@@ -36,7 +36,7 @@
                     <xsl:attribute name="key">key-store-path</xsl:attribute>
                     <xsl:attribute name="value">${jboss.server.config.dir}/ssl/keystore.jks</xsl:attribute>
                 </param>
-                <param key="key-store-password" value="keystorePassword"/>
+                <param key="key-store-password" value="SERVER_KEYSTORE_PASSWORD"/>
             </netty-connector>
             <xsl:apply-templates select="@* | *" />
         </connectors>
@@ -50,12 +50,12 @@
                     <xsl:attribute name="key">key-store-path</xsl:attribute>
                     <xsl:attribute name="value">${jboss.server.config.dir}/ssl/keystore.jks</xsl:attribute>
                 </param>
-                <param key="key-store-password" value="keystorePassword"/>
+                <param key="key-store-password" value="SERVER_KEYSTORE_PASSWORD"/>
                 <param>
                     <xsl:attribute name="key">trust-store-path</xsl:attribute>
-                    <xsl:attribute name="value">${jboss.server.config.dir}/ssl/truststore.jks</xsl:attribute>
+                    <xsl:attribute name="value">${jboss.server.config.dir}/ssl/truststore.jts</xsl:attribute>
                 </param>
-                <param key="trust-store-password" value="truststorePassword"/>
+                <param key="trust-store-password" value="SERVER_KEYSTORE_PASSWORD"/>
             </netty-acceptor>
             <xsl:apply-templates select="@* | *" />
         </acceptors>
