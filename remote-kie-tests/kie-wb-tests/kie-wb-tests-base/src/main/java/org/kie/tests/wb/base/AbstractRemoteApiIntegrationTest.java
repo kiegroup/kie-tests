@@ -66,7 +66,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(doDeploy());
         
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_JSON_TYPE, false);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         Thread.sleep(5000);
     }
 
