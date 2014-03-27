@@ -66,9 +66,9 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
         war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote", null },
-                { "org.kie.remote", "kie-services-jaxb", null },
+                { "org.kie.remote", "kie-services-jaxb", null }
                 // BZ-1070502
-                { "org.antlr", "ST4", null }
+//                { "org.antlr", "ST4", null }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         String oldClientJar = "kie-services-client";

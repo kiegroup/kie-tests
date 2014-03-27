@@ -137,13 +137,13 @@
       <scope>test</scope>
     </dependency>
     
-    <!-- BZ-1070502, etc -->
+    <!-- BZ-1070502, etc 
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>ST4</artifactId>
       <scope>test</scope>
     </dependency>
-
+-->
     <!-- JAAS use -->
     <dependency>
       <groupId>org.kie</groupId>

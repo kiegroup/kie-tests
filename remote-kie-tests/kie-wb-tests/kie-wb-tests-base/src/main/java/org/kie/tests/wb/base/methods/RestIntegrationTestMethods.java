@@ -20,7 +20,10 @@ package org.kie.tests.wb.base.methods;
 import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -259,7 +262,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * @param undeploy Whether or not to test the undeploy operation
      * @throws Exception if anything goes wrong
      */
-    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, MediaType mediaType, boolean undeploy)
+    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, boolean undeploy)
             throws Exception {
         Assume.assumeFalse(checkDeployFlagFile());
         
@@ -274,7 +277,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
    
         // Check and do deployment 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
-        RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
+        RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
     
         restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
         restRequest.accept(this.mediaType);
@@ -611,7 +614,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         MediaType originalMediaType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
-        List<Command<?>> commands = new ArrayList<Command<?>>();
+        List<Command> commands = new ArrayList<Command>();
         commands.add(command);
 
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/execute");
@@ -1047,16 +1050,33 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
             logger.debug(">> [GET] " + url.toExternalForm());
             connection.connect();
-            if (200 != connection.getResponseCode()) {
+            int respCode = connection.getResponseCode();
+            if (200 != respCode) { 
                 logger.warn(connection.getContent().toString());
             }
-            assertEquals(200, connection.getResponseCode());
-            Class<?> [] classes = { JaxbDeploymentUnitList.class };
-            depList = (JaxbDeploymentUnitList) connection.getContent(classes);
+            assertEquals(200, respCode);
+            
+            JaxbSerializationProvider jaxbSerializer = new JaxbSerializationProvider();
+            String xmlStrObj = getConnectionContent(connection.getContent());
+            logger.info( "Output: |" + xmlStrObj + "|");
+            depList = (JaxbDeploymentUnitList) jaxbSerializer.deserialize(xmlStrObj);
+            
             assertNotNull( "Null answer!", depList);
             assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
             assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
         }
+    }
+   
+    private String getConnectionContent(Object content) throws Exception { 
+        InputStreamReader in = new InputStreamReader((InputStream) content);
+        BufferedReader buff = new BufferedReader(in);
+        StringBuffer text = new StringBuffer();
+        String line = buff.readLine();
+        while( line != null ) { 
+            text.append(line);
+            line = buff.readLine();
+        }
+        return text.toString();
     }
     
     public void urlsGetRealProcessVariable(URL deploymentUrl, String user, String password) throws Exception { 
