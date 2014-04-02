@@ -20,10 +20,12 @@ package org.kie.tests.wb.eap.security;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.io.File;
+import java.net.URL;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
@@ -32,6 +34,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,7 @@ public class KieWbSecurityIntegrationTest {
     protected static final Logger logger = LoggerFactory.getLogger(KieWbSecurityIntegrationTest.class);
    
     private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @Deployment(testable=false, name = "kie-wb-security")
     public static Archive<?> createWar() {
@@ -69,7 +73,9 @@ public class KieWbSecurityIntegrationTest {
         // Replace kie-services-remote jar with the one we just generated
         logger.info( "] replace libs");
         String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote" }
+                { "org.kie.remote", "kie-services-remote" },
+                { "org.kie.remote", "kie-services-client" },
+                { "org.jbpm", "jbpm-human-task-core" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         for( String [] jar : jarsToReplace ) { 
@@ -97,9 +103,14 @@ public class KieWbSecurityIntegrationTest {
         logger.info( "] done");
         return war;
     }
-   
+  
+    @ArquillianResource
+    URL deploymentUrl;
+    
     @Test
     public void securityTest() throws Exception { 
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+        
         logger.info("-->");
         jmsTests.commandsSimpleStartProcess(MARY_USER, MARY_PASSWORD);
         logger.info("<--");

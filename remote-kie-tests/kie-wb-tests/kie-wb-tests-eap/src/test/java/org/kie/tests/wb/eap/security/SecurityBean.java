@@ -132,29 +132,30 @@ public class SecurityBean {
                     jaccService = serviceContainerFromCurrent.getService(serviceName);
                 }
             }
-            Object valueObj = jaccService.getValue();
-            System.out.println("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+            if( jaccService != null ) { 
+                Object valueObj = jaccService.getValue();
+                System.out.println("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+            }
+
+            ServiceContainer serviceContainer = lookupServiceContainer();
+            if (serviceContainer != null) {
+                System.out.println("But could get an injected service container!");
+                for (ServiceName serviceName : serviceContainer.getServiceNames()) {
+                    if (serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
+                        jaccService = serviceContainerFromCurrent.getService(serviceName);
+                    }
+                }
+                if (jaccService != null) {
+                    Object valueObj = jaccService.getValue();
+                    logger.info("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
+                } else {
+                    logger.warn("No JaccService instance found!");
+                }
+            } else {
+                logger.info("..or just a normal service container");
+            }
         } else {
             System.out.println("Could not get current service container!");
-        }
-
-        ServiceContainer serviceContainer = lookupServiceContainer();
-        if (serviceContainer != null) {
-            System.out.println("But could get an injected service container!");
-            for (ServiceName serviceName : serviceContainer.getServiceNames()) {
-                if (serviceName.getSimpleName().endsWith("jboss.security.jacc")) {
-                    jaccService = serviceContainerFromCurrent.getService(serviceName);
-                }
-            }
-            if (jaccService != null) {
-                Object valueObj = jaccService.getValue();
-                logger.info("value: " + (valueObj == null ? "null" : valueObj.getClass().getName()));
-            } else {
-                logger.warn("No JaccService instance found!");
-            }
-        } else {
-            logger.info("..or just a normal service container");
-
         }
     }
 

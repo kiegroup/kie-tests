@@ -103,7 +103,7 @@
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
-    </dependency>
+    </dependency> 
     <dependency>
       <groupId>org.jboss.shrinkwrap</groupId>
       <artifactId>shrinkwrap-api</artifactId>
@@ -279,6 +279,44 @@
             <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
           </configuration>
         </plugin>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>xml-maven-plugin</artifactId>
+                    <versionRange>[1.0,)</versionRange>
+                    <goals>
+                      <goal>transform</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.jboss.byteman</groupId>
+                    <artifactId>byteman-rulecheck-maven-plugin</artifactId>
+                    <versionRange>[2.0,)</versionRange>
+                    <goals>
+                      <goal>transform</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -350,7 +388,6 @@
       </properties>
       <build>
         <plugins>
-
 
           <!-- 1. install server in the build/target dir -->
           <plugin>
@@ -452,66 +489,70 @@
                       <filtering>false</filtering>
                     </resource>
                   </resources>
-  <overwrite>true</overwrite>
+                  <overwrite>true</overwrite>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-ssl-files</id>
+                <phase>process-test-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration/ssl</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/test/resources/ssl/server</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                  <overwrite>true</overwrite>
                 </configuration>
               </execution>
             </executions>
           </plugin>
 
           <!-- 3. modify server configuration -->
-          <!-- 
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>xml-maven-plugin</artifactId>
            <version>1.0</version>                      
            <executions>                        
              <execution>
-               <phase>process-test-classes</phase>
+               <id>modify-standalone-full</id>
+               <phase>process-test-resources</phase>
                <goals>
                  <goal>transform</goal>
                </goals>
                <configuration>                                 
                  <transformationSets>
-                   <transformationSet>
-                     <dir>${jboss.as.home}/standalone/configuration/</dir>
-                     <outputDir>${jboss.as.home}/standalone/configuration</outputDir>
-                     <includes>
-                       <include>standalone.xml</include>
-                     </includes>
-                     <stylesheet>src/test/resources/xslt/addSecurityDomain.xslt</stylesheet>
-                   </transformationSet>
                    <transformationSet> 
-                     <dir>${jboss.as.home}/standalone/configuration/</dir> 
-                     <outputDir>${jboss.as.home}/standalone/configuration</outputDir> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
                      <includes> 
-                       <include>standalone.xml</include> 
+                       <include>standalone-full.xml</include> 
                      </includes>
-                     <stylesheet>src/test/resources/xslt/changeBindingPorts.xslt</stylesheet>
+                     <stylesheet>src/test/resources-eap-6/xslt/addDebugLogging.xslt</stylesheet>
                    </transformationSet> 
-                   <transformationSet>
-                     <dir>${jboss.as.home}/modules/org/picketlink/main</dir>
-                     <outputDir>${jboss.as.home}/modules/org/picketlink/main</outputDir>
-                     <includes>
-                       <include>module.xml</include>
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
                      </includes>
-                     <stylesheet>src/test/resources/xslt/changePicketLinkModule.xslt</stylesheet>
-                     <parameters>
-                       <parameter>
-                         <name>picketlink_version</name>
-                         <value>${version.picketlink}</value>
-                       </parameter>
-                     </parameters>
-                   </transformationSet>
+                     <stylesheet>src/test/resources-eap-6/xslt/changeJmsMessagingConfig.xslt</stylesheet>
+                   </transformationSet> 
                  </transformationSets>
                </configuration>
              </execution>
            </executions>
          </plugin> 
-          -->
+         
          <plugin>
            <groupId>com.google.code.maven-replacer-plugin</groupId>
            <artifactId>replacer</artifactId>
            <executions>
+           <!-- 
              <execution>
                <id>fix-jboss-standalone-xml</id>
                <phase>process-test-resources</phase>
@@ -525,39 +566,12 @@
                  </includes>
                  <replacements>
                    <replacement>
-                     <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
-                     <value>&lt;security-settings&gt;
-                       &lt;security-setting match="#"&gt;
-                       &lt;permission type="send" roles="admin"/&gt;
-                       &lt;permission type="consume" roles="admin"/&gt;</value>
-                   </replacement>
                    <replacement>
-                     <token>periodic-rotating-file-handler&gt;</token>
-                     <value>periodic-rotating-file-handler&gt;
-                       &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
-                       &lt;formatter&gt;
-                       &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%C] (%t) %s%E%n"/&gt;
-                       &lt;/formatter&gt;
-                       &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
-                       &lt;suffix value=".yyyy-MM-dd"/&gt;
-                       &lt;append value="true"/&gt;
-                       &lt;/periodic-rotating-file-handler&gt;</value>
-                   </replacement>
-                   <replacement>
-                       <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
-                       <value>&lt;root-logger&gt;
-                       &lt;level name="DEBUG"/&gt;
-                       </value>
-                   </replacement>
-                   <replacement>
-                       <token>&lt;handlers&gt;</token>
-                       <value>&lt;handlers&gt;
-                       &lt;handler name="DEBUGFILE"/&gt;</value>
-                   </replacement>
                    <replacement>
                        <token>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</token>
                        <value>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=TRUE</value>
                    </replacement>
+                   -->
 
                    <!-- postgres
                    <replacement>
@@ -610,9 +624,11 @@
                    </replacement>
                    -->
 
+                <!-- 
                  </replacements>
                 </configuration>
               </execution>
+              -->
               <execution>
                 <id>fix-broken-junit-reports</id>
                 <phase>post-integration-test</phase>

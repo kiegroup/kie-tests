@@ -86,7 +86,7 @@ public class DamnIntegrationTest {
     @Test
     public void deploy() throws Exception { 
         Assume.assumeTrue(false);
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, MediaType.APPLICATION_XML_TYPE, false);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         
         logger.info( "SLEEP FOR 10!");
         Thread.sleep(10*1000);
@@ -96,12 +96,6 @@ public class DamnIntegrationTest {
     @Test
     public void jmsExtraJaxb() throws Exception { 
         jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @InSequence(2)
-    @Test
-    public void restExtraJaxb() throws Exception { 
-        restTests.remoteApiExtraJaxbClasses(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
 }
