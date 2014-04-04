@@ -38,10 +38,13 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.security.auth.Subject;
 
 import org.drools.core.command.runtime.process.GetProcessInstanceCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.hornetq.api.core.TransportConfiguration;
+import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
+import org.hornetq.core.remoting.impl.netty.TransportConstants;
+import org.hornetq.jms.client.HornetQJMSConnectionFactory;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
@@ -71,11 +74,21 @@ import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListR
 
 public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
+    private static final String SSL_CONNECTION_FACTORY_NAME = "jms/SslRemoteConnectionFactory";
     private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
+    private boolean useSsl = false;
+    
     private static final String KSESSION_QUEUE_NAME = "jms/queue/KIE.SESSION";
     private static final String TASK_QUEUE_NAME = "jms/queue/KIE.TASK";
     private static final String RESPONSE_QUEUE_NAME = "jms/queue/KIE.RESPONSE";
 
+    private String getConnectionFactoryName() { 
+       if( useSsl ) { 
+           return SSL_CONNECTION_FACTORY_NAME;
+       } 
+       return CONNECTION_FACTORY_NAME;
+    }
+    
     private static final long QUALITY_OF_SERVICE_THRESHOLD_MS = 5 * 1000;
 
     private final String deploymentId;
@@ -83,11 +96,16 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
 
     public JmsIntegrationTestMethods(String deploymentId) {
-        this(deploymentId, true);
+       this(deploymentId, true, false);
     }
     
-    public JmsIntegrationTestMethods(String deploymentId, boolean remote) {
+    public JmsIntegrationTestMethods(String deploymentId, boolean useSSL) {
+       this(deploymentId, true, useSSL);
+    }
+    
+    public JmsIntegrationTestMethods(String deploymentId, boolean remote, boolean useSSL) {
         this.deploymentId = deploymentId;
+        this.useSsl = useSSL;
         if( remote ) { 
             this.remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
         } else { 
@@ -122,7 +140,21 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER,
             String PASSWORD) throws Exception {
-        ConnectionFactory factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
+        ConnectionFactory factory;
+        if( ! useSsl ) { 
+            factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
+        } else { 
+            Map<String, Object> connParams = new HashMap<String, Object>();  
+            connParams.put(TransportConstants.PORT_PROP_NAME, 5446);  
+            connParams.put(TransportConstants.HOST_PROP_NAME, "127.0.0.1");  
+            // SSL
+            connParams.put(org.hornetq.core.remoting.impl.netty.TransportConstants.SSL_ENABLED_PROP_NAME, true);  
+            connParams.put(TransportConstants.KEYSTORE_PASSWORD_PROP_NAME, "CLIENT_KEYSTORE_PASSWORD");  
+            connParams.put(TransportConstants.KEYSTORE_PATH_PROP_NAME, "ssl/client_keystore.jks");  
+      
+            factory = new HornetQJMSConnectionFactory(false, 
+                    new TransportConfiguration(NettyConnectorFactory.class.getName(), connParams));
+        }
         Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
         Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
 
@@ -166,7 +198,9 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         } finally {
             if (connection != null) {
                 connection.close();
-                session.close();
+                if( session != null ) { 
+                    session.close();
+                }
             }
         }
         return cmdResponse;
@@ -259,6 +293,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        assertNotNull( "Null process instance!", processInstance);
 
         logger.debug("Started process instance: " + processInstance + " "
                 + (processInstance == null ? "" : processInstance.getId()));
@@ -311,7 +346,8 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
-
+        assertNotNull( "Null process instance!", processInstance);
+        
         logger.debug("Started process instance: " + processInstance + " "
                 + (processInstance == null ? "" : processInstance.getId()));
 

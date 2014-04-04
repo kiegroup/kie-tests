@@ -30,7 +30,7 @@
     
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:connectors" >
         <connectors>
-            <netty-connector name="netty-ssl" socket-binding="messaging">
+            <netty-connector name="netty-ssl" socket-binding="messaging-ssl">
                 <param key="ssl-enabled" value="true"/>
                 <param>
                     <xsl:attribute name="key">key-store-path</xsl:attribute>
@@ -44,7 +44,7 @@
     
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:acceptors" >
         <acceptors>
-            <netty-acceptor name="netty-ssl" socket-binding="messaging">
+            <netty-acceptor name="netty-ssl" socket-binding="messaging-ssl">
                 <param key="ssl-enabled" value="true"/>
                 <param>
                     <xsl:attribute name="key">key-store-path</xsl:attribute>
@@ -55,7 +55,7 @@
                     <xsl:attribute name="key">trust-store-path</xsl:attribute>
                     <xsl:attribute name="value">${jboss.server.config.dir}/ssl/truststore.jts</xsl:attribute>
                 </param>
-                <param key="trust-store-password" value="SERVER_KEYSTORE_PASSWORD"/>
+                <param key="trust-store-password" value="SERVER_TRUSTSTORE_PASSWORD"/>
             </netty-acceptor>
             <xsl:apply-templates select="@* | *" />
         </acceptors>
@@ -75,6 +75,13 @@
             </connection-factory>
             <xsl:apply-templates select="@* | *" />
         </jms-connection-factories>
+    </xsl:template>
+    
+    <xsl:template match="//as:socket-binding-group[@name='standard-sockets']" >
+        <socket-binding-group name="standard-sockets" default-interface="public" port-offset="0">
+            <socket-binding name="messaging-ssl" port="5446" /> 
+            <xsl:apply-templates select="@* | *" />
+        </socket-binding-group>
     </xsl:template>
     
 	<!-- Copy everything else. -->

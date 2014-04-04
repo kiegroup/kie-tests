@@ -98,6 +98,7 @@ public class AbstractIntegrationTestMethods {
                 thisProcInstVarLog = varLog;
             }
         }
+        assertNotNull( "No VariableInstanceLog found!", thisProcInstVarLog );
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
     }

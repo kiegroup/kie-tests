@@ -335,9 +335,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.error("POST operation failed.", ex);
             fail("POST operation failed.");
         }
-        if (response == null) {
-            fail("Response is null!");
-        }
+        assertNotNull("Response is null!", response);
     
         // ADDED CODE TO CHECK RESPONSE TIME
         logger.debug("AFTER POST:  " + sdf.format((after = System.currentTimeMillis())));
@@ -364,7 +362,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             logger.error("Unmarshalling failed.", ex);
             fail("Unmarshalling entity failed: " + ex.getMessage());
         }
-    
+   
+        assertNotNull("Null response!", result);
         assertTrue("The deployment unit was not created successfully.", result.isSuccess());
     
         return result;
@@ -402,8 +401,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 Thread.sleep(sleep);
             }
         }
-        KieSession ksession = null;
-        ProcessInstance pi = null;
     }
 
     private boolean isDeployed(ClientResponse<?> responseObj) {
@@ -556,13 +553,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-
-        logger.debug("Started process instance: " + processInstance + " "
-                + (processInstance == null ? "" : processInstance.getId()));
+        assertNotNull( "Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+        
+        logger.debug("Started process instance: " + processInstance + " " + procInstId);
 
         TaskService taskService = engine.getTaskService();
         List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long taskId = findTaskId(processInstance.getId(), tasks);
+        long taskId = findTaskId(procInstId, tasks);
 
         logger.debug("Found task " + taskId);
         Task task = taskService.getTaskById(taskId);
@@ -581,7 +579,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
-        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(processInstance.getId(), statuses, "en-UK");
+        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
@@ -888,11 +886,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         } catch (Exception e) {
             fail("Unable to start process: " + e.getMessage());
         }
-        logger.debug("Started process instance: " + processInstance + " "
-                + (processInstance == null ? "" : processInstance.getId()));
+        
+        assertNotNull("Null processInstance!", processInstance);
+        long procInstId = processInstance.getId();
 
         TaskService taskService = engine.getTaskService();
-        List<Long> tasks = taskService.getTasksByProcessInstanceId(processInstance.getId());
+        List<Long> tasks = taskService.getTasksByProcessInstanceId(procInstId);
         assertEquals("Incorrect number of tasks for started process: ", 1, tasks.size());
         long taskId = tasks.get(0);
 
@@ -1104,8 +1103,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 break;
             }
         }
+        assertNotNull( "No VariableInstanceLog found!", thisProcInstVarLog);
         assertEquals( varName, thisProcInstVarLog.getVariableId() );
-//        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
         
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
         ClientResponse<?> response = get(restRequest);

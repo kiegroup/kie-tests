@@ -17,11 +17,33 @@
  */
 package org.kie.tests.wb.eap.security;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 
+import javax.jms.BytesMessage;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.drools.core.command.runtime.process.StartProcessCommand;
+import org.hornetq.api.core.TransportConfiguration;
+import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
+import org.hornetq.core.remoting.impl.netty.TransportConstants;
+import org.hornetq.jms.client.HornetQJMSConnectionFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -33,6 +55,10 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.api.command.Command;
+import org.kie.services.client.serialization.JaxbSerializationProvider;
+import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
+import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
@@ -44,7 +70,7 @@ public class KieWbSecurityIntegrationTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbSecurityIntegrationTest.class);
    
-    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID, true);
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @Deployment(testable=false, name = "kie-wb-security")
@@ -68,13 +94,14 @@ public class KieWbSecurityIntegrationTest {
         
         // Add kjar deployer
         logger.info( "] add classes");
-        war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
+//        war.addClasses(SecurityBean.class, UserPassCallbackHandler.class);
      
         // Replace kie-services-remote jar with the one we just generated
         logger.info( "] replace libs");
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-services-remote" },
                 { "org.kie.remote", "kie-services-client" },
+                { "org.kie.remote", "kie-services-jaxb" },
                 { "org.jbpm", "jbpm-human-task-core" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
@@ -106,13 +133,115 @@ public class KieWbSecurityIntegrationTest {
   
     @ArquillianResource
     URL deploymentUrl;
+   
+    private InitialContext remoteInitialContext = null;
+    private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
+    
+    private static final String SSL_CONNECTION_FACTORY_NAME = "jms/SslRemoteConnectionFactory";
+    private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
+    private boolean useSsl = true;
+    
+    private static final String KSESSION_QUEUE_NAME = "jms/queue/KIE.SESSION";
+    private static final String TASK_QUEUE_NAME = "jms/queue/KIE.TASK";
+    private static final String RESPONSE_QUEUE_NAME = "jms/queue/KIE.RESPONSE";
+    
+    private static final long QUALITY_OF_SERVICE_THRESHOLD_MS = 5 * 1000;
+ 
     
     @Test
     public void securityTest() throws Exception { 
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+        // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         
         logger.info("-->");
-        jmsTests.commandsSimpleStartProcess(MARY_USER, MARY_PASSWORD);
+        Command<?> cmd = new StartProcessCommand(SCRIPT_TASK_PROCESS_ID);
+        JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, cmd);
+        sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, MARY_USER, MARY_PASSWORD);
         logger.info("<--");
+    }
+    
+    private static InitialContext getRemoteInitialContext(String user, String password) {
+        Properties initialProps = new Properties();
+        initialProps.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        initialProps.setProperty(InitialContext.PROVIDER_URL, "remote://localhost:4447");
+        initialProps.setProperty(InitialContext.SECURITY_PRINCIPAL, user);
+        initialProps.setProperty(InitialContext.SECURITY_CREDENTIALS, password);
+
+        for (Object keyObj : initialProps.keySet()) {
+            String key = (String) keyObj;
+            System.setProperty(key, (String) initialProps.get(key));
+        }
+        try {
+            return new InitialContext(initialProps);
+        } catch (NamingException e) {
+            throw new RuntimeException("Unable to create " + InitialContext.class.getSimpleName(), e);
+        }
+    }
+
+    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER,
+            String PASSWORD) throws Exception {
+        ConnectionFactory factory;
+        if( ! useSsl ) { 
+            factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
+        } else { 
+            Map<String, Object> connParams = new HashMap<String, Object>();  
+            connParams.put(TransportConstants.PORT_PROP_NAME, 5446);  
+            connParams.put(TransportConstants.HOST_PROP_NAME, "127.0.0.1");  
+            // SSL
+            connParams.put(org.hornetq.core.remoting.impl.netty.TransportConstants.SSL_ENABLED_PROP_NAME, true);  
+            connParams.put(TransportConstants.KEYSTORE_PASSWORD_PROP_NAME, "CLIENT_KEYSTORE_PASSWORD");  
+            connParams.put(TransportConstants.KEYSTORE_PATH_PROP_NAME, "ssl/client_keystore.jks");  
+      
+            factory = new HornetQJMSConnectionFactory(false, 
+                    new TransportConfiguration(NettyConnectorFactory.class.getName(), connParams));
+        }
+        Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
+        Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
+
+        Connection connection = null;
+        Session session = null;
+        JaxbCommandsResponse cmdResponse = null;
+        try {
+            // setup
+            connection = factory.createConnection(USER, PASSWORD);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+            MessageProducer producer = session.createProducer(jbpmQueue);
+            String corrId = UUID.randomUUID().toString();
+            String selector = "JMSCorrelationID = '" + corrId + "'";
+            MessageConsumer consumer = session.createConsumer(responseQueue, selector);
+
+            connection.start();
+
+            // Create msg
+            BytesMessage msg = session.createBytesMessage();
+            msg.setJMSCorrelationID(corrId);
+            msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE);
+            msg.setStringProperty("username", MARY_USER);
+            msg.setStringProperty("password", MARY_PASSWORD);
+            String xmlStr = jaxbSerializationProvider.serialize(req);
+            msg.writeUTF(xmlStr);
+
+            // send
+            producer.send(msg);
+
+            // receive
+            Message response = consumer.receive(QUALITY_OF_SERVICE_THRESHOLD_MS);
+
+            // check
+            assertNotNull("Response is empty.", response);
+            assertEquals("Correlation id not equal to request msg id.", corrId, response.getJMSCorrelationID());
+            assertNotNull("Response from MDB was null!", response);
+            xmlStr = ((BytesMessage) response).readUTF();
+            cmdResponse = (JaxbCommandsResponse) jaxbSerializationProvider.deserialize(xmlStr);
+            assertNotNull("Jaxb Cmd Response was null!", cmdResponse);
+        } finally {
+            if (connection != null) {
+                connection.close();
+                if( session != null ) { 
+                    session.close();
+                }
+            }
+        }
+        return cmdResponse;
     }
 }

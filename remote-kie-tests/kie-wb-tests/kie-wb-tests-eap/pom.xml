@@ -32,6 +32,10 @@
     <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.1</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
+    
+    <server.keystore.password>SERVER_KEYSTORE_PASSWORD</server.keystore.password>
+    <server.truststore.password>SERVER_TRUSTSTORE_PASSWORD</server.truststore.password>
+    <client.keystore.password>CLIENT_KEYSTORE_PASSWORD</client.keystore.password>
   </properties>
 
   <dependencies>
@@ -231,6 +235,10 @@
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources-filtered</directory>
         <filtering>true</filtering>
       </testResource>
       <testResource>

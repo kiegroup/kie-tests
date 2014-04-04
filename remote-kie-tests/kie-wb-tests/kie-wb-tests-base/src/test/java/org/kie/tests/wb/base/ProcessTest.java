@@ -251,7 +251,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false);
+        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false, false);
         jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
     }
 }
