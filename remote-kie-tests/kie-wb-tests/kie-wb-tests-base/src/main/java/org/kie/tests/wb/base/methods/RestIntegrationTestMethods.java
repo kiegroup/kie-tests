@@ -109,17 +109,22 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private final String deploymentId;
     private boolean useFormBasedAuth = false;
     private boolean testWithHttpUrlConnection = true;
+    private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
     private MediaType mediaType;
     private final int timeout;
     private static final int DEFAULT_TIMEOUT = 10;
     
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance) {
+    
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance, RuntimeStrategy strategy) {
         if( mediaType == null ) { 
             mediaType = MediaType.APPLICATION_XML_TYPE;
         }
         if( tomcatInstance == null ) { 
            tomcatInstance = false; 
+        }
+        if( strategy != null ) { 
+            this.strategy = strategy;
         }
         
         this.deploymentId = deploymentId;
@@ -129,20 +134,24 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         this.testWithHttpUrlConnection = ! this.useFormBasedAuth;
     }
     
+    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth, RuntimeStrategy strategy) {
+       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, strategy);
+    }
+    
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth) {
-       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth);
+       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, null);
     }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout) {
-       this(deploymentId, mediaType, timeout, null);
+       this(deploymentId, mediaType, timeout, null, null);
     }
     
     public RestIntegrationTestMethods(String deploymentId, MediaType mediaType) {
-        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null);
+        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null, null);
     }
 
     public RestIntegrationTestMethods(String deploymentId) {
-        this(deploymentId, null, DEFAULT_TIMEOUT, null);
+        this(deploymentId, null, DEFAULT_TIMEOUT, null, null);
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
@@ -277,7 +286,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
    
         // Check and do deployment 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
-        RuntimeStrategy strategy = RuntimeStrategy.PER_PROCESS_INSTANCE;
     
         restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
         restRequest.accept(this.mediaType);
@@ -289,13 +297,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         } 
             
         // Deploy
-        deploy(user, password, deploymentUrl, deploymentId, strategy, mediaType);
+        deploy(user, password, deploymentUrl, deploymentId);
         waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
         
     }
 
-    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId,
-            RuntimeStrategy strategy, MediaType mediaType) throws Exception {
+    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId) throws Exception {
         logger.info("deploy");
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
     
@@ -1130,7 +1137,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     }
     
-    
     public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
        RemoteRuntimeEngineFactory krisRemoteEngineFactory 
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD, useFormBasedAuth );
@@ -1138,7 +1144,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD, useFormBasedAuth);
        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD, useFormBasedAuth);
-       runHumanTaskGroupIdTest(krisRemoteEngineFactory, johnRemoteEngineFactory, maryRemoteEngineFactory);
+       runHumanTaskGroupIdTest(krisRemoteEngineFactory.newRuntimeEngine(), 
+               johnRemoteEngineFactory.newRuntimeEngine(), 
+               maryRemoteEngineFactory.newRuntimeEngine());
     }
     
     public void remoteApiGroupAssignmentTest(URL deploymentUrl) throws Exception { 

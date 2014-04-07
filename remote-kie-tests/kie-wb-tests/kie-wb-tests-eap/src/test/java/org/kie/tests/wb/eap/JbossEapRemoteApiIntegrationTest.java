@@ -26,6 +26,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
+import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
@@ -38,7 +39,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public boolean doDeploy() { 
-        return false;
+        return true;
     }
  
     public MediaType getMediaType() { 
@@ -51,7 +52,18 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
 
     @Override
+    public boolean doRestTests() {
+        return false;
+    }
+
+    @Override
     public boolean useFormBasedAuth() {
         return false;
     }
+
+    @Override
+    public RuntimeStrategy getStrategy() {
+        return RuntimeStrategy.SINGLETON;
+    }
+    
 }

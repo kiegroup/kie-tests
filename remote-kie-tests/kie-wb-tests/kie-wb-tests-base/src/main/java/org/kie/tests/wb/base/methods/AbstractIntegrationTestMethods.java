@@ -85,7 +85,9 @@ public class AbstractIntegrationTestMethods {
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("myobject", param);
         KieSession ksession = engine.getKieSession();
+        logger.info("Sending start-process-request");
         ProcessInstance procInst = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters);
+        assertNotNull( "No process instance returned!", procInst);
         long procInstId = procInst.getId();
         
         /**
@@ -117,6 +119,7 @@ public class AbstractIntegrationTestMethods {
        
         // Start process
         ProcessInstance pi = ksession.startProcess(TestConstants.RULE_TASK_PROCESS_ID, params);
+        assertNotNull( "No Process instance returned!", pi);
         ksession.fireAllRules();
         
         // Check
@@ -131,24 +134,23 @@ public class AbstractIntegrationTestMethods {
         }
     }
    
-    public void runHumanTaskGroupIdTest(RemoteRuntimeEngineFactory krisRuntimeEngineFactory, 
-            RemoteRuntimeEngineFactory johnRuntimeEngineFactory, RemoteRuntimeEngineFactory maryRuntimeEngineFactory) {
+    public void runHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
 
-        RuntimeEngine engine = krisRuntimeEngineFactory.newRuntimeEngine();
-        KieSession ksession = engine.getKieSession();
+        KieSession ksession = krisRuntimeEngine.getKieSession();
 
         // start a new process instance
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("employee", "krisv");
         params.put("reason", "Yearly performance evaluation");
         ProcessInstance processInstance = ksession.startProcess(EVALUTAION_PROCESS_ID, params);
+        assertNotNull( "Null process instance!", processInstance);
         long procInstId = processInstance.getId();
         System.out.println("Process started ...");
 
         // complete Self Evaluation
         {
             String user = "krisv";
-            TaskService taskService = engine.getTaskService();
+            TaskService taskService = krisRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
             TaskSummary task = getProcessInstanceTask(tasks, procInstId);
             assertNotNull("Unable to find " + user + "'s task", task);
@@ -162,12 +164,11 @@ public class AbstractIntegrationTestMethods {
         // john from HR
         { 
             String user = "john";
-            TaskService taskService = johnRuntimeEngineFactory.newRuntimeEngine().getTaskService();
+            TaskService taskService = johnRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
             TaskSummary task = getProcessInstanceTask(tasks, procInstId);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'john' completing task " + task.getName() + ": " + task.getDescription());
-//            taskService.claim(task.getId(), user);
             taskService.start(task.getId(), user);
             Map<String, Object> results = new HashMap<String, Object>();
             results.put("performance", "acceptable");
@@ -177,12 +178,11 @@ public class AbstractIntegrationTestMethods {
         // mary from PM
         {
             String user = "mary";
-            TaskService taskService = maryRuntimeEngineFactory.newRuntimeEngine().getTaskService();
+            TaskService taskService = maryRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
             TaskSummary task = getProcessInstanceTask(tasks, procInstId);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
-//            taskService.claim(task.getId(), user);
             taskService.start(task.getId(), user);
             Map<String, Object> results = new HashMap<String, Object>();
             results.put("performance", "outstanding");
@@ -195,9 +195,10 @@ public class AbstractIntegrationTestMethods {
 
     private TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) { 
         TaskSummary result = null;
-        for( TaskSummary krisTask : tasks ) { 
-            if( krisTask.getProcessInstanceId() == procInstId ) { 
-                result = krisTask;
+        for( TaskSummary task : tasks ) { 
+            if( task.getProcessInstanceId() == procInstId ) { 
+                result = task;
+                break;
             }
          }
         return result;

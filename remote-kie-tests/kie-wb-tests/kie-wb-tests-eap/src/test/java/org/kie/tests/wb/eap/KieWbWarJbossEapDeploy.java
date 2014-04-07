@@ -44,7 +44,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             war.delete("WEB-INF/classes/META-INF/persistence.xml");
             if( "oracle".equals(database) ) { 
                 war.addAsResource("META-INF/persistence-oracle.xml", "META-INF/persistence.xml");
-            } else if( "postgresql".equals(database) || "postgres".equals(database) ) { 
+            } else if( "postgres".equals(database) ) { 
                 war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
             } else { 
                 throw new IllegalArgumentException("Unknown database type: " + database );

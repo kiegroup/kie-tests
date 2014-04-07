@@ -47,7 +47,7 @@ public class DamnIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
-        return createTestWar("eap-6_1");
+        return createTestWar("eap-6_1", "postgres");
     }
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractRemoteApiIntegrationTest.class);
@@ -85,7 +85,7 @@ public class DamnIntegrationTest {
     @InSequence(1)
     @Test
     public void deploy() throws Exception { 
-        Assume.assumeTrue(false);
+        Assume.assumeTrue(true);
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         
         logger.info( "SLEEP FOR 10!");
@@ -95,7 +95,10 @@ public class DamnIntegrationTest {
     @InSequence(2)
     @Test
     public void jmsExtraJaxb() throws Exception { 
-        jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
+        jmsTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
+        
+        logger.info( "SLEEP FOR 10!");
+        Thread.sleep(10*1000);
     }
     
 }

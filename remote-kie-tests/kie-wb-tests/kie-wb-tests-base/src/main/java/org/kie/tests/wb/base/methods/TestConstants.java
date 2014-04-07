@@ -33,6 +33,13 @@ public class TestConstants {
     public static final String SALA_PASSWORD = "sala123@";
     public static final String JOHN_USER = "john";
     public static final String JOHN_PASSWORD = "john123@";
+   
+    /**
+     * SSL
+     */
+    
+    public static final String CLIENT_KEY_TRUSTSTORE_LOCATION = "ssl/client_keystore.jks";
+    public static final String CLIENT_KEYSTORE_PASSWORD = "CLIENT_KEYSTORE_PASSWORD";
     
     /**
      * Project version (arquillian jars)

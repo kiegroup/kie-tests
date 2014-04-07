@@ -35,6 +35,7 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
+import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -70,7 +71,6 @@ public class KieWbSecurityIntegrationTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbSecurityIntegrationTest.class);
    
-    private JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID, true);
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
     
     @Deployment(testable=false, name = "kie-wb-security")
@@ -137,8 +137,6 @@ public class KieWbSecurityIntegrationTest {
     private InitialContext remoteInitialContext = null;
     private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
     
-    private static final String SSL_CONNECTION_FACTORY_NAME = "jms/SslRemoteConnectionFactory";
-    private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
     private boolean useSsl = true;
     
     private static final String KSESSION_QUEUE_NAME = "jms/queue/KIE.SESSION";
@@ -151,6 +149,8 @@ public class KieWbSecurityIntegrationTest {
     @Test
     public void securityTest() throws Exception { 
         // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+       
+        this.remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
         
         logger.info("-->");
         Command<?> cmd = new StartProcessCommand(SCRIPT_TASK_PROCESS_ID);
@@ -177,23 +177,37 @@ public class KieWbSecurityIntegrationTest {
         }
     }
 
-    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER,
-            String PASSWORD) throws Exception {
+    private ConnectionFactory getConnectionFactory(boolean useSsl) { 
         ConnectionFactory factory;
+        Map<String, Object> connParams = new HashMap<String, Object>();  
         if( ! useSsl ) { 
-            factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
+            connParams.put(TransportConstants.PORT_PROP_NAME, 5445);  
+            connParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
+            connParams.put(org.hornetq.core.remoting.impl.netty.TransportConstants.SSL_ENABLED_PROP_NAME, false);  
         } else { 
-            Map<String, Object> connParams = new HashMap<String, Object>();  
             connParams.put(TransportConstants.PORT_PROP_NAME, 5446);  
-            connParams.put(TransportConstants.HOST_PROP_NAME, "127.0.0.1");  
+            connParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
+            
+            // arguments
+            String password = "CLIENT_KEYSTORE_PASSWORD";
+            String keystorePath = this.getClass().getResource("/ssl/client_keystore.jks").getPath();
+            
             // SSL
             connParams.put(org.hornetq.core.remoting.impl.netty.TransportConstants.SSL_ENABLED_PROP_NAME, true);  
-            connParams.put(TransportConstants.KEYSTORE_PASSWORD_PROP_NAME, "CLIENT_KEYSTORE_PASSWORD");  
-            connParams.put(TransportConstants.KEYSTORE_PATH_PROP_NAME, "ssl/client_keystore.jks");  
-      
-            factory = new HornetQJMSConnectionFactory(false, 
-                    new TransportConfiguration(NettyConnectorFactory.class.getName(), connParams));
+            connParams.put(TransportConstants.KEYSTORE_PASSWORD_PROP_NAME, password); 
+            connParams.put(TransportConstants.KEYSTORE_PATH_PROP_NAME, keystorePath);
+            connParams.put(TransportConstants.TRUSTSTORE_PASSWORD_PROP_NAME, password); 
+            connParams.put(TransportConstants.TRUSTSTORE_PATH_PROP_NAME, keystorePath);
         }
+        factory = new HornetQJMSConnectionFactory(false, 
+                new TransportConfiguration(NettyConnectorFactory.class.getName(), connParams));
+        return factory;
+    }
+    
+    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER,
+            String PASSWORD) throws Exception {
+        ConnectionFactory factory = getConnectionFactory(useSsl);
+        
         Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
         Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
 

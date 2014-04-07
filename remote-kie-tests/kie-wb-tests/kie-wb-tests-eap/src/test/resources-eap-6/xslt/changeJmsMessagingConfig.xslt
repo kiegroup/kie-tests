@@ -25,9 +25,11 @@
 	</xsl:template>
 
     <!-- delete acceptor settings -->
+    <!-- 
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:connectors/msg:netty-connector[@name='netty']" />
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:acceptors/msg:netty-acceptor[@name='netty']" />
-    
+     -->
+     
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:connectors" >
         <connectors>
             <netty-connector name="netty-ssl" socket-binding="messaging-ssl">
@@ -51,21 +53,18 @@
                     <xsl:attribute name="value">${jboss.server.config.dir}/ssl/keystore.jks</xsl:attribute>
                 </param>
                 <param key="key-store-password" value="SERVER_KEYSTORE_PASSWORD"/>
-                <param>
-                    <xsl:attribute name="key">trust-store-path</xsl:attribute>
-                    <xsl:attribute name="value">${jboss.server.config.dir}/ssl/truststore.jts</xsl:attribute>
-                </param>
-                <param key="trust-store-password" value="SERVER_TRUSTSTORE_PASSWORD"/>
             </netty-acceptor>
             <xsl:apply-templates select="@* | *" />
         </acceptors>
     </xsl:template>
-    
+   
+   <!-- 
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:jms-connection-factories/msg:connection-factory[@name='RemoteConnectionFactory']" />
-    
+     --> 
+     
     <xsl:template match="//as:profile/msg:subsystem/msg:hornetq-server/msg:jms-connection-factories" >
         <jms-connection-factories>
-            <connection-factory name="RemoteConnectionFactory">
+            <connection-factory name="SslRemoteConnectionFactory">
                 <connectors>
                     <connector-ref connector-name="netty-ssl"/>
                 </connectors>

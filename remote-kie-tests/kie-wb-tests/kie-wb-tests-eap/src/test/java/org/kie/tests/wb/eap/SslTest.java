@@ -1,6 +1,6 @@
 package org.kie.tests.wb.eap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,21 +13,28 @@ import java.security.PrivilegedAction;
 
 import javax.net.ssl.SSLContext;
 
+import org.hornetq.core.client.HornetQClientLogger;
 import org.hornetq.core.remoting.impl.ssl.SSLSupport;
 import org.hornetq.utils.ClassloadingUtil;
+import org.jboss.logging.Logger;
 import org.junit.Test;
 
 public class SslTest {
 
+    @Test
+    public void logging() { 
+        System.out.println( 
+                System.getProperty("java.util.logging.config.file") + " >" );
+        HornetQClientLogger.LOGGER.warn("TEST!");
+        System.out.println( " <" );
+    }
+    
     @Test
     public void keyStoreLocation() throws Exception { 
         String keystorePath = this.getClass().getResource("/ssl/client_keystore.jks").getPath();
         String keystorePassword = "CLIENT_KEYSTORE_PASSWORD";
         String type = "JKS";
        
-        System.out.println( type );
-        System.out.println( keystorePath );
-
         KeyStore ks = KeyStore.getInstance(type);
         InputStream in = new FileInputStream(keystorePath);
         assertNotNull(in);
@@ -36,40 +43,4 @@ public class SslTest {
         SSLContext context = SSLSupport.createContext("ssl/client_keystore.jks", keystorePassword, null, null);
     }
     
-    private URL validateUrl(String storePath) throws Exception { 
-        // First see if this is a URL
-        try
-        {
-           return new URL(storePath);
-        }
-        catch (MalformedURLException e)
-        {
-           File file = new File(storePath);
-           if (file.exists() == true && file.isFile())
-           {
-              return file.toURI().toURL();
-           }
-           else
-           {
-              URL url = findResource(storePath);
-              if (url != null)
-              {
-                 return url;
-              }
-           }
-        }
-
-        throw new Exception("Failed to find a store at " + storePath);
-    }
-    
-    private static URL findResource(final String resourceName)
-    {
-       return AccessController.doPrivileged(new PrivilegedAction<URL>()
-       {
-          public URL run()
-          {
-             return ClassloadingUtil.findResource(resourceName);
-          }
-       });
-    }
 }

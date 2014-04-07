@@ -385,6 +385,27 @@
           <skipTests>${skip.integration.tests}</skipTests>
         </configuration>
       </plugin>
+      
+       <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <includes>
+              <include>**/*Test.java</include>
+            </includes>
+            <excludes>
+              <exclude>**/*IntegrationTest.java</exclude>
+            </excludes>
+            <argLine>-Xmx1024m -XX:MaxPermSize=128m -Dfile.encoding=UTF-8</argLine>
+            <systemProperties>
+              <property>
+                <name>java.util.logging.config.file</name>
+                <value>src/test/resources/logging.properties</value>
+              </property>
+            </systemProperties>
+          </configuration>
+        </plugin>
+
     </plugins>
   </build>
 
@@ -550,6 +571,14 @@
                      </includes>
                      <stylesheet>src/test/resources-eap-6/xslt/changeJmsMessagingConfig.xslt</stylesheet>
                    </transformationSet> 
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources-eap-6/xslt/addPostgresConfig.xslt</stylesheet>
+                   </transformationSet> 
                  </transformationSets>
                </configuration>
              </execution>
@@ -560,83 +589,6 @@
            <groupId>com.google.code.maven-replacer-plugin</groupId>
            <artifactId>replacer</artifactId>
            <executions>
-           <!-- 
-             <execution>
-               <id>fix-jboss-standalone-xml</id>
-               <phase>process-test-resources</phase>
-               <goals>
-                 <goal>replace</goal>
-                </goals>
-                <configuration>
-                  <basedir>${project.build.directory}/${jboss.server.name}/standalone/configuration</basedir>
-                 <includes>
-                    <include>standalone-full.xml</include>
-                 </includes>
-                 <replacements>
-                   <replacement>
-                   <replacement>
-                   <replacement>
-                       <token>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</token>
-                       <value>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MVCC=TRUE</value>
-                   </replacement>
-                   -->
-
-                   <!-- postgres
-                   <replacement>
-                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
-                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true" use-ccm="true"&gt;
-                    &lt;connection-url&gt;jdbc:postgresql://localhost:5432/jbpm5&lt;/connection-url&gt;
-                    &lt;driver&gt;org.postgresql&lt;/driver&gt;
-                    &lt;pool&gt;
-                        &lt;min-pool-size&gt;2&lt;/min-pool-size&gt;
-                        &lt;max-pool-size&gt;20&lt;/max-pool-size&gt;
-                        &lt;prefill&gt;true&lt;/prefill&gt;
-                    &lt;/pool&gt;
-                    &lt;security&gt;
-                        &lt;user-name&gt;jbpm5&lt;/user-name&gt;
-                        &lt;password&gt;jbpm5&lt;/password&gt;
-                    &lt;/security&gt;
-                    &lt;validation&gt;
-                        &lt;check-valid-connection-sql&gt;SELECT 1&lt;/check-valid-connection-sql&gt;
-                    &lt;/validation&gt;
-                &lt;/datasource&gt;
-                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
-                   </replacement>
-                   <replacement>
-                      <token>&lt;driver name="h2"</token>
-                      <value>&lt;driver name="org.postgresql" module="org.postgresql"&gt;
-                        &lt;xa-datasource-class&gt;org.postgresql.xa.PGXADataSource&lt;/xa-datasource-class&gt;
-                    &lt;/driver&gt;
-                    &lt;driver name="h2"</value>
-                   </replacement>
-                    -->
-                   
-                   <!-- oracle
-                    <replacement>
-                       <token>&lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</token>
-                       <value>&lt;datasource jndi-name="java:jboss/datasources/jbpmDS" jta="true" pool-name="jbpmDS" enabled="true" use-java-context="true"&gt;
-                    &lt;connection-url&gt;jdbc:oracle:thin:@localhost:1521:jbpm5&lt;/connection-url&gt;
-                    &lt;driver-class&gt;oracle.jdbc.OracleDriver&lt;/driver-class&gt;
-                    &lt;driver&gt;com.oracle&lt;/driver&gt;
-                    &lt;security&gt;
-                      &lt;user-name&gt;jbpm5&lt;/user-name&gt;
-                      &lt;password&gt;jbpm5&lt;/password&gt;
-                    &lt;/security&gt;
-                 &lt;/datasource&gt;
-                &lt;datasource jndi-name="java:jboss/datasources/ExampleDS"</value>
-                   </replacement>
-                   <replacement>
-                      <token>&lt;driver name="h2"</token>
-                      <value>&lt;driver name="com.oracle" module="com.oracle"/&gt;
-                    &lt;driver name="h2"</value>
-                   </replacement>
-                   -->
-
-                <!-- 
-                 </replacements>
-                </configuration>
-              </execution>
-              -->
               <execution>
                 <id>fix-broken-junit-reports</id>
                 <phase>post-integration-test</phase>
