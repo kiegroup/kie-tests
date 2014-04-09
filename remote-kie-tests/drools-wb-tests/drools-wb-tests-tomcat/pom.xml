@@ -4,14 +4,14 @@
 
   <parent>
     <groupId>org.kie.tests.remote</groupId>
-    <artifactId>kie-wb-tests</artifactId>
-    <version>6.1.0-SNAPSHOT</version>
+    <artifactId>drools-wb-tests</artifactId>
+    <version>6.0.2-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-wb-tests-tomcat</artifactId>
+  <artifactId>drools-wb-tests-jboss</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: Tomcat 7</name>
+  <name>Drools Workbench Integration Tests :: JBoss AS 7</name>
 
   <properties>
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
@@ -19,28 +19,40 @@
   </properties>
 
   <dependencies>
-    <!--  base -->
+    <!-- base -->
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
-      <artifactId>kie-wb-tests-base</artifactId>
+      <artifactId>drools-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
     
     <!--  client -->
     <dependency>
-      <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
+      <groupId>org.kie.workbench.services</groupId>
+      <artifactId>kie-wb-common-services-api</artifactId>
+    </dependency>
+
+    <!--  client/resteasy -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
       <scope>test</scope>
     </dependency>
 
     <!--  war -->
     <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-wb-distribution-wars</artifactId>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-wb-distribution-wars</artifactId>
+      <classifier>tomcat7.0</classifier>
       <version>${project.version}</version>
-      <classifier>tomcat7</classifier>
       <type>war</type>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
 
     <!-- arquillian tomcat container -->
@@ -64,14 +76,14 @@
       <version>1.6</version>
       <scope>test</scope>
     </dependency>
-
-    <!-- testing -->
+    
+    <!-- test -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- arquillian -->
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
@@ -88,7 +100,7 @@
       <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
       <scope>test</scope>
     </dependency>
-
+    
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -104,6 +116,23 @@
       <groupId>org.jboss.logmanager</groupId>
       <artifactId>jboss-logmanager</artifactId>
       <version>1.4.0.Final</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- simple arquillian tests -->
+    <dependency>
+      <groupId>org.jboss.weld.servlet</groupId>
+      <artifactId>weld-servlet-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.weld.se</groupId>
+      <artifactId>weld-se-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-cdi</artifactId>
       <scope>test</scope>
     </dependency>
     
@@ -140,17 +169,10 @@
       <version>1.7.2</version>
       <scope>test</scope>
     </dependency>
-    
-    <!-- JAAS use -->
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-tomcat-integration</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.security.jacc</groupId>
-      <artifactId>javax.security.jacc-api</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -191,7 +213,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>check-kie-wb-war</id>
+            <id>check-drools-wb-war</id>
             <phase>generate-test-resources</phase>
             <goals>
               <goal>copy</goal>
@@ -199,9 +221,9 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.kie</groupId>
-                  <artifactId>kie-wb-distribution-wars</artifactId>
-                  <classifier>tomcat7</classifier>
+                  <groupId>org.drools</groupId>
+                  <artifactId>drools-wb-distribution-wars</artifactId>
+                  <classifier>tomcat7.0</classifier>
                   <type>war</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
@@ -210,7 +232,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>copy-kie-wb-libs</id>
+            <id>copy-drools-wb-libs</id>
             <phase>generate-test-resources</phase>
             <goals>
               <goal>copy</goal>
@@ -347,4 +369,5 @@
       </plugin>
     </plugins>
   </build>
-</project> 
+  
+</project>

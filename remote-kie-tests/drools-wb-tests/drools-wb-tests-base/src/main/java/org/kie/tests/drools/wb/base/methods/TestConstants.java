@@ -1,4 +1,4 @@
-package org.kie.tests.drools.wb.jboss;
+package org.kie.tests.drools.wb.base.methods;
 
 import java.util.Properties;
 
@@ -11,7 +11,7 @@ public class TestConstants {
     public static final String JOHN_USER = "john";
     public static final String JOHN_PASSWORD = "john123@";
     
-    public final static String projectVersion;
+    public final static String PROJECT_VERSION;
     static { 
         Properties testProps = new Properties();
         try {
@@ -19,7 +19,7 @@ public class TestConstants {
         } catch (Exception e) {
             throw new RuntimeException("Unable to initialize projectVersion property: " + e.getMessage(), e);
         }
-        projectVersion = testProps.getProperty("project.version");
+        PROJECT_VERSION = testProps.getProperty("project.version");
     }
     
 }
