@@ -1112,7 +1112,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
         assertNotNull( "No VariableInstanceLog found!", thisProcInstVarLog);
         assertEquals( varName, thisProcInstVarLog.getVariableId() );
-        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        Object procInstVar = thisProcInstVarLog.getValue();
+        assertNotNull("Null process instance variable!", procInstVar);
+        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), procInstVar.getClass().getName() );
         
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
         ClientResponse<?> response = get(restRequest);

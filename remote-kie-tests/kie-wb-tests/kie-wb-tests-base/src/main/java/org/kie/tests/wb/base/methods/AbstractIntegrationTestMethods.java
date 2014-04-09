@@ -103,6 +103,11 @@ public class AbstractIntegrationTestMethods {
         assertNotNull( "No VariableInstanceLog found!", thisProcInstVarLog );
         assertEquals( "type", thisProcInstVarLog.getVariableId() );
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
+        
+        // Double check for BZ-1085267
+        varLogList = engine.getAuditLogService().findVariableInstances(procInstId, "type");
+        assertNotNull("No variable log list retrieved!", varLogList);
+        assertTrue("Variable log list is empty!", varLogList.size() > 0);
     }
     
     public static void runRuleTaskProcess(KieSession ksession, AuditLogService auditLogService) { 
