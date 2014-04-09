@@ -1,6 +1,4 @@
-package org.kie.tests.drools.wb.jboss.base;
-
-import static org.kie.tests.drools.wb.jboss.TestConstants.*;
+package org.kie.tests.drools.wb.jboss;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +33,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.kie.tests.drools.wb.base.methods.TestConstants;
 
 public class DroolsWbWarJbossDeploy {
 
@@ -57,7 +56,7 @@ public class DroolsWbWarJbossDeploy {
         
         // Replace kie-services-remote jar with the one we just generated
         for( int i = 0; i < jarsToReplace.length; ++i ) { 
-            war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + projectVersion + ".jar");
+            war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + TestConstants.PROJECT_VERSION + ".jar");
         }
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
