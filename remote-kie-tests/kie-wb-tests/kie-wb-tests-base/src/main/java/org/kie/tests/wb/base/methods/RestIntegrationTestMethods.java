@@ -1231,4 +1231,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals(1, taskSumList.size());
         return taskSumList.get(0);
     }
+    
+    public void urlsWorkItemTest(URL deploymentUrl, String user, String password) throws Exception {
+        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
+
+        // Start process
+        ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/workitem/200" );
+        logger.debug(">> " + restRequest.getUri());
+        ClientResponse<?> responseObj = get(restRequest);
+    }
+    
 }

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 
+import org.drools.core.command.runtime.process.GetWorkItemCommand;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
@@ -48,6 +49,18 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         super(true, true, "org.jbpm.domain");
     }
 
+    @Test
+    public void scratch() throws Exception { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/userTask.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);
+        
+        KieSession ksession =  runtimeManager.getRuntimeEngine(null).getKieSession();
+        
+        ksession.getProcessInstance(23l);
+    }
+    
     @Test
     public void runRuleTaskProcessTest() throws Exception {
         // setup
