@@ -226,6 +226,14 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(jmsQueuesAvailable());
         restTests.remoteApiGroupAssignmentTest(deploymentUrl);
     }
+   
+    @Test
+    @InSequence(2)
+    public void testRestRemoteApiHumanTaskGroupVarAssign() throws Exception { 
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.remoteApiHumanTaskGroupVarAssignTest(deploymentUrl);
+    }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
     
