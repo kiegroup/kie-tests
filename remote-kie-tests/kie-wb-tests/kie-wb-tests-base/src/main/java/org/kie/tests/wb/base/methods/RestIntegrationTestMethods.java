@@ -38,12 +38,14 @@ import java.util.Properties;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.util.Base64;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.drools.core.command.runtime.process.GetProcessIdsCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientExecutor;
 import org.jboss.resteasy.client.ClientRequest;
@@ -65,8 +67,10 @@ import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
 import org.junit.Assume;
 import org.kie.api.command.Command;
+import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
@@ -74,6 +78,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
@@ -190,22 +195,25 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     private ClientResponse<?> get(ClientRequest restRequest) throws Exception {
-        restRequest.getHeaders().remove(HttpHeaders.ACCEPT);
-        restRequest.accept(this.mediaType);
-        logger.debug(">> [GET]  " + restRequest.getUri());
+        setAcceptHeader(restRequest);
+        logger.debug(">> [GET " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
         return checkResponse(restRequest.get());
     }
 
     private ClientResponse<?> post(ClientRequest restRequest) throws Exception {
-        restRequest.getHeaders().remove(HttpHeaders.ACCEPT);
-        restRequest.accept(this.mediaType);
-        logger.debug(">> [POST/" + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
+        setAcceptHeader(restRequest);
+        logger.debug(">> [POST " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
         return checkResponse(restRequest.post());
+    }
+    
+    private void setAcceptHeader(ClientRequest restRequest) { 
+        restRequest.getHeaders().putSingle(HttpHeaderNames.ACCEPT, this.mediaType.getType() + "/" + this.mediaType.getSubtype());
+        assertEquals( 1, restRequest.getHeaders().get(HttpHeaderNames.ACCEPT).size());
     }
 
     private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception {
-        restRequest.getHeaders().remove(HttpHeaders.ACCEPT);
-        restRequest.accept(this.mediaType);
+        setAcceptHeader(restRequest);
+        
         long before, after;
         logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
         ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
@@ -1240,5 +1248,31 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         logger.debug(">> " + restRequest.getUri());
         ClientResponse<?> responseObj = get(restRequest);
     }
-    
+  
+    public void remoteApiHumanTaskGroupVarAssignTest(URL deploymentUrl) { 
+        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
+            = RemoteRestRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addUserName(MARY_USER)
+            .addPassword(MARY_PASSWORD)
+            .addUrl(deploymentUrl)
+            .build();
+
+        RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("taskOwnerGroup", "HR");
+        params.put("taskName", "Mary's Task");
+        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
+        assertNotNull( "No ProcessInstance!", pi);
+        long procInstId = pi.getId();
+        
+        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
+        assertEquals( 1, taskIds.size());
+
+        List<String> processIds = runtimeEngine.getKieSession().execute(new GetProcessIdsCommand());
+        for( String procId : processIds ) { 
+            System.out.println( "Process: " + procId);
+        }
+     }
 }

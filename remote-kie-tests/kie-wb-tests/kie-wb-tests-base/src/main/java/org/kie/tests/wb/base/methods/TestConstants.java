@@ -10,7 +10,7 @@ public class TestConstants {
      * Process ids
      */
     
-    public static final String HUMAN_TASK_PROCESS_ID        = "org.jbpm.humantask";
+    public static final String HUMAN_TASK_PROCESS_ID        = "org.jbpm.writedocument";
     public static final String HUMAN_TASK_VAR_PROCESS_ID    = "org.jboss.qa.bpms.HumanTaskWithForm";
     public static final String SCRIPT_TASK_PROCESS_ID       = "org.jbpm.scripttask";
     public static final String SCRIPT_TASK_VAR_PROCESS_ID   = "org.jbpm.scripttask.var";
@@ -20,6 +20,7 @@ public class TestConstants {
     public static final String TASK_CONTENT_PROCESS_ID      = "org.kie.remote.test.usertask.UserTask";
     public static final String EVALUTAION_PROCESS_ID        = "com.sample.evaluation";
     public static final String GROUP_ASSSIGNMENT_PROCESS_ID = "org.jboss.qa.bpms.GroupAssignmentHumanTask";
+    public static final String GROUP_ASSSIGN_VAR_PROCESS_ID = "org.jbpm.humantask.groupAssign";
    
     /**
      * User/password
