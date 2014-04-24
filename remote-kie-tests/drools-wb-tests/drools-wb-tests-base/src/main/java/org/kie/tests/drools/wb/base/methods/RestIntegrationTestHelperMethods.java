@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
@@ -44,10 +46,23 @@ import org.slf4j.LoggerFactory;
 public class RestIntegrationTestHelperMethods {
 
     private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
+   
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+    
+    protected static ClientResponse<?> checkTimeResponse(ClientResponse<?> responseObj) throws Exception {
+        long start = System.currentTimeMillis();
+        try { 
+            return checkResponse(responseObj); 
+        } finally { 
+           long duration = System.currentTimeMillis() - start;
+           logger.info("Op time : " + sdf.format(new Date(duration)));
+        }
+    }
     
     protected static ClientResponse<?> checkResponse(ClientResponse<?> responseObj) throws Exception {
         logger.debug("<< Response received");
         responseObj.resetStream();
+        logger.error("Response :\n" + responseObj.getEntity(String.class));
         int status = responseObj.getStatus(); 
         if( status != 200 ) { 
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));

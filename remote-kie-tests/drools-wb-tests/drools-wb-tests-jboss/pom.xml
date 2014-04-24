@@ -55,13 +55,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- test -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -105,6 +98,14 @@
         </exclusion>
       </exclusions>
     </dependency>
+   
+    <!--  deltaspike --> 
+    <dependency>
+      <groupId>org.apache.deltaspike.core</groupId>
+      <artifactId>deltaspike-core-api</artifactId> 
+      <version>0.6</version>
+      <scope>test</scope>
+   </dependency>
   </dependencies>
 
   <build>
@@ -158,6 +159,25 @@
           <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
+              <execution>
+                <id>check-drools-wb-war</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.drools</groupId>
+                      <artifactId>drools-wb-distribution-wars</artifactId>
+                      <classifier>jboss-as7.0</classifier>
+                      <type>war</type>
+                      <overWrite>false</overWrite>
+                    </artifactItem>
+                  </artifactItems>
+                  <outputDirectory>${project.build.directory}/deployments</outputDirectory>
+                </configuration>
+              </execution>
               <execution>
                 <id>unpack-jboss</id>
                 <phase>generate-test-resources</phase>
