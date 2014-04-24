@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods {
 
     private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
-    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+
    
     public void manipulatingRepositories(URL deploymentUrl) throws Exception {
         // rest/repositories GET
@@ -52,9 +52,7 @@ public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods
         newRepo.setDescription("repo for testing rest services");
         newRepo.setRequestType("new");
         addToRequestBody(restRequest, newRepo);
-        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
-        responseObj = checkResponse(restRequest.post());
-        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
+        responseObj = checkTimeResponse(restRequest.post());
         
         CreateOrCloneRepositoryRequest createJobRequest = responseObj.getEntity(CreateOrCloneRepositoryRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createJobRequest));
@@ -73,9 +71,7 @@ public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods
         String testProjectName = "test-project";
         project.setName(testProjectName);
         addToRequestBody(restRequest, project);
-        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
-        responseObj = checkResponse(restRequest.post());
-        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
+        responseObj = checkTimeResponse(restRequest.post());
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
@@ -102,9 +98,7 @@ public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods
         String projectName = UUID.randomUUID().toString();
         project.setName(projectName);
         addToRequestBody(restRequest, project);
-        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
-        responseObj = checkResponse(restRequest.post());
-        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
+        responseObj = checkTimeResponse(restRequest.post());
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
@@ -115,9 +109,7 @@ public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods
         String mavenOperBase = "rest/repositories/" + repoName + "/projects/" + projectName + "/maven/";
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + mavenOperBase + "compile").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
-        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
-        responseObj = checkResponse(restRequest.post());
-        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
+        responseObj = checkTimeResponse(restRequest.post());
         CompileProjectRequest compileRequest = responseObj.getEntity(CompileProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(compileRequest));
         
@@ -155,9 +147,7 @@ public class RestIntegrationTestMethods extends RestIntegrationTestHelperMethods
         orgUnit.setName(UUID.randomUUID().toString());
         orgUnit.setOwner(this.getClass().getSimpleName());
         addToRequestBody(restRequest, orgUnit);
-        logger.info("Before op: " + sdf.format(new Date(System.currentTimeMillis())));
-        responseObj = checkResponse(restRequest.post());
-        logger.info("After op : " + sdf.format(new Date(System.currentTimeMillis())));
+        responseObj = checkTimeResponse(restRequest.post());
         CreateOrganizationalUnitRequest createOURequest = responseObj.getEntity(CreateOrganizationalUnitRequest.class);
 
         // rest/jobs/{jobId}
