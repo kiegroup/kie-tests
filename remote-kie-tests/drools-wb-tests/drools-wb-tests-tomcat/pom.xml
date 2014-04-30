@@ -8,10 +8,10 @@
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests-jboss</artifactId>
+  <artifactId>drools-wb-tests-tomcat</artifactId>
   <packaging>jar</packaging>
 
-  <name>Drools Workbench Integration Tests :: JBoss AS 7</name>
+  <name>Drools Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
@@ -41,7 +41,6 @@
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
       <scope>test</scope>
     </dependency>
 
