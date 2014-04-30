@@ -21,6 +21,8 @@ public class TestConstants {
     public static final String EVALUTAION_PROCESS_ID        = "com.sample.evaluation";
     public static final String GROUP_ASSSIGNMENT_PROCESS_ID = "org.jboss.qa.bpms.GroupAssignmentHumanTask";
     public static final String GROUP_ASSSIGN_VAR_PROCESS_ID = "org.jbpm.humantask.groupAssign";
+    public static final String HUMAN_TASK_OWN_TYPE_ID       = "org.kie.wb.test.HumanTaskWithOwnType";
+    
    
     /**
      * User/password

@@ -38,7 +38,6 @@ import java.util.Properties;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.util.Base64;
@@ -56,6 +55,8 @@ import org.jboss.resteasy.spi.ReaderException;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.jbpm.process.audit.AuditLogService;
+import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.process.audit.event.AuditEvent;
@@ -67,10 +68,8 @@ import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
 import org.junit.Assume;
 import org.kie.api.command.Command;
-import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.api.runtime.manager.RuntimeManager;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
@@ -491,6 +490,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // get task info
         restRequest = requestHelper.createRequest("task/" + taskId);
         responseObj = get(restRequest);
+        assertNotNull("Task response is null.", responseObj); 
     }
 
     /**
@@ -543,13 +543,17 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj.releaseConnection();
 
         restRequest = helper.createRequest("task/execute");
-        commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, null));
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("myType", new MyType("serialization", 3224950));
+        commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, results));
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
         logger.debug(">> [completeTask] " + restRequest.getUri());
-        post(restRequest);
-
+        responseObj = post(restRequest);
+        JaxbCommandsResponse jaxbResp = responseObj.getEntity(JaxbCommandsResponse.class);
+        assertNotNull( "Response is null", jaxbResp);
+        
         // TODO: check that above has completed?
         this.mediaType = originalType;
     }
@@ -1275,4 +1279,44 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             System.out.println( "Process: " + procId);
         }
      }
+    
+    public void remoteApiHumanTaskOwnTypeTest(URL deploymentUrl) { 
+        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
+            = RemoteRestRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addUserName(JOHN_USER)
+            .addPassword(MARY_PASSWORD)
+            .addUrl(deploymentUrl)
+            .build();
+
+        RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
+
+     }
+    
+    public void runremoteApiHumanTaskOwnTypeTest(RuntimeEngine runtimeEngine) { 
+        MyType myType = new MyType("wacky", 123);
+
+        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
+        assertNotNull(pi);
+        assertEquals( ProcessInstance.STATE_ACTIVE, pi.getState());
+
+        TaskService taskService = runtimeEngine.getTaskService();
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(pi.getId());
+        assertFalse(taskIds.isEmpty());
+        long taskId = taskIds.get(0);
+
+        taskService.start(taskId, JOHN_USER);
+
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("outMyObject", myType);
+        taskService.complete(taskId, JOHN_USER, data);
+
+        Task task = taskService.getTaskById(taskId);
+        assertEquals( Status.Completed, task.getTaskData().getStatus());
+
+        AuditLogService auditLogService = new JPAAuditLogService();
+        List<VariableInstanceLog> vill = auditLogService.findVariableInstances(pi.getId(), "myObject");
+        assertNotNull(vill);
+        assertEquals(myType.toString(), vill.get(0).getValue());
+    }
 }

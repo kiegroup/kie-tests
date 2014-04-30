@@ -1,9 +1,6 @@
 package org.kie.tests.wb.base.test.objects;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -13,8 +10,13 @@ import javax.xml.bind.annotation.XmlSchemaType;
 
 @XmlRootElement(name="my-type")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class MyType implements Externalizable {
+public class MyType implements Serializable {
 
+    /**
+     * Default ID.
+     */
+    private static final long serialVersionUID = 1L;
+    
     @XmlElement
     @XmlSchemaType(name="string")
     private String text;
@@ -49,29 +51,7 @@ public class MyType implements Externalizable {
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        if( this.text != null ) { 
-            out.writeBoolean(true);
-            out.writeUTF(this.text);
-        } else { 
-            out.writeBoolean(false);
-        }
-        if( this.data != null) { 
-            out.writeBoolean(true);
-            out.write(this.data);
-        } else { 
-            out.writeBoolean(false);
-        }
+    public String toString() {
+        return "MyType{" + "text=" + text + '}';
     }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        if( in.readBoolean() ) { 
-            this.text = in.readUTF();
-        }
-        if( in.readBoolean() ) { 
-            this.data = in.read();
-        }
-    }
-    
 }

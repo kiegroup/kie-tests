@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 
-import org.drools.core.command.runtime.process.GetWorkItemCommand;
+import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
@@ -20,7 +20,6 @@ import org.jbpm.test.JbpmJUnitBaseTestCase;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.Test;
 import org.kie.api.io.ResourceType;
-import org.kie.api.runtime.Environment;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.manager.RuntimeManager;
@@ -35,6 +34,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.TestConstants;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.slf4j.Logger;
@@ -221,5 +221,17 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         
         List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
         assertEquals( 1, taskIds.size());
+    }
+    
+    @Test
+    public void runHumanTaskWithOwnTypeTest() throws Exception { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/humanTaskWithOwnType.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);
+
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+
+        new RestIntegrationTestMethods(null).runremoteApiHumanTaskOwnTypeTest(runtimeEngine);
     }
 }
