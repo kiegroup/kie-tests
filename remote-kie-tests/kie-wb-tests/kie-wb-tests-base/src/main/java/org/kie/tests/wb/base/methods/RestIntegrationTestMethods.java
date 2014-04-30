@@ -159,6 +159,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
+    {
+        jaxbSerializationProvider.addJaxbClasses(MyType.class);
+    }
     private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
@@ -502,10 +505,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * @throws Exception
      */
     public void commandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
-
         MediaType originalType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
+
+        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
         String executeOp = "runtime/" + deploymentId + "/execute";
@@ -546,6 +549,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         Map<String, Object> results = new HashMap<String, Object>();
         results.put("myType", new MyType("serialization", 3224950));
         commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, results));
+
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
@@ -624,12 +628,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         this.mediaType = origType;
     }
 
-    private JaxbCommandResponse<?> executeCommand(URL appUrl, String user, String password, String deploymentId, Command<?> command)
-            throws Exception {
-        RestRequestHelper requestHelper = getRestRequestHelper(appUrl, user, password);
-
+    private JaxbCommandResponse<?> executeCommand(URL appUrl, String user, String password, String deploymentId, Command<?> command) throws Exception {
         MediaType originalMediaType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
+
+        RestRequestHelper requestHelper = getRestRequestHelper(appUrl, user, password);
 
         List<Command> commands = new ArrayList<Command>();
         commands.add(command);
@@ -763,12 +766,13 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void urlsJsonJaxbStartProcess(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         MediaType origType = this.mediaType;
+        this.mediaType = MediaType.APPLICATION_XML_TYPE;
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        
         // XML
         String startProcessOper = "runtime/" + deploymentId + "/process/org.jbpm.humantask/start";
         ClientRequest restRequest = requestHelper.createRequest(startProcessOper);
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
         logger.debug(">> " + restRequest.getUri());
         ClientResponse<?> responseObj = post(restRequest);
         String result = (String) responseObj.getEntity(String.class);
@@ -893,7 +897,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         MediaType origType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
         
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         // Remote API setup
         RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
@@ -1054,6 +1057,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Null answer!", depList);
         assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
         assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
+       
+        String deploymentId = depList.getDeploymentUnitList().get(0).getIdentifier();
+        restRequest = requestHelper.createRequest("deployment/" + deploymentId);
+        responseObj = get(restRequest);
+        JaxbDeploymentUnit dep = responseObj.getEntity(JaxbDeploymentUnit.class);
+        assertNotNull( "Null answer!", dep);
+        assertNotNull( "Null deployment list!", dep);
+        assertEquals( "Empty status!", JaxbDeploymentStatus.DEPLOYED, dep.getStatus());
         
         // test with HttpURLConnection
         if( testWithHttpUrlConnection ) { 
@@ -1126,7 +1137,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( varName, thisProcInstVarLog.getVariableId() );
         Object procInstVar = thisProcInstVarLog.getValue();
         assertNotNull("Null process instance variable!", procInstVar);
-        assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), procInstVar.getClass().getName() );
+        assertEquals( "De/serialization of Kjar type did not work.", param.toString(), procInstVar );
         
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
         ClientResponse<?> response = get(restRequest);
@@ -1136,10 +1147,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "Unequal process instance id.", procInstId, procInst.getId());
        
         restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName );
-        restRequest.accept(MediaType.APPLICATION_XML_TYPE);
         response = get(restRequest);
-        
-        MyType retrievedVar = response.getEntity(MyType.class);
+      
+        String xmlStr = response.getEntity(String.class);
+        MyType retrievedVar = (MyType) jaxbSerializationProvider.deserialize(xmlStr);
         assertNotNull( "Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
         assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
@@ -1285,15 +1296,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             = RemoteRestRuntimeEngineFactory.newBuilder()
             .addDeploymentId(deploymentId)
             .addUserName(JOHN_USER)
-            .addPassword(MARY_PASSWORD)
+            .addPassword(JOHN_PASSWORD)
             .addUrl(deploymentUrl)
+            .addExtraJaxbClasses(MyType.class)
             .build();
 
-        RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
-
+        RemoteRuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
+        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditLogService());
      }
     
-    public void runremoteApiHumanTaskOwnTypeTest(RuntimeEngine runtimeEngine) { 
+    public void runRemoteApiHumanTaskOwnTypeTest(RuntimeEngine runtimeEngine, AuditLogService auditLogService) { 
         MyType myType = new MyType("wacky", 123);
 
         ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
@@ -1314,7 +1326,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         Task task = taskService.getTaskById(taskId);
         assertEquals( Status.Completed, task.getTaskData().getStatus());
 
-        AuditLogService auditLogService = new JPAAuditLogService();
         List<VariableInstanceLog> vill = auditLogService.findVariableInstances(pi.getId(), "myObject");
         assertNotNull(vill);
         assertEquals(myType.toString(), vill.get(0).getValue());
