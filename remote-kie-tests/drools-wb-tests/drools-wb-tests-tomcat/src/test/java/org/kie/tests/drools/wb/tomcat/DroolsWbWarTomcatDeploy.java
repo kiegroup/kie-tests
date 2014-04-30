@@ -37,7 +37,7 @@ import org.kie.tests.drools.wb.base.methods.TestConstants;
 
 public class DroolsWbWarTomcatDeploy {
 
-    private static final String classifier = "jboss-as7.0";
+    private static final String classifier = "tomcat7.0";
 
     protected static WebArchive createWarWithTestDeploymentLoader(String deployName) {
         // Import kie-wb war

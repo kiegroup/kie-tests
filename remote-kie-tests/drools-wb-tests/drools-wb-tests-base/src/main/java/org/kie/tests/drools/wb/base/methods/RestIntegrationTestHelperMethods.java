@@ -62,7 +62,6 @@ public class RestIntegrationTestHelperMethods {
     protected static ClientResponse<?> checkResponse(ClientResponse<?> responseObj) throws Exception {
         logger.debug("<< Response received");
         responseObj.resetStream();
-        logger.error("Response :\n" + responseObj.getEntity(String.class));
         int status = responseObj.getStatus(); 
         if( status != 200 ) { 
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
