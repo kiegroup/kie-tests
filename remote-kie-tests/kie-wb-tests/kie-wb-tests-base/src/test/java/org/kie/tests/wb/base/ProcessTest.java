@@ -198,6 +198,6 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        new RestIntegrationTestMethods(null).runremoteApiHumanTaskOwnTypeTest(runtimeEngine);
+        new RestIntegrationTestMethods(null).runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
     }
 }
