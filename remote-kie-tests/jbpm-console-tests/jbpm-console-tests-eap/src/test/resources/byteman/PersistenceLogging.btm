@@ -1,0 +1,93 @@
+#
+# A byteman script which prints a stacktrace whenever UserTransaction.begin is called
+#
+########################################################################
+#
+# Rule to trace class load
+#
+# To see the stack trace
+# DO traceStack(">>> BEGIN:\n", 25 );
+#
+# To just print the text
+# DO traceln(">>> BEGIN:" );
+#
+
+RULE UserTransaction.begin trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD begin
+AT EXIT
+IF TRUE
+DO traceln(">>> BEGIN");
+ENDRULE
+
+RULE UserTransaction.commit trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD commit
+AT ENTRY
+IF TRUE
+DO traceln("=== COMMIT");
+ENDRULE
+
+RULE UserTransaction.rollback trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD rollback
+AT ENTRY
+IF TRUE
+DO traceln("XXX ROLLBACK");
+ENDRULE
+
+RULE UserTransaction.rollbackOnly trace 
+CLASS com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction
+METHOD setRollbackOnly
+AT ENTRY
+IF TRUE
+DO traceln("xxx SET ROLLBACK ONLY");
+ENDRULE
+
+RULE EntityManager.close trace 
+CLASS org.hibernate.ejb.EntityManagerImpl
+METHOD close
+AT ENTRY
+IF TRUE
+DO traceln("{{{ CLOSE: " + System.identityHashCode($this) );
+ENDRULE
+
+RULE EntityManager constructor trace 
+CLASS org.hibernate.ejb.EntityManagerImpl
+METHOD <init>
+AT ENTRY
+IF TRUE
+DO traceln("}}} CREATE: " + System.identityHashCode($this) );
+ENDRULE
+
+RULE EntityManager joinTransaction trace 
+CLASS org.hibernate.ejb.AbstractEntityManagerImpl
+METHOD joinTransaction()
+AT ENTRY
+IF TRUE
+DO traceln("}}} JOIN TX: " + System.identityHashCode($this) );
+ENDRULE
+
+RULE JPAWorkingMemoryDbLogger constructor
+CLASS org.jbpm.process.audit.JPAWorkingMemoryDbLogger
+METHOD <init>(javax.persistence.EntityManagerFactory)
+AT EXIT
+IF TRUE
+DO traceln("-=- JPAWorkingMemoryDbLogger");
+ENDRULE
+
+RULE EntityManagerFactory constructor trace 
+CLASS org.hibernate.ejb.EntityManagerFactoryImpl
+METHOD <init>
+AT EXIT
+IF TRUE
+DO traceln("::: EMF INIT: " + System.identityHashCode($this) );
+ENDRULE
+
+RULE EntityManagerFactory.close trace 
+CLASS org.hibernate.ejb.EntityManagerFactoryImpl
+METHOD close()
+AT ENTRY
+IF TRUE
+DO traceln("000 EMF CLOSE: " + System.identityHashCode($this) );
+ENDRULE
