@@ -12,7 +12,10 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
+import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
@@ -325,6 +328,35 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
         jmsTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
+    }
+    
+    @Test
+    @InSequence(JMS_FAILING)
+    public void testJmsRemoteApiGroupAssignmentEngineering() throws Exception { 
+        Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
+        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(KJAR_DEPLOYMENT_ID)
+                .useSsl(true)
+                .addHostName("localhost")
+                .addJmsConnectorPort(5446)
+                .addKeystoreLocation("ssl/client_keystore.jks")
+                .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
+                .useKeystoreAsTruststore()
+                .addUserName(JOHN_USER)
+                .addPassword(JOHN_PASSWORD);
+                        
+        
+        RuntimeEngine runtimeEngine = jreFactoryBuilder.build().newRuntimeEngine();
+        jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+    }
+    
+    @Test
+    @InSequence(JMS_FAILING)
+    public void testRemoteApiHistoryVariablesTest() throws Exception { 
+        Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
+        jmsTests.remoteApiHistoryVariablesTest(deploymentUrl);
     }
     
 }

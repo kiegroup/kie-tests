@@ -58,13 +58,8 @@ public class DroolsWbWarJbossDeploy {
 
         String [][] jarsToReplace = { 
                 { "org.drools", "drools-wb-rest" },
-                { "org.kie.workbench.services", "kie-wb-common-services-api" },
-                { "org.guvnor", "guvnor-services-backend" },
-                { "org.guvnor", "guvnor-project-backend" },
-                { "org.uberfire", "uberfire-commons" }
-            };
-       
-        war.delete("WEB-INF/lib/jackson-xc-1.9.9.jar");
+                { "org.kie.workbench.services", "kie-wb-common-services-api" }
+        };
         
         // Replace kie-services-remote jar with the one we just generated
         for( int i = 0; i < jarsToReplace.length; ++i ) { 
@@ -83,16 +78,6 @@ public class DroolsWbWarJbossDeploy {
            logger.info( "Replacing " + depFile.getName());
         }
         war.addAsLibraries(kieRemoteDeps);
-        
-        File [] deltaspikeDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve("org.apache.deltaspike.core:deltaspike-core-api",
-                        "org.codehaus.jackson:jackson-mapper-asl",
-                        "org.codehaus.jackson:jackson-xc"
-                        )
-                .withoutTransitivity()
-                .asFile();
-        war.addAsLibraries(deltaspikeDeps);
         
         return war;
     }
