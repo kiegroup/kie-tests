@@ -8,10 +8,10 @@
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests-eap</artifactId>
+  <artifactId>kie-drools-wb-tests-eap</artifactId>
   <packaging>jar</packaging>
 
-  <name>Drools Workbench Integration Tests :: JBoss AS 7</name>
+  <name>Drools Workbench Integration Tests :: kie-drools-wb on EAP 6</name>
 
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
@@ -31,9 +31,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-wb-distribution-wars</artifactId>
-      <classifier>jboss-as7.0</classifier>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-drools-wb-distribution-wars</artifactId>
+      <classifier>eap-6_1</classifier>
       <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
@@ -170,8 +170,8 @@
                   <artifactItems>
                     <artifactItem>
                       <groupId>org.drools</groupId>
-                      <artifactId>drools-wb-distribution-wars</artifactId>
-                      <classifier>jboss-as7.0</classifier>
+                      <artifactId>kie-drools-wb-distribution-wars</artifactId>
+                      <classifier>eap-6_1</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
                     </artifactItem>
