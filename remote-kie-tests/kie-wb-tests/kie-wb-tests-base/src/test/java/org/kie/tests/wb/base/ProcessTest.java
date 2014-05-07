@@ -49,18 +49,6 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
     }
 
     @Test
-    public void scratch() throws Exception { 
-        // setup
-        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
-        resources.put("repo/test/userTask.bpmn2", ResourceType.BPMN2);
-        RuntimeManager runtimeManager = createRuntimeManager(resources);
-        
-        KieSession ksession =  runtimeManager.getRuntimeEngine(null).getKieSession();
-        
-        ksession.getProcessInstance(23l);
-    }
-    
-    @Test
     public void runRuleTaskProcessTest() throws Exception {
         // setup
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();

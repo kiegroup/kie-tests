@@ -77,6 +77,9 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
+        
+        war.delete("WEB-INF/ejb-jar.xml");
+        war.addAsWebInfResource("ejb-jar.xml");
      
         return war;
     }
