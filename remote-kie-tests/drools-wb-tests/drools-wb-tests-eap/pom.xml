@@ -8,7 +8,7 @@
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests-jboss</artifactId>
+  <artifactId>drools-wb-tests-eap</artifactId>
   <packaging>jar</packaging>
 
   <name>Drools Workbench Integration Tests :: JBoss AS 7</name>

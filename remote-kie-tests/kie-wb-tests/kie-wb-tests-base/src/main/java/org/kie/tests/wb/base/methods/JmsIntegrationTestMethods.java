@@ -45,7 +45,9 @@ import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQJMSConnectionFactory;
+import org.jboss.resteasy.client.ClientRequest;
 import org.jbpm.process.audit.ProcessInstanceLog;
+import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -639,5 +641,27 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             }
         }
         return result;
+    }
+    
+    public void remoteApiHistoryVariablesTest(URL deploymentUrl) { 
+        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(deploymentId)
+                .addJbossServerUrl(deploymentUrl)
+                .useSsl(false)
+                .addUserName(JOHN_USER)
+                .addPassword(JOHN_PASSWORD);
+        
+        RemoteRuntimeEngineFactory runtimeEngineFactory = jreFactoryBuilder.build();
+        
+        RemoteRuntimeEngine runtimeEngine = runtimeEngineFactory.newRuntimeEngine();
+      
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("myobject", 10l);
+        runtimeEngine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, params);
+        
+        List<VariableInstanceLog> viLogs = runtimeEngine.getAuditLogService().findVariableInstancesByName("myobject", false);
+        assertNotNull( "Null variable instance log list", viLogs);
+        logger.info("vi logs: " + viLogs.size());
+        assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
     }
 }
