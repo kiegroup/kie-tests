@@ -1,5 +1,7 @@
 package org.kie.tests.drools.wb.tomcat;
 
+import static org.kie.tests.drools.wb.base.methods.TestConstants.PROJECT_VERSION;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -34,10 +36,15 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.drools.wb.base.methods.TestConstants;
+import org.kie.tests.drools.wb.eap.KieDroolsWbWarEapDeploy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DroolsWbWarTomcatDeploy {
 
     private static final String classifier = "tomcat7.0";
+    
+    private static Logger logger = LoggerFactory.getLogger(DroolsWbWarTomcatDeploy.class);
 
     protected static WebArchive createWarWithTestDeploymentLoader(String deployName) {
         // Import kie-wb war
@@ -49,20 +56,27 @@ public class DroolsWbWarTomcatDeploy {
         ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, deployName + ".war").importFrom(warFile[0]);
         WebArchive war = zipWar.as(WebArchive.class);
 
-        String [][] jarsToReplace = new String[2][2];
-        int j = 0;
-        jarsToReplace[j][0] = "org.drools"; jarsToReplace[j][1] = "drools-wb-rest"; ++j;
-        jarsToReplace[j][0] = "org.kie.workbench.services"; jarsToReplace[j][1] = "kie-wb-common-services-api";
+        String [][] jarsToReplace = { 
+                { "org.drools", "drools-wb-rest" },
+                { "org.kie.workbench.services", "kie-wb-common-services-api" }
+        };
         
         // Replace kie-services-remote jar with the one we just generated
         for( int i = 0; i < jarsToReplace.length; ++i ) { 
-            war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + TestConstants.PROJECT_VERSION + ".jar");
+            war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + PROJECT_VERSION + ".jar");
+        }
+        String [] jarsToAdd = new String[jarsToReplace.length];
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+           jarsToAdd[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
         }
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve(jarsToReplace[0][0] + ":" + jarsToReplace[0][1], jarsToReplace[1][0] + ":" + jarsToReplace[1][1])
+                .resolve(jarsToAdd)
                 .withoutTransitivity()
                 .asFile();
+        for( File depFile : kieRemoteDeps ) { 
+           logger.info( "Replacing " + depFile.getName());
+        }
         war.addAsLibraries(kieRemoteDeps);
         
         return war;

@@ -13,7 +13,7 @@ import org.kie.tests.drools.wb.base.methods.RestIntegrationTestMethods;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class DroolsWbRestEapIntegrationTest extends DroolsWbWarEapDeploy {
+public class KieDroolsWbRestEapIntegrationTest extends KieDroolsWbWarEapDeploy {
 
     @Deployment(testable = false, name="drools-wb")
     public static Archive<?> createWar() {

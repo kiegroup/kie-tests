@@ -1,6 +1,7 @@
 package org.kie.tests.drools.wb.eap;
 
 import static org.kie.tests.drools.wb.base.methods.TestConstants.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -35,11 +36,16 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.kie.tests.drools.wb.base.methods.TestConstants;
+import org.kie.tests.drools.wb.jboss.DroolsWbWarJbossDeploy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DroolsWbWarEapDeploy {
+public class KieDroolsWbWarEapDeploy {
 
-    private static final String classifier = "jboss-as7.0";
+    private static final String classifier = "eap-6_1";
 
+    private static Logger logger = LoggerFactory.getLogger(KieDroolsWbWarEapDeploy.class);
+    
     protected static WebArchive createWarWithTestDeploymentLoader(String deployName) {
         // Import kie-wb war
         File[] warFile = Maven.resolver()
@@ -52,30 +58,26 @@ public class DroolsWbWarEapDeploy {
 
         String [][] jarsToReplace = { 
                 { "org.drools", "drools-wb-rest" },
-                {"org.kie.workbench.services", "kie-wb-common-services-api" }
-            };
+                { "org.kie.workbench.services", "kie-wb-common-services-api" }
+        };
         
         // Replace kie-services-remote jar with the one we just generated
         for( int i = 0; i < jarsToReplace.length; ++i ) { 
             war.delete("WEB-INF/lib/" + jarsToReplace[i][1] + "-" + PROJECT_VERSION + ".jar");
         }
+        String [] jarsToAdd = new String[jarsToReplace.length];
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+           jarsToAdd[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+        }
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve(jarsToReplace[0][0] + ":" + jarsToReplace[0][1], 
-                         jarsToReplace[1][0] + ":" + jarsToReplace[1][1])
+                .resolve(jarsToAdd)
                 .withoutTransitivity()
                 .asFile();
+        for( File depFile : kieRemoteDeps ) { 
+           logger.info( "Replacing " + depFile.getName());
+        }
         war.addAsLibraries(kieRemoteDeps);
-       
-        File [] deltaspikeDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve("org.apache.deltaspike.core:deltaspike-core-api",
-                        "org.codehaus.jackson:jackson-mapper-asl",
-                        "org.codehaus.jackson:jackson-xc"
-                        )
-                .withoutTransitivity()
-                .asFile();
-        war.addAsLibraries(deltaspikeDeps);
         
         return war;
     }
