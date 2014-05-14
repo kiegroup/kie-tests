@@ -16,8 +16,8 @@
   <modules>
     <module>drools-wb-tests-base</module>
     <module>drools-wb-tests-jboss</module>
-    <module>drools-wb-tests-eap</module>
     <module>drools-wb-tests-tomcat</module>
+    <module>kie-drools-wb-tests-eap</module>
   </modules>
 
   <properties>

@@ -35,8 +35,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.kie.tests.drools.wb.base.methods.TestConstants;
-import org.kie.tests.drools.wb.eap.KieDroolsWbWarEapDeploy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
