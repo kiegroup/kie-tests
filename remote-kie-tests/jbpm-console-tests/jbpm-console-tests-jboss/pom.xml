@@ -39,8 +39,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.kie.tests</groupId>
-      <artifactId>kie-wb-tests-base</artifactId>
+      <groupId>org.kie.tests.remote</groupId>
+      <artifactId>jbpm-conolse-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
 

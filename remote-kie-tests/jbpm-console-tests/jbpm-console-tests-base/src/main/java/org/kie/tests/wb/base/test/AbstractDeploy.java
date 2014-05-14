@@ -1,6 +1,10 @@
 package org.kie.tests.wb.base.test;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.kie.tests.wb.base.methods.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.KBASE_NAME;
+import static org.kie.tests.wb.base.methods.TestConstants.KSESSION_NAME;
+import static org.kie.tests.wb.base.methods.TestConstants.VERSION;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

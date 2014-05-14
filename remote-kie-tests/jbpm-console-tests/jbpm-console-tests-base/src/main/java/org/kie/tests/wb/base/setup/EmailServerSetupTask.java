@@ -6,13 +6,12 @@ import org.jboss.as.arquillian.api.ServerSetupTask;
 import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EmailServerSetupTask implements ServerSetupTask {
 
-    private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
+    private static Logger logger = LoggerFactory.getLogger(EmailServerSetupTask.class);
     
     /**
      * Name in JNDI to which the SMTP {@link javax.mail.Session} will be bound
