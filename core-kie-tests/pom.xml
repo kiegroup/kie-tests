@@ -18,12 +18,7 @@
     <!-- fix me.. 
     <module>core-marshalling-kie-tests</module>
      -->
-    <module>jbpm-kie-tests</module>
+    <module>kie-jbpm-tests</module>
   </modules>
-
-  <dependencies>
-
-  </dependencies>
-
 
 </project>
