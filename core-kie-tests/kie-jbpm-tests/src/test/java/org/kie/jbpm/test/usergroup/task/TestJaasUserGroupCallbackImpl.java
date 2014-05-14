@@ -15,9 +15,13 @@
  */
 package org.kie.jbpm.test.usergroup.task;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 
 import org.jbpm.services.task.identity.JBossUserGroupCallbackImpl;
+
+import com.sun.xml.internal.rngom.parse.IllegalSchemaException;
 
 /**
  * This implementation mimics the JAAS based implementation of user group callback used
@@ -49,6 +53,15 @@ public class TestJaasUserGroupCallbackImpl extends JBossUserGroupCallbackImpl {
     }
 
     public List<String> getGroupsForUser(String userId, List<String> groupIds, List<String> allExistingGroupIds) {
+        Map<String, List<String>> groupStore = null;
+        try {
+            Field groupStoreField = JBossUserGroupCallbackImpl.class.getDeclaredField("groupStore");
+            groupStoreField.setAccessible(true);
+            groupStore = (Map<String, List<String>>) groupStoreField.get(this);
+        } catch( Exception e ) { 
+            throw new IllegalStateException("Unable to get groupStore field!", e);
+        }
+            
         List<String> groups = groupStore.get(currentUserId);
         
         StringBuilder builder = new StringBuilder("Groups (");
