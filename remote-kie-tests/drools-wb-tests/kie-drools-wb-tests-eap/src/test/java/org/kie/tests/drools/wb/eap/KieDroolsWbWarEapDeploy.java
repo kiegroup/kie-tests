@@ -1,6 +1,6 @@
 package org.kie.tests.drools.wb.eap;
 
-import static org.kie.tests.drools.wb.base.methods.TestConstants.*;
+import static org.kie.tests.drools.wb.base.methods.TestConstants.PROJECT_VERSION;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,8 +35,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.kie.tests.drools.wb.base.methods.TestConstants;
-import org.kie.tests.drools.wb.jboss.DroolsWbWarJbossDeploy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
