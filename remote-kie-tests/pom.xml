@@ -18,6 +18,9 @@
   <modules>
     <module>drools-wb-tests</module>
     <module>kie-wb-tests</module>
+    <!--
+    <module>jbpm-console-tests</module>
+    -->
   </modules>
 
   <properties>

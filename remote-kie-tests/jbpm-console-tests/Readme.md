@@ -1,4 +1,7 @@
 
-### How to setup and run the REST and JMS API integration tests
+This module is not yet active because only the very rough framework (copied from other modules) 
+has been created here. 
 
-(will be filled in between Feb 7 and feb 13, 2014)
+This module is only to do some very simple deployment checks on jbpm-console-ng 
+on different platforms.
+
