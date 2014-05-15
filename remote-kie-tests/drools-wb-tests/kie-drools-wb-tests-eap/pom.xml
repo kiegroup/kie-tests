@@ -25,6 +25,12 @@
 
   <dependencies>
     <dependency>
+        <groupId>org.drools</groupId>
+        <artifactId>drools-wb-rest</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <dependency>
       <groupId>org.kie.tests.remote</groupId>
       <artifactId>drools-wb-tests-base</artifactId>
       <scope>test</scope>

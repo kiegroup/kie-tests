@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>org.kie.workbench.services</groupId>
-      <artifactId>kie-wb-common-services-api</artifactId>
+      <artifactId>kie-wb-common-rest</artifactId>
     </dependency>
 
     <dependency>
@@ -47,7 +47,13 @@
       <artifactId>jboss-annotations-api_1.1_spec</artifactId>
       <version>1.0.0.Final</version>
     </dependency>
-    
+  
+    <!-- arquillian --> 
+    <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-core</artifactId>
+    </dependency>
+     
     <!-- test -->
     <dependency>
       <groupId>junit</groupId>
