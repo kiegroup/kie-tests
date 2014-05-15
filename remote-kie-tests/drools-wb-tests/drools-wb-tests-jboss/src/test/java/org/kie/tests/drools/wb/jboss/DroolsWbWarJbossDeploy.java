@@ -1,6 +1,6 @@
 package org.kie.tests.drools.wb.jboss;
 
-import static org.kie.tests.drools.wb.base.methods.TestConstants.*;
+import static org.kie.tests.drools.wb.base.methods.TestConstants.PROJECT_VERSION;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,14 +35,12 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.kie.tests.drools.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.drools.wb.base.methods.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DroolsWbWarJbossDeploy {
 
-    private static final String classifier = "jboss-as7.0";
+    private static final String classifier = "jboss-as7";
 
     private static Logger logger = LoggerFactory.getLogger(DroolsWbWarJbossDeploy.class);
     
@@ -58,7 +56,9 @@ public class DroolsWbWarJbossDeploy {
 
         String [][] jarsToReplace = { 
                 { "org.drools", "drools-wb-rest" },
-                { "org.kie.workbench.services", "kie-wb-common-services-api" }
+                { "org.kie.workbench.services", "kie-wb-common-rest" },
+                { "org.jbpm", "jbpm-executor" },
+                { "org.apache.deltaspike.core", "deltaspike-core-api" }
         };
         
         // Replace kie-services-remote jar with the one we just generated
@@ -75,7 +75,7 @@ public class DroolsWbWarJbossDeploy {
                 .withoutTransitivity()
                 .asFile();
         for( File depFile : kieRemoteDeps ) { 
-           logger.info( "Replacing " + depFile.getName());
+           logger.info( "Replacing with " + depFile.getName());
         }
         war.addAsLibraries(kieRemoteDeps);
         

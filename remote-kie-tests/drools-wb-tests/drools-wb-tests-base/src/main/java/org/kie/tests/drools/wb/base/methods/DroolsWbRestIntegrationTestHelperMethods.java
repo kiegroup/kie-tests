@@ -1,6 +1,6 @@
 package org.kie.tests.drools.wb.base.methods;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -43,29 +43,34 @@ import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RestIntegrationTestHelperMethods {
+public class DroolsWbRestIntegrationTestHelperMethods {
 
-    private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
+    private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestMethods.class);
    
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
     
     protected static ClientResponse<?> checkTimeResponse(ClientResponse<?> responseObj) throws Exception {
         long start = System.currentTimeMillis();
         try { 
-            return checkResponse(responseObj); 
+            return checkResponse(responseObj, 202); 
         } finally { 
            long duration = System.currentTimeMillis() - start;
+           assertTrue( "Rest call took too long: " + duration + "ms", duration < 500);
            logger.info("Op time : " + sdf.format(new Date(duration)));
         }
     }
     
     protected static ClientResponse<?> checkResponse(ClientResponse<?> responseObj) throws Exception {
+        return checkResponse(responseObj, 200);
+    }
+    
+    protected static ClientResponse<?> checkResponse(ClientResponse<?> responseObj, int expStatus) throws Exception {
         logger.debug("<< Response received");
         responseObj.resetStream();
         int status = responseObj.getStatus(); 
-        if( status != 200 ) { 
+        if( status != expStatus ) { 
             logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
-            assertEquals( "Status OK", 200, status);
+            assertEquals( "Status ACCEPTED", expStatus, status);
         } 
         return responseObj;
     }
@@ -150,8 +155,7 @@ public class RestIntegrationTestHelperMethods {
                     if (creds == null) {
                         throw new HttpException("No credentials for preemptive authentication");
                     }
-                    authState.setAuthScheme(authScheme);
-                    authState.setCredentials(creds);
+                    authState.update(authScheme, creds);
                 }
             }
         }

@@ -39,7 +39,7 @@
     <dependency>
       <groupId>org.drools</groupId>
       <artifactId>drools-wb-distribution-wars</artifactId>
-      <classifier>jboss-as7.0</classifier>
+      <classifier>jboss-as7</classifier>
       <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
@@ -53,7 +53,6 @@
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -110,7 +109,7 @@
     <dependency>
       <groupId>org.apache.deltaspike.core</groupId>
       <artifactId>deltaspike-core-api</artifactId> 
-      <version>0.6</version>
+      <version>0.7</version>
       <scope>test</scope>
    </dependency>
   </dependencies>
@@ -177,7 +176,7 @@
                     <artifactItem>
                       <groupId>org.drools</groupId>
                       <artifactId>drools-wb-distribution-wars</artifactId>
-                      <classifier>jboss-as7.0</classifier>
+                      <classifier>jboss-as7</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
                     </artifactItem>
@@ -206,6 +205,32 @@
               </execution>
             </executions>
           </plugin>
+           <plugin>
+           <groupId>org.codehaus.mojo</groupId>
+           <artifactId>xml-maven-plugin</artifactId>
+           <version>1.0</version>                      
+           <executions>                        
+             <execution>
+               <id>modify-standalone-full</id>
+               <phase>process-test-resources</phase>
+               <goals>
+                 <goal>transform</goal>
+               </goals>
+               <configuration>                                 
+                 <transformationSets>
+                   <transformationSet> 
+                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
+                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                     <includes> 
+                       <include>standalone-full.xml</include> 
+                     </includes>
+                     <stylesheet>src/test/resources-jboss-as7/xslt/addDebugLogging.xslt</stylesheet>
+                   </transformationSet> 
+                 </transformationSets>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin> 
           <!-- 2. install files with user/password information in the server dir -->
           <plugin>
             <artifactId>maven-resources-plugin</artifactId>
