@@ -17,11 +17,15 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
     
-    static WebArchive createTestWar(String classifier) {
-        return createTestWar(classifier, null);
+    static WebArchive createTestWar(String classifier, boolean replace) {
+        return createTestWar(classifier, null, replace);
     }
     
-    static WebArchive createTestWar(String classifier, String database) {
+    static WebArchive createTestWar(String classifier) {
+        return createTestWar(classifier, null, true);
+    }
+    
+    static WebArchive createTestWar(String classifier, String database, boolean replace) {
         // Deploy test deployment
         createAndDeployTestKJarToMaven();
         
@@ -51,35 +55,36 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             }
         } 
 
-        // Replace kie-services-remote jar with the one we just generated
-        String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-jaxb" },
-                { "org.drools", "drools-wb-rest" }
-        };
-        String [] jarsArg = new String[jarsToReplace.length];
-        for( String [] jar : jarsToReplace ) { 
-            logger.info( "Deleting " + jar[1] + " from test war");
-            war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
-        }
-        for( int i = 0; i < jarsToReplace.length; ++i ) { 
-            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
-            logger.info("About to resolve " + jarsArg[i]);
-        }
+        if( replace ) { 
+            // Replace kie-services-remote jar with the one we just generated
+            String [][] jarsToReplace = { 
+                    { "org.kie.remote", "kie-services-remote" },
+                    { "org.kie.remote", "kie-services-jaxb" }
+            };
+            String [] jarsArg = new String[jarsToReplace.length];
+            for( String [] jar : jarsToReplace ) { 
+                logger.info( "Deleting " + jar[1] + " from test war");
+                war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
+            }
+            for( int i = 0; i < jarsToReplace.length; ++i ) { 
+                jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+                logger.info("About to resolve " + jarsArg[i]);
+            }
 
-        File [] kieRemoteDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve(jarsArg)
-                .withoutTransitivity()
-                .asFile();
-        logger.info( "Adding above dependencies to war libraries");
-        war.addAsLibraries(kieRemoteDeps);
+            File [] kieRemoteDeps = Maven.resolver()
+                    .loadPomFromFile("pom.xml")
+                    .resolve(jarsArg)
+                    .withoutTransitivity()
+                    .asFile();
+            for( File dep : kieRemoteDeps ) { 
+                logger.info("Replacing with " + dep.getName() ); 
+            }
+            war.addAsLibraries(kieRemoteDeps);
+        }
        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
         
-        war.delete("WEB-INF/ejb-jar.xml");
-        war.addAsWebInfResource("ejb-jar.xml");
      
         return war;
     }

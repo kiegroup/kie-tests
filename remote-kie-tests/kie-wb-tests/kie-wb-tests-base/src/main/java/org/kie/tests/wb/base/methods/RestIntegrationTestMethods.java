@@ -218,9 +218,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         long before, after;
         logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
-        ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
+        ClientResponse<?> responseObj = checkResponse(restRequest.post(), status);
         logger.debug("AFTER: " + sdf.format((after = System.currentTimeMillis())));
-        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
+        long duration = (after - before);
+        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds: " + duration + "ms", duration < restCallDurationLimit);
         return responseObj;
     }
 
@@ -1330,4 +1331,30 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull(vill);
         assertEquals(myType.toString(), vill.get(0).getValue());
     }
+    
+    public void urlsCreateMemoryLeakOnTomcat(URL deploymentUrl, String user, String password, long timeout) throws Exception { 
+        long origCallDurationLimit = this.restCallDurationLimit;
+        this.restCallDurationLimit = timeout; 
+        
+        // Remote API setup
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        try { 
+            for( int i = 0; i < 20; ++i ) { 
+                logger.info( i + " process started.");
+                startProcessWithUserDefinedClass(requestHelper); 
+            }
+        } finally { 
+            this.restCallDurationLimit = origCallDurationLimit;
+        }
+     }
+    
+    private void startProcessWithUserDefinedClass(RestRequestHelper requestHelper) throws Exception {
+        String varId = "myobject";
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
+        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 200);
+        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        long procInstId = procInstResp.getResult().getId();;
+        assertTrue( "Process instance should be larger than 0: " + procInstId, procInstId > 0 );
+    }
+   
 }

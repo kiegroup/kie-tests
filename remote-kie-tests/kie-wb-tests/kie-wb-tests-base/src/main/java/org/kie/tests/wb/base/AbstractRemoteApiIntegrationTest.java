@@ -37,6 +37,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public abstract boolean doRestTests();
     public abstract boolean useFormBasedAuth();
     public abstract RuntimeStrategy getStrategy();
+    public abstract long getTimeout();
    
     public AbstractRemoteApiIntegrationTest() { 
          restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth(), getStrategy());
@@ -255,6 +256,13 @@ public abstract class AbstractRemoteApiIntegrationTest {
         restTests.remoteApiHumanTaskOwnTypeTest(deploymentUrl);
     }
     
+    @Test
+    @InSequence(REST_FAILING)
+    public void testRestTomcatMemoryLreak() throws Exception { 
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, getTimeout());
+    }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
     

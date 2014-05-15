@@ -16,12 +16,16 @@ import org.slf4j.LoggerFactory;
 public class KieWbWarTomcatDeploy extends AbstractDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarTomcatDeploy.class);
-    
-    static WebArchive createTestWar(String classifier) {
-        return createTestWar(classifier, null);
+
+    static WebArchive createTestWar(String classifier, boolean replace) {
+        return createTestWar(classifier, null, replace);
     }
     
-    static WebArchive createTestWar(String classifier, String database) {
+    static WebArchive createTestWar(String classifier) {
+        return createTestWar(classifier, null, true);
+    }
+    
+    static WebArchive createTestWar(String classifier, String database, boolean replace) {
         // Deploy test deployment
         createAndDeployTestKJarToMaven();
         
@@ -62,38 +66,39 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
                 "classes/META-INF/services/org.uberfire.security.auth.AuthenticationSource");
         war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
 
-        // Replace kie-services-remote jar with the one we just generated
-        war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
-        String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote", null },
-                { "org.kie.remote", "kie-services-jaxb", null }
-                // BZ-1070502
-//                { "org.antlr", "ST4", null }
-        };
-        String [] jarsArg = new String[jarsToReplace.length];
-        String oldClientJar = "kie-services-client";
-        war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
-        logger.info( "Deleting " + oldClientJar + " from test war");
-        for( String [] jar : jarsToReplace ) { 
-            logger.info( "Deleting " + jar[1] + " from test war");
-            war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
-        }
-        for( int i = 0; i < jarsToReplace.length; ++i ) { 
-            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
-            if( jarsToReplace[i][2] != null ) { 
-                jarsArg[i] += ":" + jarsToReplace[i][2];
+        if( replace ) { 
+            // Replace kie-services-remote jar with the one we just generated
+            war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
+            String [][] jarsToReplace = { 
+                    { "org.kie.remote", "kie-services-remote", null },
+                    { "org.kie.remote", "kie-services-jaxb", null }
+            };
+            String [] jarsArg = new String[jarsToReplace.length];
+            String oldClientJar = "kie-services-client";
+            war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
+            logger.info( "Deleting " + oldClientJar + " from test war");
+            for( String [] jar : jarsToReplace ) { 
+                logger.info( "Deleting " + jar[1] + " from test war");
+                war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
             }
-            logger.info("About to resolve " + jarsArg[i]);
-        }
+            for( int i = 0; i < jarsToReplace.length; ++i ) { 
+                jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+                if( jarsToReplace[i][2] != null ) { 
+                    jarsArg[i] += ":" + jarsToReplace[i][2];
+                }
+                logger.info("About to resolve " + jarsArg[i]);
+            }
 
-        File [] kieRemoteDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve(jarsArg)
-                .withoutTransitivity()
-                .asFile();
-        logger.info( "Adding above dependencies to war libraries");
-        war.addAsLibraries(kieRemoteDeps);
-       
+            File [] kieRemoteDeps = Maven.resolver()
+                    .loadPomFromFile("pom.xml")
+                    .resolve(jarsArg)
+                    .withoutTransitivity()
+                    .asFile();
+            for( File dep: kieRemoteDeps ) { 
+                logger.info( "Replacing with " + dep.getName());
+            }
+            war.addAsLibraries(kieRemoteDeps);
+        }
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
        

@@ -54,6 +54,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.api.command.Command;
@@ -65,8 +66,9 @@ import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunAsClient
-@RunWith(Arquillian.class)
+//@RunAsClient
+//@RunWith(Arquillian.class)
+@Ignore
 public class KieWbSecurityIntegrationTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbSecurityIntegrationTest.class);
