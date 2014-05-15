@@ -220,9 +220,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         long before, after;
         logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
-        ClientResponse<?> responseObj = checkResponse(restRequest.post(), 202);
+        ClientResponse<?> responseObj = checkResponse(restRequest.post(), status);
         logger.debug("AFTER: " + sdf.format((after = System.currentTimeMillis())));
-        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds", (after - before) < restCallDurationLimit);
+        long duration = (after - before);
+        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds: " + duration + "ms", duration < restCallDurationLimit);
         return responseObj;
     }
 

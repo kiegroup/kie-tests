@@ -66,4 +66,8 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
         return RuntimeStrategy.SINGLETON;
     }
 
+    @Override
+    public long getTimeout() {
+        return 4000l;
+    }
 }

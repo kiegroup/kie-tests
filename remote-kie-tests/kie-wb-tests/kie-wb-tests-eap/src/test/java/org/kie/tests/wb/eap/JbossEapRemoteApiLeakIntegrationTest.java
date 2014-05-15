@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss;
+package org.kie.tests.wb.eap;
 
-import static org.kie.tests.wb.jboss.KieWbWarJbossAsDeploy.createTestWar;
+import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import javax.ws.rs.core.MediaType;
 
@@ -27,28 +27,27 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
+import org.kie.tests.wb.base.AbstractLeakRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class JbossEapRemoteApiLeakIntegrationTest extends AbstractLeakRemoteApiIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-jboss")
+    @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
-        return createTestWar("jboss-as7");
+        return createTestWar("eap-6_1", false);
     }
-
+ 
     public boolean doDeploy() { 
         return true;
     }
-
-    @Override
-    public MediaType getMediaType() {
+ 
+    public MediaType getMediaType() { 
         return MediaType.APPLICATION_JSON_TYPE;
     }
 
     @Override
-    public boolean jmsQueuesAvailable() {
+    public boolean doRestTests() {
         return true;
     }
 
@@ -58,17 +57,13 @@ public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     }
 
     @Override
-    public boolean doRestTests() {
-        return true;
-    }
-
-    @Override
     public RuntimeStrategy getStrategy() {
         return RuntimeStrategy.SINGLETON;
     }
     
     @Override
     public long getTimeout() {
-        return 4000l;
+        return 1000l;
     }
+    
 }

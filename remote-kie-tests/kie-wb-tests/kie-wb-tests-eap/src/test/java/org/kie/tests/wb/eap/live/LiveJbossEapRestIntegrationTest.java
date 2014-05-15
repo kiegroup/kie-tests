@@ -54,4 +54,8 @@ public class LiveJbossEapRestIntegrationTest extends AbstractRemoteApiIntegratio
         return RuntimeStrategy.SINGLETON;
     }
 
+    @Override
+    public long getTimeout() {
+        return 1000l;
+    }
 }

@@ -65,5 +65,9 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     public RuntimeStrategy getStrategy() {
         return RuntimeStrategy.SINGLETON;
     }
-    
+   
+    @Override
+    public long getTimeout() {
+        return 1000l;
+    }
 }
