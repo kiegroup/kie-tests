@@ -11,12 +11,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.logging.Logger;
 
+import org.jbpm.process.audit.CommandBasedAuditLogService;
+import org.jbpm.process.audit.JPAAuditLogService;
+import org.jbpm.process.audit.VariableInstanceLog;
+import org.jbpm.services.task.utils.ContentMarshallerHelper;
+import org.jbpm.test.JbpmJUnitBaseTestCase;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
+import org.junit.Test;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.RuntimeManager;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.runtime.process.WorkItem;
+import org.kie.api.runtime.process.WorkItemHandler;
+import org.kie.api.runtime.process.WorkItemManager;
+import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Content;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.TaskData;
+import org.kie.api.task.model.TaskSummary;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.TestConstants;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProcessTest extends JbpmJUnitBaseTestCase {
 

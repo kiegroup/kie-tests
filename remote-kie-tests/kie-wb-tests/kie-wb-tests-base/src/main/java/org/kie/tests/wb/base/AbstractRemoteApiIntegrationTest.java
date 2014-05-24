@@ -254,7 +254,12 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         restTests.remoteApiHumanTaskOwnTypeTest(deploymentUrl);
     }
-    
+   
+    @Test
+    @InSequence(REST_FAILING) 
+    public void testRestUrlsGetProcessDefinitions() throws Exception { 
+        restTests.urlsGetProcessDefinitionInfo(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
     
@@ -358,5 +363,5 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         jmsTests.remoteApiHistoryVariablesTest(deploymentUrl);
     }
-    
+
 }

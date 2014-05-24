@@ -95,6 +95,8 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobR
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessIdList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
@@ -1260,7 +1262,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // Start process
         ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/workitem/200" );
-        logger.debug(">> " + restRequest.getUri());
         ClientResponse<?> responseObj = get(restRequest);
     }
   
@@ -1330,4 +1331,61 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull(vill);
         assertEquals(myType.toString(), vill.get(0).getValue());
     }
+    
+    public void urlsCreateMemoryLeakOnTomcat(URL deploymentUrl, String user, String password, long timeout) throws Exception { 
+        long origCallDurationLimit = this.restCallDurationLimit;
+        this.restCallDurationLimit = timeout; 
+        
+        // Remote API setup
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        try { 
+            for( int i = 0; i < 20; ++i ) { 
+                logger.info( i + " process started.");
+                startProcessWithUserDefinedClass(requestHelper); 
+            }
+        } finally { 
+            this.restCallDurationLimit = origCallDurationLimit;
+        }
+     }
+    
+    private void startProcessWithUserDefinedClass(RestRequestHelper requestHelper) throws Exception {
+        String varId = "myobject";
+        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
+        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 200);
+        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        long procInstId = procInstResp.getResult().getId();;
+        assertTrue( "Process instance should be larger than 0: " + procInstId, procInstId > 0 );
+    }
+    
+    public void urlsGetProcessDefinitionInfo(URL deploymentUrl, String user, String password) throws Exception { 
+        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
+
+        // Start process
+        ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" );
+        ClientResponse<?> responseObj = get(restRequest);
+        JaxbProcessIdList procIdListResponse = responseObj.getEntity(JaxbProcessIdList.class);
+        assertNotNull( "Null process id list.", procIdListResponse );
+        assertFalse( "Empty process id list", procIdListResponse.getProcessIdList().isEmpty() );
+       
+        List<String> procIdList = procIdListResponse.getProcessIdList();
+        for( String id : procIdList ) { 
+            restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + id);
+            responseObj = get(restRequest);
+            JaxbProcessDefinition procDef = responseObj.getEntity(JaxbProcessDefinition.class);
+            validateProcessDefinition(id, procDef);
+        }    
+        
+    }
+    
+    private void validateProcessDefinition( String id, JaxbProcessDefinition procDef ) { 
+       assertNotNull("Null process definition: " + id, procDef); 
+       assertEquals("Proc def id", id, procDef.getId() );
+       assertFalse("Process def " + id + ": null deployment id", procDef.getDeploymentId() == null || procDef.getDeploymentId().isEmpty() ); 
+       assertFalse("Process def " + id + ": null forms", procDef.getForms() == null || procDef.getForms().isEmpty() );
+       assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty() );
+       assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty() );
+       assertFalse("Process def " + id + ": null variables", procDef.getVariables() == null || procDef.getVariables().isEmpty() );
+       assertFalse("Process def " + id + ": null version", procDef.getVersion() == null || procDef.getVersion().isEmpty() );
+    }
+    
 }
