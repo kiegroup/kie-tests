@@ -1,6 +1,12 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.SALA_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.SALA_USER;
 
 import java.net.URL;
 
@@ -21,9 +27,9 @@ import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractLeakRemoteApiIntegrationTest {
+public abstract class AbstractIssueIntegrationTest {
     
-    protected static final Logger logger = LoggerFactory.getLogger(AbstractLeakRemoteApiIntegrationTest.class);
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractIssueIntegrationTest.class);
     
     private final RestIntegrationTestMethods restTests;
 
@@ -32,24 +38,14 @@ public abstract class AbstractLeakRemoteApiIntegrationTest {
    
     public abstract boolean doDeploy();
     public abstract MediaType getMediaType();
-    public abstract boolean doRestTests();
     public abstract boolean useFormBasedAuth();
     public abstract RuntimeStrategy getStrategy();
     public abstract long getTimeout();
    
-    public AbstractLeakRemoteApiIntegrationTest() { 
+    public AbstractIssueIntegrationTest() { 
          restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth(), getStrategy());
     }
 
-    private final static int SETUP = 0;
-    
-    private final static int REST_FAILING = 1;
-    private final static int REST_SUCCEEDING = 2;
-    private final static int REST_RANDOM = 3;
-    
-    private final static int JMS_FAILING = 4;
-    private final static int JMS_SUCCEEDING = 5;
-    private final static int JMS_RANDOM = 6;
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
@@ -71,21 +67,12 @@ public abstract class AbstractLeakRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(SETUP)
-    public void setupDeployment() throws Exception {
-        Assume.assumeTrue(doDeploy());
-        
+    public void testDeploymentRedeployClassPathTest() throws Exception { 
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        Thread.sleep(5000);
+        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
+    
+    // JMS ------------------------------------------------------------------------------------------------------------------------
 
-    @Test
-    @InSequence(REST_FAILING)
-    public void testRestTomcatMemoryLeak() throws Exception { 
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, getTimeout());
-    }
     
 }

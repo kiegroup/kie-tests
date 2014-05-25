@@ -1,6 +1,12 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.SALA_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.SALA_USER;
 
 import java.net.URL;
 
@@ -83,7 +89,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(doDeploy());
         
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
         Thread.sleep(5000);
     }
 
@@ -257,11 +263,19 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(REST_FAILING)
-    public void testRestTomcatMemoryLreak() throws Exception { 
+    @InSequence(REST_SUCCEEDING)
+    public void testRestTomcatMemoryLeak() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, getTimeout());
+    }
+    
+    @Test
+    @InSequence(REST_FAILING)
+    public void testDeploymentRedeployClassPathTest() throws Exception { 
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------

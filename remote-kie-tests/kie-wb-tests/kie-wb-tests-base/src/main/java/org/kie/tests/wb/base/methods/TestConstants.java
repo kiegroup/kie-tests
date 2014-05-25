@@ -22,6 +22,7 @@ public class TestConstants {
     public static final String GROUP_ASSSIGNMENT_PROCESS_ID = "org.jboss.qa.bpms.GroupAssignmentHumanTask";
     public static final String GROUP_ASSSIGN_VAR_PROCESS_ID = "org.jbpm.humantask.groupAssign";
     public static final String HUMAN_TASK_OWN_TYPE_ID       = "org.kie.wb.test.HumanTaskWithOwnType";
+    public static final String CLASSPATH_OBJECT_PROCESS_ID  = "org.kie.wb.test.classpath.process";
     
    
     /**
@@ -56,6 +57,7 @@ public class TestConstants {
             throw new RuntimeException("Unable to initialize projectVersion property: " + e.getMessage(), e);
         }
         projectVersion = testProps.getProperty("project.version");
+        VERSION = projectVersion;
     }
     
     /**
@@ -70,7 +72,8 @@ public class TestConstants {
     
     public static final String GROUP_ID = "org.test";
     public static final String ARTIFACT_ID = "kjar";
-    public static final String VERSION = "1.0";
+    public static final String CLASSPATH_ARTIFACT_ID = "classpath-kjar";
+    public static final String VERSION; // see above
     public static final String KBASE_NAME = "defaultKieBase";
     public static final String KSESSION_NAME = "defaultKieSession";
  

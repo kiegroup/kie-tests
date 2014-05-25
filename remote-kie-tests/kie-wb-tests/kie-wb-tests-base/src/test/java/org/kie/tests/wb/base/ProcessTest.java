@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.UUID;
 
+import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.JPAAuditLogService;
@@ -220,6 +222,38 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        new RestIntegrationTestMethods(null).runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
+        KModuleDeploymentUnit depUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        new RestIntegrationTestMethods(depUnit).runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
     }
+
+    @Test
+    public void runClassPathProcessTest() throws Exception {
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/classpath/objectVariableProcess.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);
+
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+        KieSession ksession = runtimeEngine.getKieSession();
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        String varId = "myobject";
+        String text = UUID.randomUUID().toString();
+        params.put(varId, new MyType(text, 10));
+        ProcessInstance procInst = ksession.startProcess(TestConstants.CLASSPATH_OBJECT_PROCESS_ID, params);
+        long processInstanceId = procInst.getId();
+
+        Map<String, Object> varMap = ((WorkflowProcessInstanceImpl) procInst).getVariables();
+        assertNotNull("Null variable instance found.", varMap);
+        for (Entry<String, Object> entry : varMap.entrySet()) {
+            logger.debug(entry.getKey() + " (" + entry.getValue().getClass().getSimpleName() + ") " + entry.getValue());
+        }
+
+        List<VariableInstanceLog> varLogs = new JPAAuditLogService(getEmf()).findVariableInstancesByName(varId, false);
+        assertTrue(varLogs.size() > 0);
+        assertEquals(varId, varLogs.get(0).getVariableId());
+
+        procInst = ksession.getProcessInstance(processInstanceId);
+        assertNull(procInst);
+    } 
 }
