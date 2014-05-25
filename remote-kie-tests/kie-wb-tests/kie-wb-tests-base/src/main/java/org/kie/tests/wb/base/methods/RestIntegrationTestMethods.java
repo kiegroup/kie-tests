@@ -35,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.Map.Entry;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -66,6 +68,7 @@ import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
 import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
+import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.Assume;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
@@ -113,6 +116,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private static final String taskUserId = "salaboy";
 
     private final String deploymentId;
+    private final KModuleDeploymentUnit deploymentUnit;
     private boolean useFormBasedAuth = false;
     private boolean testWithHttpUrlConnection = true;
     private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
@@ -134,6 +138,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
         
         this.deploymentId = deploymentId;
+        this.deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        assertEquals( "Deployment unit information", deploymentId, deploymentUnit.getIdentifier());
         this.mediaType = mediaType;
         this.timeout = timeout;
         this.useFormBasedAuth = tomcatInstance;
@@ -158,6 +164,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public RestIntegrationTestMethods(String deploymentId) {
         this(deploymentId, null, DEFAULT_TIMEOUT, null, null);
+    }
+
+    public RestIntegrationTestMethods(KModuleDeploymentUnit deploymentUnit) {
+        this(deploymentUnit.getIdentifier(), null, DEFAULT_TIMEOUT, null, null);
     }
 
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
@@ -242,7 +252,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
    
     private RemoteRuntimeEngineFactory getRemoteRuntimeFactory(URL deploymentUrl, String user, String password) { 
-        return new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, user, password, useFormBasedAuth);
+       return getRemoteRuntimeFactory(deploymentId, deploymentUrl, user, password);
+    }
+    
+    private RemoteRuntimeEngineFactory getRemoteRuntimeFactory(String deploymentId, URL deploymentUrl, String user, String password) { 
+        RemoteRestRuntimeEngineFactory r3eFactory = RemoteRestRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(deploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password)
+                .useFormBasedAuth(useFormBasedAuth)
+                .build();
+        return r3eFactory;
     }
     
     /**
@@ -284,8 +305,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * @param undeploy Whether or not to test the undeploy operation
      * @throws Exception if anything goes wrong
      */
-    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, boolean undeploy)
-            throws Exception {
+    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
         Assume.assumeFalse(checkDeployFlagFile());
         
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
@@ -297,44 +317,37 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Null answer!", depList);
         assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
    
-        // Check and do deployment 
+        // Check deployment 
         String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
     
         restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
-        restRequest.accept(this.mediaType);
     
-        if (isDeployed(restRequest.get())) {
-            if( undeploy ) { 
-                undeploy(deploymentId, deploymentUrl, requestHelper);
-            }
+        if (isUndeployed(deploymentUnit, restRequest.get())) {
+            // Deploy
+            deploy(deploymentUnit, user, password, deploymentUrl);
         } 
-            
-        // Deploy
-        deploy(user, password, deploymentUrl, deploymentId);
-        waitForDeploymentJobToSucceed(deploymentId, true, deploymentUrl, requestHelper);
-        
     }
 
-    private JaxbDeploymentJobResult deploy(String userId, String password, URL appUrl, String deploymentId) throws Exception {
+    private JaxbDeploymentJobResult deploy(KModuleDeploymentUnit depUnit, String user, String password, URL appUrl) throws Exception {
         logger.info("deploy");
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
     
         // Create request
-        String url = appUrl.toExternalForm() + "rest/deployment/" + deploymentId + "/deploy";
+        String url = appUrl.toExternalForm() + "rest/deployment/" + depUnit.getIdentifier() + "/deploy";
         if (strategy.equals(RuntimeStrategy.SINGLETON)) {
             url += "?strategy=" + strategy.toString();
         }
         ClientRequest request;
         if( useFormBasedAuth ) { 
-            ClientRequestFactory factory = RestRequestHelper.createRequestFactory(appUrl, userId, password, useFormBasedAuth);
+            ClientRequestFactory factory = RestRequestHelper.createRequestFactory(appUrl, user, password, useFormBasedAuth);
             request = factory.createRequest(url);
         } else { 
-            String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", userId, password).getBytes()).trim();
+            String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", user, password).getBytes()).trim();
 
             DefaultHttpClient httpClient = new DefaultHttpClient();
             httpClient.getCredentialsProvider().setCredentials(
                     new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
-                    new UsernamePasswordCredentials(userId, password));
+                    new UsernamePasswordCredentials(user, password));
             ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
             ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
 
@@ -385,14 +398,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
    
         assertNotNull("Null response!", result);
         assertTrue("The deployment unit was not created successfully.", result.isSuccess());
+      
+        // wait for deploy to succeed
+        RestRequestHelper requestHelper = getRestRequestHelper(appUrl, user, password);
+        waitForDeploymentJobToSucceed(depUnit, true, appUrl, requestHelper);
     
         return result;
     }
 
-    private void undeploy(String deploymentId, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
+    private void undeploy(KModuleDeploymentUnit kDepUnit, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
         logger.info("undeploy");
         // Exists, so undeploy
-        ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/undeploy");
+        ClientRequest restRequest = requestHelper.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy");
     
         ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 202);
     
@@ -400,22 +417,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY");
         logger.info("UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]"
                 + jaxbJobResult.getExplanation());
-    
-        waitForDeploymentJobToSucceed(deploymentId, false, deploymentUrl, requestHelper);
+   
+        waitForDeploymentJobToSucceed(kDepUnit, false, deploymentUrl, requestHelper);
     }
 
-    private void waitForDeploymentJobToSucceed(String deploymentId, boolean deploy, URL deploymentUrl, RestRequestHelper requestHelper) 
-            throws Exception {
+    private void waitForDeploymentJobToSucceed(KModuleDeploymentUnit kDepUnit, boolean deploy, URL deploymentUrl, RestRequestHelper requestHelper) throws Exception {
         boolean success = false;
         int tries = 0;
         while (!success && tries++ < MAX_TRIES) {
             ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
             logger.debug(">> " + restRequest.getUri());
-            restRequest.accept(this.mediaType);
             ClientResponse<?> responseObj = restRequest.get();
-            if (deploy) {
-                success = isDeployed(responseObj);
-            }
+            success = isDeployRequestComplete(kDepUnit, deploy, responseObj);
             if (!success) {
                 logger.info("Sleeping for " + sleep / 1000 + " seconds");
                 Thread.sleep(sleep);
@@ -423,19 +436,39 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
 
-    private boolean isDeployed(ClientResponse<?> responseObj) {
-        int status = responseObj.getStatus();
+    private boolean isDeployed(KModuleDeploymentUnit kDepUnit, ClientResponse<?> responseObj) {
+       return isDeployRequestComplete(kDepUnit, true, responseObj);
+    }
+    
+    private boolean isUndeployed(KModuleDeploymentUnit kDepUnit, ClientResponse<?> responseObj) {
+       return isDeployRequestComplete(kDepUnit, false, responseObj);
+    }
+    
+    private boolean isDeployRequestComplete(KModuleDeploymentUnit kDepUnit, boolean deploy, ClientResponse<?> responseObj) {
         try {
+            int status = responseObj.getStatus();
             if (status == 200) {
                 JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(jaxbDepUnit, GROUP_ID, ARTIFACT_ID, VERSION);
-                if (jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
+                JaxbDeploymentStatus jaxbDepStatus 
+                    = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
+                if( deploy && jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
+                    return true;
+                } else if( ! deploy && jaxbDepStatus.equals(JaxbDeploymentStatus.UNDEPLOYED) ) { 
                     return true;
                 } else { 
-                    return false;
+                   return false; 
                 }
-            } 
-            return false;
+            } else {  
+                if( status < 500 ) { 
+                    if( deploy ) { 
+                        return false;
+                    } else { 
+                        return true;
+                    }
+                } else { 
+                    throw new IllegalStateException();
+                }
+            }
         } catch( Exception e ) { 
            logger.error( "Unable to check if deployed: " + responseObj.getEntity(String.class)); 
            return false;
@@ -444,11 +477,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         }
     }
 
-    private JaxbDeploymentStatus checkJaxbDeploymentUnitAndGetStatus(JaxbDeploymentUnit jaxbDepUnit, String groupId,
-            String artifactId, String version) {
-        assertEquals("GroupId", GROUP_ID, jaxbDepUnit.getGroupId());
-        assertEquals("ArtifactId", ARTIFACT_ID, jaxbDepUnit.getArtifactId());
-        assertEquals("Version", VERSION, jaxbDepUnit.getVersion());
+    private JaxbDeploymentStatus checkJaxbDeploymentUnitAndGetStatus(KModuleDeploymentUnit expectedDepUnit, JaxbDeploymentUnit jaxbDepUnit) {
+        assertEquals("GroupId", expectedDepUnit.getGroupId(), jaxbDepUnit.getGroupId());
+        assertEquals("ArtifactId", expectedDepUnit.getArtifactId(), jaxbDepUnit.getArtifactId());
+        assertEquals("Version", expectedDepUnit.getVersion(), jaxbDepUnit.getVersion());
         return jaxbDepUnit.getStatus();
     }
 
@@ -880,13 +912,17 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception {
+       runRemoteApiExtraJaxbClassesTest(deploymentId, deploymentUrl, user, password); 
+    }
+
+    private void runRemoteApiExtraJaxbClassesTest(String deploymentId, URL deploymentUrl, String user, String password) throws Exception { 
         // Remote API setup
         RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
         RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
-
+        // test
         testExtraJaxbClassSerialization(engine);
     }
-
+    
     public void remoteApiRuleTaskProcess(URL deploymentUrl, String user, String password) {
         // Remote API setup
         RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
@@ -1389,4 +1425,66 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
        assertFalse("Process def " + id + ": null version", procDef.getVersion() == null || procDef.getVersion().isEmpty() );
     }
     
+    public void remoteApiDeploymentRedeployClassPathTest(URL deploymentUrl, String user, String password) throws Exception  {
+        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
+        
+        KModuleDeploymentUnit kDepUnit = new KModuleDeploymentUnit(GROUP_ID, CLASSPATH_ARTIFACT_ID, VERSION);
+        String classpathDeploymentId = kDepUnit.getIdentifier();
+        
+        // Check that project is not deployed
+        ClientRequest restRequest = requestHelper.createRequest("deployment/" + classpathDeploymentId + "/");
+        setAcceptHeader(restRequest);
+  
+        // Run test the first time
+        if ( ! isDeployed(kDepUnit, restRequest.get()) ) { 
+            // Deploy
+            deploy(kDepUnit, user, password, deploymentUrl);
+        }
+            
+        // Run process
+        RemoteRuntimeEngine runtimeEngine = RemoteRestRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(classpathDeploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password)
+                .build().newRuntimeEngine();
+                
+        runClassPathProcessTest(runtimeEngine);
+           
+        // undeploy..
+        undeploy(kDepUnit, deploymentUrl, requestHelper);
+            
+        // .. and (re)deploy
+        deploy(kDepUnit, user, password, deploymentUrl);
+
+        logger.info( "Rerunning test.. is there a CNFE?");
+        // Rerun process
+        runClassPathProcessTest(runtimeEngine);
+    }
+ 
+    private void runClassPathProcessTest(RemoteRuntimeEngine runtimeEngine) { 
+        KieSession ksession = runtimeEngine.getKieSession();
+
+        Map<String, Object> params = new HashMap<String, Object>();
+        String varId = "myobject";
+        String text = UUID.randomUUID().toString();
+        params.put(varId, new MyType(text, 10));
+        ProcessInstance procInst = ksession.startProcess(TestConstants.CLASSPATH_OBJECT_PROCESS_ID, params);
+        long processInstanceId = procInst.getId();
+
+        AuditLogService auditLogService = runtimeEngine.getAuditLogService();
+        List<VariableInstanceLog> varLogList = auditLogService.findVariableInstances(processInstanceId);
+        
+        assertNotNull("Null variable instance found.", varLogList);
+        for (VariableInstanceLog varLog : varLogList ) { 
+            logger.debug(varLog.getVariableId() + " (" + varLog.getValue() + ") " );
+        }
+
+        List<VariableInstanceLog> varLogs = runtimeEngine.getAuditLogService().findVariableInstancesByName(varId, false);
+        assertTrue(varLogs.size() > 0);
+        assertEquals(varId, varLogs.get(0).getVariableId());
+
+        procInst = ksession.getProcessInstance(processInstanceId);
+        assertNull(procInst);
+    }
 }

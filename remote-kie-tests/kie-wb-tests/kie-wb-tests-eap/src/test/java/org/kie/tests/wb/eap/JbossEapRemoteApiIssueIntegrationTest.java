@@ -27,15 +27,15 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
-import org.kie.tests.wb.base.AbstractLeakRemoteApiIntegrationTest;
+import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiLeakIntegrationTest extends AbstractLeakRemoteApiIntegrationTest {
+public class JbossEapRemoteApiIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
-        return createTestWar("eap-6_1", false);
+        return createTestWar("eap-6_1");
     }
  
     public boolean doDeploy() { 
@@ -47,11 +47,6 @@ public class JbossEapRemoteApiLeakIntegrationTest extends AbstractLeakRemoteApiI
     }
 
     @Override
-    public boolean doRestTests() {
-        return true;
-    }
-
-    @Override
     public boolean useFormBasedAuth() {
         return false;
     }
@@ -60,10 +55,9 @@ public class JbossEapRemoteApiLeakIntegrationTest extends AbstractLeakRemoteApiI
     public RuntimeStrategy getStrategy() {
         return RuntimeStrategy.SINGLETON;
     }
-    
+   
     @Override
     public long getTimeout() {
         return 1000l;
     }
-    
 }

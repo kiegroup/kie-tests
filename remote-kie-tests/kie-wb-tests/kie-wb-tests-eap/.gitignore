@@ -2,5 +2,5 @@
 /target
 /bin
 
-# core dumps.. :(
+# core dumps (WTF, Oracle?)
 /hs_err*
