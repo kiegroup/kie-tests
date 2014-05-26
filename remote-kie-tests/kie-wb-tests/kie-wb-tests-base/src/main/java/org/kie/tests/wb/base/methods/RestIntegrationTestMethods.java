@@ -423,7 +423,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         boolean success = false;
         int tries = 0;
         while (!success && tries++ < MAX_TRIES) {
-            ClientRequest restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
+            ClientRequest restRequest = requestHelper.createRequest("deployment/" + kDepUnit.getIdentifier() + "/");
             logger.debug(">> " + restRequest.getUri());
             ClientResponse<?> responseObj = restRequest.get();
             success = isDeployRequestComplete(kDepUnit, deploy, responseObj);
@@ -432,6 +432,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 Thread.sleep(sleep);
             }
         }
+        assertTrue( "No result after " + MAX_TRIES + " checks.", tries < MAX_TRIES );
     }
 
     private boolean isDeployed(KModuleDeploymentUnit kDepUnit, ClientResponse<?> responseObj) {
@@ -447,8 +448,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             int status = responseObj.getStatus();
             if (status == 200) {
                 JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus 
-                    = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
+                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
                 if( deploy && jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
                     return true;
                 } else if( ! deploy && jaxbDepStatus.equals(JaxbDeploymentStatus.UNDEPLOYED) ) { 
