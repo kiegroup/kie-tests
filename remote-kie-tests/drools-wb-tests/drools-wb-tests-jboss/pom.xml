@@ -41,7 +41,7 @@
       <artifactId>drools-wb-distribution-wars</artifactId>
       <classifier>jboss-as7</classifier>
       <version>${project.version}</version>
-      <type>war</type>
+      <type>0.war</type>
       <scope>test</scope>
     </dependency>
 
@@ -177,7 +177,7 @@
                       <groupId>org.drools</groupId>
                       <artifactId>drools-wb-distribution-wars</artifactId>
                       <classifier>jboss-as7</classifier>
-                      <type>war</type>
+                      <type>0.war</type>
                       <overWrite>false</overWrite>
                     </artifactItem>
                   </artifactItems>

@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>org.kie.workbench.services</groupId>
-      <artifactId>kie-wb-common-rest</artifactId>
+      <artifactId>kie-wb-common-services-api</artifactId>
     </dependency>
 
     <dependency>

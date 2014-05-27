@@ -1,13 +1,14 @@
 package org.kie.tests.drools.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.kie.tests.drools.wb.base.methods.TestConstants.PASSWORD;
 import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
 
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -16,11 +17,20 @@ import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.ClientResponse;
 import org.junit.Test;
-import org.kie.workbench.common.services.shared.rest.*;
+import org.kie.workbench.common.services.shared.rest.AddRepositoryToOrganizationalUnitRequest;
+import org.kie.workbench.common.services.shared.rest.CompileProjectRequest;
+import org.kie.workbench.common.services.shared.rest.CreateOrCloneRepositoryRequest;
+import org.kie.workbench.common.services.shared.rest.CreateOrganizationalUnitRequest;
+import org.kie.workbench.common.services.shared.rest.CreateProjectRequest;
+import org.kie.workbench.common.services.shared.rest.Entity;
+import org.kie.workbench.common.services.shared.rest.JobResult;
+import org.kie.workbench.common.services.shared.rest.JobStatus;
+import org.kie.workbench.common.services.shared.rest.OrganizationalUnit;
+import org.kie.workbench.common.services.shared.rest.RemoveRepositoryFromOrganizationalUnitRequest;
+import org.kie.workbench.common.services.shared.rest.RepositoryRequest;
+import org.kie.workbench.common.services.shared.rest.RepositoryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.cache.RemovalCause;
 
 /**
  * These are various tests for the drools-wb-rest module
