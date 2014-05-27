@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class DroolsWbWarJbossDeploy {
 
-    private static final String classifier = "jboss-as7";
+    private static final String classifier = "jboss-as7.0";
 
     private static Logger logger = LoggerFactory.getLogger(DroolsWbWarJbossDeploy.class);
     
@@ -56,9 +56,7 @@ public class DroolsWbWarJbossDeploy {
 
         String [][] jarsToReplace = { 
                 { "org.drools", "drools-wb-rest" },
-                { "org.kie.workbench.services", "kie-wb-common-rest" },
-                { "org.jbpm", "jbpm-executor" },
-                { "org.apache.deltaspike.core", "deltaspike-core-api" }
+                { "org.kie.workbench.services", "kie-wb-common-services-api" }
         };
         
         // Replace kie-services-remote jar with the one we just generated

@@ -15,7 +15,7 @@ public class DroolsWbRestTomcatIntegrationTest extends AbstractDroolsWbIntegrati
 
     @Deployment(testable = false, name="drools-wb")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("test");
+       return createWarWithTestDeploymentLoader("tomcat");
     }
     
 }

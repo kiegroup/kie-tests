@@ -15,7 +15,7 @@ public class DroolsWbRestJbossIntegrationTest extends AbstractDroolsWbIntegratio
 
     @Deployment(testable = false, name="drools-wb")
     public static Archive<?> createWar() {
-       return createWarWithTestDeploymentLoader("test");
+       return createWarWithTestDeploymentLoader("jboss");
     }
     
 }
