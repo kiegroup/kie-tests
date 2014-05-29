@@ -89,7 +89,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(doDeploy());
         
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
         Thread.sleep(5000);
     }
 

@@ -59,7 +59,17 @@
       <type>war</type>
     </dependency>
 
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
+    </dependency>
+    
     <!-- temp: web services -->
+    <dependency>
+      <groupId>javax.xml.ws</groupId>
+      <artifactId>jaxws-api</artifactId>
+    <version>2.2.11</version>
+    </dependency>
     <dependency>
       <groupId>org.kie.remote.ws</groupId>
       <artifactId>kie-remote-ws-common</artifactId>

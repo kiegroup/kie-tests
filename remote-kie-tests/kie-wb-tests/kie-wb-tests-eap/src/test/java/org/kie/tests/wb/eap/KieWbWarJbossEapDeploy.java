@@ -59,12 +59,18 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             // Replace kie-services-remote jar with the one we just generated
             replaceJars(war);
             addNewJars(war);
+            replaceWebXmlForWebServices(war);
         }
        
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");
      
         return war;
+    }
+
+    private static void replaceWebXmlForWebServices(WebArchive war) {
+        war.delete("WEB-INF/web.xml");
+        war.addAsWebInfResource("WEB-INF/web.xml", "web.xml");
     }
 
     protected void printTestName() { 
@@ -74,8 +80,11 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
   
     private static void replaceJars(WebArchive war) { 
        String [][] jarsToReplace = { 
+                { "org.jbpm", "jbpm-human-task-core" },
                 { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-jaxb" }
+                { "org.kie.remote", "kie-services-jaxb" },
+                { "org.kie.remote.ws", "kie-remote-ws-common" },
+                { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
         for( String [] jar : jarsToReplace ) { 
@@ -87,6 +96,7 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             logger.info("Resolving '{}'", jarsArg[i]);
         }
 
+        
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
                 .resolve(jarsArg)
@@ -100,25 +110,27 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
     }
     
     private static void addNewJars(WebArchive war) { 
-        // Replace kie-services-remote jar with the one we just generated
+        war.delete("WEB-INF/lib/jaxws-api-2.1.jar");
+        
         String [][] jarsToAdd = { 
-                { "org.kie.remote.ws", "kie-remote-ws-common" },
-                { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
+                { "javax.xml.ws", "jaxws-api" }
         };
-        String [] jarsArg = new String[jarsToAdd.length];
-        for( int i = 0; i < jarsToAdd.length; ++i ) { 
-            jarsArg[i] = jarsToAdd[i][0] + ":" + jarsToAdd[i][1];
-            logger.info("Resolving '{}'", jarsArg[i]);
-        }
+        if( jarsToAdd.length > 0 ) { 
+            String [] jarsArg = new String[jarsToAdd.length];
+            for( int i = 0; i < jarsToAdd.length; ++i ) { 
+                jarsArg[i] = jarsToAdd[i][0] + ":" + jarsToAdd[i][1];
+                logger.info("Resolving '{}'", jarsArg[i]);
+            }
 
-        File [] kieRemoteDeps = Maven.resolver()
-                .loadPomFromFile("pom.xml")
-                .resolve(jarsArg)
-                .withoutTransitivity()
-                .asFile();
-        for( File dep : kieRemoteDeps ) { 
-            logger.info("Adding '{}'", dep.getName() ); 
+            File [] depsToAdd = Maven.resolver()
+                    .loadPomFromFile("pom.xml")
+                    .resolve(jarsArg)
+                    .withoutTransitivity()
+                    .asFile();
+            for( File dep : depsToAdd ) { 
+                logger.info("Adding '{}'", dep.getName() ); 
+            }
+            war.addAsLibraries(depsToAdd);
         }
-        war.addAsLibraries(kieRemoteDeps);
     }
 }

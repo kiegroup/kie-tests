@@ -305,8 +305,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * @param undeploy Whether or not to test the undeploy operation
      * @throws Exception if anything goes wrong
      */
-    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password) throws Exception {
-        Assume.assumeFalse(checkDeployFlagFile());
+    public void urlsDeployModuleForOtherTests(URL deploymentUrl, String user, String password, boolean check) throws Exception {
+        if( check ) { 
+            Assume.assumeFalse(checkDeployFlagFile());
+        }
         
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
     
@@ -453,7 +455,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
                 if( deploy && jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
                     return true;
-                } else if( ! deploy && jaxbDepStatus.equals(JaxbDeploymentStatus.UNDEPLOYED) ) { 
+                } else if( ! deploy && ! jaxbDepStatus.equals(JaxbDeploymentStatus.DEPLOYED)) { 
                     return true;
                 } else { 
                    return false; 
