@@ -59,6 +59,20 @@
       <type>war</type>
     </dependency>
 
+    <!-- temp: web services -->
+    <dependency>
+      <groupId>org.kie.remote.ws</groupId>
+      <artifactId>kie-remote-ws-common</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.remote.ws</groupId>
+      <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- jms -->
     <dependency>
       <groupId>org.hornetq</groupId>

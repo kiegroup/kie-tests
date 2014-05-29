@@ -57,33 +57,8 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
 
         if( replace ) { 
             // Replace kie-services-remote jar with the one we just generated
-            String [][] jarsToReplace = { 
-                    { "org.kie.remote", "kie-services-remote" },
-                    { "org.kie.remote", "kie-services-jaxb" }
-            };
-            String [] jarsArg = new String[jarsToReplace.length];
-            for( String [] jar : jarsToReplace ) { 
-                logger.info( "Deleting " + jar[1] + " from test war");
-                war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
-            }
-            for( int i = 0; i < jarsToReplace.length; ++i ) { 
-                jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
-                logger.info("About to resolve " + jarsArg[i]);
-            }
-
-            File [] kieRemoteDeps = Maven.resolver()
-                    .loadPomFromFile("pom.xml")
-                    .resolve(jarsArg)
-                    .withoutTransitivity()
-                    .asFile();
-            for( File dep : kieRemoteDeps ) { 
-                logger.info("Replacing with " + dep.getName() ); 
-            }
-            war.addAsLibraries(kieRemoteDeps);
-            
-            // BZ-1067418: dynamic jaxbcontext filter
-            war.delete("WEB-INF/web.xml");
-            war.addAsWebInfResource("WEB-INF/web.xml", "web.xml");
+            replaceJars(war);
+            addNewJars(war);
         }
        
         // Add data service resource for tests
@@ -96,5 +71,54 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
         StackTraceElement ste = new Throwable().getStackTrace()[1];
         logger.info( "] Starting " + ste.getMethodName());
     }
+  
+    private static void replaceJars(WebArchive war) { 
+       String [][] jarsToReplace = { 
+                { "org.kie.remote", "kie-services-remote" },
+                { "org.kie.remote", "kie-services-jaxb" }
+        };
+        String [] jarsArg = new String[jarsToReplace.length];
+        for( String [] jar : jarsToReplace ) { 
+            logger.info( "Deleting '{}' from test war", jar[1] );
+            war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
+        }
+        for( int i = 0; i < jarsToReplace.length; ++i ) { 
+            jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
+            logger.info("Resolving '{}'", jarsArg[i]);
+        }
+
+        File [] kieRemoteDeps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve(jarsArg)
+                .withoutTransitivity()
+                .asFile();
+        for( File dep : kieRemoteDeps ) { 
+            logger.info("Replacing with '{}'", dep.getName() ); 
+        }
+        war.addAsLibraries(kieRemoteDeps);
+       
+    }
     
+    private static void addNewJars(WebArchive war) { 
+        // Replace kie-services-remote jar with the one we just generated
+        String [][] jarsToAdd = { 
+                { "org.kie.remote.ws", "kie-remote-ws-common" },
+                { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
+        };
+        String [] jarsArg = new String[jarsToAdd.length];
+        for( int i = 0; i < jarsToAdd.length; ++i ) { 
+            jarsArg[i] = jarsToAdd[i][0] + ":" + jarsToAdd[i][1];
+            logger.info("Resolving '{}'", jarsArg[i]);
+        }
+
+        File [] kieRemoteDeps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve(jarsArg)
+                .withoutTransitivity()
+                .asFile();
+        for( File dep : kieRemoteDeps ) { 
+            logger.info("Adding '{}'", dep.getName() ); 
+        }
+        war.addAsLibraries(kieRemoteDeps);
+    }
 }

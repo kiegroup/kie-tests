@@ -1,7 +1,6 @@
 package org.kie.tests.wb.eap.security;
 
 import java.security.Principal;
-import java.security.Provider;
 import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -20,7 +19,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.jacc.PolicyContext;
