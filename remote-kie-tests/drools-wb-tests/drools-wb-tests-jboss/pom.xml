@@ -25,15 +25,15 @@
 
   <dependencies>
     <dependency>
-        <groupId>org.drools</groupId>
-        <artifactId>drools-wb-rest</artifactId>
-        <scope>test</scope>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-wb-rest</artifactId>
+      <scope>test</scope>
     </dependency>
-    
+
     <dependency>
-        <groupId>org.kie.tests.remote</groupId>
-        <artifactId>drools-wb-tests-base</artifactId>
-        <scope>test</scope>
+      <groupId>org.kie.tests.remote</groupId>
+      <artifactId>drools-wb-tests-base</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -104,14 +104,14 @@
         </exclusion>
       </exclusions>
     </dependency>
-   
-    <!--  deltaspike --> 
+
+    <!-- deltaspike -->
     <dependency>
       <groupId>org.apache.deltaspike.core</groupId>
-      <artifactId>deltaspike-core-api</artifactId> 
+      <artifactId>deltaspike-core-api</artifactId>
       <version>0.7</version>
       <scope>test</scope>
-   </dependency>
+    </dependency>
   </dependencies>
 
   <build>
@@ -126,137 +126,102 @@
       </testResource>
     </testResources>
 
-    <!-- running tests -->
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>integration-test</id>
-              <goals>
-                <goal>integration-test</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>verify</id>
-              <goals>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
+    <plugins>
+      <!-- testing with jboss AS 7 -->
+      <!-- 1. install server in the build/target dir -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>check-drools-wb-war</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.drools</groupId>
+                  <artifactId>drools-wb-distribution-wars</artifactId>
+                  <classifier>jboss-as7</classifier>
+                  <type>0.war</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/deployments</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>unpack-jboss</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.jboss.as</groupId>
+                  <artifactId>jboss-as-dist</artifactId>
+                  <version>${version.org.jboss.as.dist}</version>
+                  <type>zip</type>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>xml-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>modify-standalone-full</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>transform</goal>
+            </goals>
+            <configuration>
+              <transformationSets>
+                <transformationSet>
+                  <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir>
+                  <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir>
+                  <includes>
+                    <include>standalone-full.xml</include>
+                  </includes>
+                  <stylesheet>src/test/resources-jboss-as7/xslt/addDebugLogging.xslt</stylesheet>
+                </transformationSet>
+              </transformationSets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- 2. install files with user/password information in the server dir -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-user-config</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/test/resources-jboss-as7/config</directory>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+              <overwrite>true</overwrite>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>integration-tests</id>
-      <build>
-        <plugins>
-          <!-- testing with jboss AS 7 -->
-          <!-- 1. install server in the build/target dir -->
-          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>check-drools-wb-war</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>copy</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>org.drools</groupId>
-                      <artifactId>drools-wb-distribution-wars</artifactId>
-                      <classifier>jboss-as7</classifier>
-                      <type>0.war</type>
-                      <overWrite>false</overWrite>
-                    </artifactItem>
-                  </artifactItems>
-                  <outputDirectory>${project.build.directory}/deployments</outputDirectory>
-                </configuration>
-              </execution>
-              <execution>
-                <id>unpack-jboss</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>unpack</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>org.jboss.as</groupId>
-                      <artifactId>jboss-as-dist</artifactId>
-                      <version>${version.org.jboss.as.dist}</version>
-                      <type>zip</type>
-                      <overWrite>false</overWrite>
-                      <outputDirectory>${project.build.directory}</outputDirectory>
-                    </artifactItem>
-                  </artifactItems>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-           <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>xml-maven-plugin</artifactId>
-           <version>1.0</version>                      
-           <executions>                        
-             <execution>
-               <id>modify-standalone-full</id>
-               <phase>process-test-resources</phase>
-               <goals>
-                 <goal>transform</goal>
-               </goals>
-               <configuration>                                 
-                 <transformationSets>
-                   <transformationSet> 
-                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
-                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
-                     <includes> 
-                       <include>standalone-full.xml</include> 
-                     </includes>
-                     <stylesheet>src/test/resources-jboss-as7/xslt/addDebugLogging.xslt</stylesheet>
-                   </transformationSet> 
-                 </transformationSets>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin> 
-          <!-- 2. install files with user/password information in the server dir -->
-          <plugin>
-            <artifactId>maven-resources-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>copy-user-config</id>
-                <phase>process-test-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>src/test/resources-jboss-as7/config</directory>
-                      <filtering>false</filtering>
-                    </resource>
-                  </resources>
-                  <overwrite>true</overwrite>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
 
