@@ -114,30 +114,15 @@
       <artifactId>uberfire-io</artifactId>
     </dependency>
 
-    <!-- server setup -->
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-controller-client</artifactId>
-      <version>7.2.0.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-arquillian-common</artifactId>
-      <version>7.2.0.Final</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- for getting *.bpmn2 files in classpath -->
     <dependency>
       <groupId>org.reflections</groupId>
       <artifactId>reflections</artifactId>
-      <version>0.9.9-RC1</version>
     </dependency>
 
     <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
-      <version>3.3</version>
     </dependency>
 
     <dependency>
@@ -155,7 +140,6 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-test</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 

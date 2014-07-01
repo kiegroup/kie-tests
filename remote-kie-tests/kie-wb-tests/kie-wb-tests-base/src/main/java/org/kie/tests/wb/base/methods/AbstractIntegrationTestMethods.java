@@ -14,6 +14,7 @@ import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.GetTaskCommand;
+import org.junit.Assume;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
@@ -36,29 +37,28 @@ public class AbstractIntegrationTestMethods {
 
     protected static Logger logger = LoggerFactory.getLogger(AbstractIntegrationTestMethods.class);
    
-    protected final static int MAX_TRIES = 3;
+    protected final static int MAX_TRIES = 5;
     
-    protected long findTaskId(long procInstId, List<TaskSummary> taskSumList) { 
+    protected long findTaskId(Long procInstId, List<TaskSummary> taskSumList) { 
         long taskId = -1;
-        for( TaskSummary task : taskSumList ) { 
-            if( task.getProcessInstanceId() == procInstId ) {
-                taskId = task.getId();
-            }
+        TaskSummary task = findTaskSummary(procInstId, taskSumList);
+        if( task != null ) { 
+            taskId = task.getId();
         }
         assertNotEquals("Could not determine taskId!", -1, taskId);
         return taskId;
     }
     
-    protected TaskSummary findTaskSummary(long procInstId, List<TaskSummary> taskSumList) { 
+    protected TaskSummary findTaskSummary(Long procInstId, List<TaskSummary> taskSumList) { 
         for( TaskSummary task : taskSumList ) { 
-            if( task.getProcessInstanceId() == procInstId ) {
+            if( procInstId.equals(task.getProcessInstanceId()) ) {
                 return task;
             }
         }
         fail( "Unable to find task summary for process instance " + procInstId); 
         return null;
     }
- 
+
     /**
      * Shared tests
      */
@@ -157,7 +157,7 @@ public class AbstractIntegrationTestMethods {
             String user = "krisv";
             TaskService taskService = krisRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            TaskSummary task = findTaskSummary(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -171,7 +171,7 @@ public class AbstractIntegrationTestMethods {
             String user = "john";
             TaskService taskService = johnRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            TaskSummary task = findTaskSummary(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'john' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -185,7 +185,7 @@ public class AbstractIntegrationTestMethods {
             String user = "mary";
             TaskService taskService = maryRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            TaskSummary task = findTaskSummary(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -196,17 +196,6 @@ public class AbstractIntegrationTestMethods {
 
         //  assertProcessInstanceCompleted(processInstance.getId(), ksession);
         System.out.println("Process instance completed");
-    }
-
-    private TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) { 
-        TaskSummary result = null;
-        for( TaskSummary task : tasks ) { 
-            if( task.getProcessInstanceId() == procInstId ) { 
-                result = task;
-                break;
-            }
-         }
-        return result;
     }
 
 }

@@ -2,8 +2,8 @@
 <!-- XSLT file to add the security domains to the standalone.xml used during 
 	the integration tests. -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:as="urn:jboss:domain:1.4" 
-	xmlns:log="urn:jboss:domain:logging:1.2" 
+	xmlns:as="urn:jboss:domain:1.6" 
+	xmlns:log="urn:jboss:domain:logging:1.4" 
     exclude-result-prefixes="as log"
 	version="1.0">
 

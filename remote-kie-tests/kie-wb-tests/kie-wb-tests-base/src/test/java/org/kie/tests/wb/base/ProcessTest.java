@@ -1,5 +1,7 @@
 package org.kie.tests.wb.base;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.kie.tests.wb.base.methods.AbstractIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.methods.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
@@ -111,20 +113,28 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         Map<String, Object> params = new HashMap<String, Object>();
         String varId = "myobject";
-        params.put(varId, new MyType("test", 10));
+        int varVal = 10;
+        params.put(varId, new MyType("test", varVal));
         ProcessInstance procInst = ksession.startProcess(TestConstants.OBJECT_VARIABLE_PROCESS_ID, params);
         long processInstanceId = procInst.getId();
 
-        String varName = "type";
         Map<String, Object> varMap = ((WorkflowProcessInstanceImpl) procInst).getVariables();
         assertNotNull("Null variable instance found.", varMap);
         for (Entry<String, Object> entry : varMap.entrySet()) {
             logger.debug(entry.getKey() + " (" + entry.getValue().getClass().getSimpleName() + ") " + entry.getValue());
         }
 
-        List<VariableInstanceLog> varLogs = new JPAAuditLogService(getEmf()).findVariableInstancesByName(varId, false);
-        assertTrue(varLogs.size() > 0);
-        assertEquals(varId, varLogs.get(0).getVariableId());
+        List<VariableInstanceLog> viLogs = new JPAAuditLogService(getEmf()).findVariableInstancesByName(varId, false);
+        assertTrue(viLogs.size() > 0);
+        assertEquals(varId, viLogs.get(0).getVariableId());
+        
+        assertNotNull("Empty VariableInstanceLog list.", viLogs);
+        assertEquals("VariableInstanceLog list size",  1, viLogs.size());
+        VariableInstanceLog vil = viLogs.get(0);
+        assertNotNull("Empty VariableInstanceLog instance.", vil);
+        assertEquals("Process instance id", vil.getProcessInstanceId(), processInstanceId);
+        assertEquals("Variable id", vil.getVariableId(), "myobject");
+        assertEquals("Variable value", vil.getValue(), String.valueOf(varVal));
 
         ksession.getWorkItemManager().completeWorkItem(testWih.workItemList.poll().getId(), null);
         procInst = ksession.getProcessInstance(processInstanceId);

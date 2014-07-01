@@ -251,9 +251,9 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertTrue("response list was not empty", response.getResponses().size() == 0);
 
         // send cmd
-        cmd = new GetTasksOwnedCommand(SALA_USER, "en-UK");
+        cmd = new GetTasksOwnedCommand(SALA_USER);
         req = new JaxbCommandsRequest(deploymentId, cmd);
-        req.getCommands().add(new GetTasksOwnedCommand("bob", "fr-CA"));
+        req.getCommands().add(new GetTasksOwnedCommand("bob"));
         req.getCommands().add(new GetProcessInstanceCommand(procInstId));
         response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
 

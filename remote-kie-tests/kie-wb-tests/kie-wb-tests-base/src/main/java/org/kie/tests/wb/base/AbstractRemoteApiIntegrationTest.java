@@ -17,6 +17,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
@@ -279,7 +280,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_SUCCEEDING)
     public void testDeploymentRedeployClassPathTest() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();

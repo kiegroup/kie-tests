@@ -23,19 +23,17 @@
   post-integration-test:   fix weird characters in failsafe reports
    -->
   <properties>
-    <arquillian.version>1.1.1.Final</arquillian.version>
-    <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
-
-    <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
-    
-    <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
-    <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
-    <jboss.server.name>jboss-eap-6.1</jboss.server.name>
+    <version.org.jboss.as.dist>7.4.0.Final-redhat-17</version.org.jboss.as.dist>
+    <jboss.server.name>jboss-eap-6.3</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
     
     <server.keystore.password>SERVER_KEYSTORE_PASSWORD</server.keystore.password>
     <server.truststore.password>SERVER_TRUSTSTORE_PASSWORD</server.truststore.password>
     <client.keystore.password>CLIENT_KEYSTORE_PASSWORD</client.keystore.password>
+    
+    <!--  for Byteman plugin -->
+    <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
+    <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
   </properties>
 
   <dependencies>
@@ -53,37 +51,12 @@
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
-      <version>${project.version}</version>
       <classifier>eap-6_1</classifier>
       <scope>test</scope>
       <type>war</type>
     </dependency>
 
-    <dependency>
-      <groupId>com.sun.xml.bind</groupId>
-      <artifactId>jaxb-impl</artifactId>
-    </dependency>
-    
-    <!-- temp: web services -->
-    <dependency>
-      <groupId>javax.xml.ws</groupId>
-      <artifactId>jaxws-api</artifactId>
-    <version>2.2.11</version>
-    </dependency>
-    <dependency>
-      <groupId>org.kie.remote.ws</groupId>
-      <artifactId>kie-remote-ws-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.kie.remote.ws</groupId>
-      <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- jms -->
+    <!-- jms
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-core-client</artifactId>
@@ -100,6 +73,7 @@
       <artifactId>hornetq-jms-client</artifactId>
       <scope>test</scope>
     </dependency>
+    -->
 
     <!-- test -->
     <dependency>
@@ -122,7 +96,6 @@
     <dependency>
       <groupId>org.jboss.logmanager</groupId>
       <artifactId>jboss-logmanager</artifactId>
-      <version>1.4.0.Final</version>
       <scope>test</scope>
     </dependency>
 
@@ -141,67 +114,13 @@
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-arquillian-container-managed</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>jboss-logmanager</artifactId>
-          <groupId>org.jboss.logmanager</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
-    <!-- libs needed for (test) war integration -->
+    <!-- REST -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxb-provider</artifactId>
+      <artifactId>jaxrs-api</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-cdi</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.solder</groupId>
-      <artifactId>solder-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-persistence-jpa</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- kie nio providers -->
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-nio2-fs</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-nio2-model</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-io</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j</artifactId>
-          <groupId>log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>helix-core</artifactId>
-          <groupId>org.apache.helix</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!-- data service -->
@@ -220,41 +139,34 @@
         </exclusion>
       </exclusions>
     </dependency>
-
-    <!-- maven's broken -->
-    <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-persistence-jpa</artifactId>
-      <scope>test</scope>
-    </dependency>
     
-        <!-- security test -->
-    <dependency>
-      <groupId>javax.security</groupId>
-      <artifactId>jacc</artifactId>
-      <version>1.0</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-server</artifactId>
-      <version>${version.org.jboss.as.dist}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.as</groupId>
-      <artifactId>jboss-as-connector</artifactId>
-      <version>${version.org.jboss.as.dist}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.msc</groupId>
-      <artifactId>jboss-msc</artifactId>
-      <version>1.0.4.GA-redhat-1</version>
-      <scope>runtime</scope>
+    <!-- security test -->
+   <dependency>
+      <groupId>org.jboss.spec.javax.security.jacc</groupId>
+      <artifactId>jboss-jacc-api_1.4_spec</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
+  <!-- 
+  <dependencyManagement>
+    <dependencies>
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-arquillian-container-managed</artifactId>
+      <version>${version.org.jboss.as.dist}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>jboss-logmanager</artifactId>
+          <groupId>org.jboss.logmanager</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    </dependencies>
+  </dependencyManagement>
+   -->
+   
   <build>
     <testResources>
       <testResource>
