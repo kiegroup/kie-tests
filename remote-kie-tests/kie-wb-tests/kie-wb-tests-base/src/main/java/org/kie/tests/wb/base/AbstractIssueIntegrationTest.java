@@ -67,9 +67,9 @@ public abstract class AbstractIssueIntegrationTest {
     }
     
     @Test
-    public void testDeploymentRedeployClassPathTest() throws Exception { 
+    public void issueTest() throws Exception { 
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
         Thread.sleep(5000);
         restTests.urlsDeploymentProcessDefinitions(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }

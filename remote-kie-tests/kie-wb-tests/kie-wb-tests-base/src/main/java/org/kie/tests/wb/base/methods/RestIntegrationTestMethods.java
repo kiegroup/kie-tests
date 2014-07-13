@@ -119,7 +119,6 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessIdList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinitionList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
@@ -1414,25 +1413,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
-        ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" );
+        ClientRequest restRequest = helper.createRequest("deployments/processes/" );
         ClientResponse<?> responseObj = get(restRequest);
-        JaxbProcessIdList procIdListResponse = responseObj.getEntity(JaxbProcessIdList.class);
-        assertNotNull( "Null process id list.", procIdListResponse );
-        assertFalse( "Empty process id list", procIdListResponse.getProcessIdList().isEmpty() );
+        JaxbProcessDefinitionList jaxbProcDefList = responseObj.getEntity(JaxbProcessDefinitionList.class);
        
-        List<String> procIdList = procIdListResponse.getProcessIdList();
-        for( String id : procIdList ) { 
-            restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + id);
-            responseObj = get(restRequest);
-            JaxbProcessDefinition procDef = responseObj.getEntity(JaxbProcessDefinition.class);
-            validateProcessDefinition(id, procDef);
+        List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
+        for( JaxbProcessDefinition jaxbProcDef : procDefList ) { 
+            validateProcessDefinition(jaxbProcDef);
         }    
         
     }
     
-    private void validateProcessDefinition( String id, JaxbProcessDefinition procDef ) { 
-       assertNotNull("Null process definition: " + id, procDef); 
-       assertEquals("Proc def id", id, procDef.getId() );
+    private void validateProcessDefinition( JaxbProcessDefinition procDef ) { 
+       String id = procDef.getId();
        assertFalse("Process def " + id + ": null deployment id", procDef.getDeploymentId() == null || procDef.getDeploymentId().isEmpty() ); 
        assertFalse("Process def " + id + ": null forms", procDef.getForms() == null || procDef.getForms().isEmpty() );
        assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty() );
