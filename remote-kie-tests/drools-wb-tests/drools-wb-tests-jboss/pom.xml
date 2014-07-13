@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.kie.tests.remote</groupId>
     <artifactId>drools-wb-tests</artifactId>
-    <version>6.1.0-SNAPSHOT</version>
+    <version>6.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>drools-wb-tests-jboss</artifactId>
