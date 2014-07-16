@@ -4,11 +4,11 @@
 
   <parent>
     <groupId>org.kie.tests</groupId>
-    <artifactId>kie-core-tests</artifactId>
+    <artifactId>core-kie-tests</artifactId>
     <version>6.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>jbpm-tests</artifactId>
+  <artifactId>kie-jbpm-tests</artifactId>
   <packaging>jar</packaging>
 
   <name>KIE Core Tests :: jBPM tests</name>
@@ -45,7 +45,7 @@
       <artifactId>cdi-api</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- persistence -->
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -91,7 +91,6 @@
     <dependency>
       <groupId>org.jboss.arquillian.extension</groupId>
       <artifactId>arquillian-extension-byteman</artifactId>
-      <version>1.0.0.Alpha2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -106,4 +105,14 @@
     </dependency>
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jboss.arquillian.extension</groupId>
+        <artifactId>arquillian-extension-byteman</artifactId>
+        <version>1.0.0.Alpha2</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project> 

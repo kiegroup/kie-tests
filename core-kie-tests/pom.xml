@@ -8,7 +8,7 @@
     <version>6.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>kie-core-tests</artifactId>
+  <artifactId>core-kie-tests</artifactId>
   <packaging>pom</packaging>
 
   <name>KIE Core Tests</name>

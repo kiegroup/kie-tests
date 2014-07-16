@@ -14,15 +14,13 @@
   <name>KIE Workbench Integration Tests :: Base</name>
 
   <dependencies>
+     <dependency>
+      <groupId>org.kie.tests.remote</groupId>
+      <artifactId>remote-kie-tests-base</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>slf4j-ext</artifactId>
-          <groupId>org.slf4j</groupId>
-        </exclusion>
-      </exclusions>
+      <artifactId>kie-remote-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -140,6 +138,16 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-audit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-jpa</artifactId>
       <scope>test</scope>
     </dependency>
 

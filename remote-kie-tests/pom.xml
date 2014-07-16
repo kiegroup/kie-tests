@@ -16,16 +16,21 @@
   <description>Integration tests involving remote interfaces</description>
 
   <modules>
+    <module>remote-kie-tests-base</module>
     <module>drools-wb-tests</module>
-    <module>kie-wb-tests</module>
     <!--
     <module>jbpm-console-tests</module>
     -->
+    <module>kie-wb-tests</module>
   </modules>
 
   <properties>
-    <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version> 
-    <arquillian.version>1.1.1.Final</arquillian.version> 
+    <shrinkwrap.resolver.version>2.0.2</shrinkwrap.resolver.version> 
+    <arquillian.version>1.1.4.Final</arquillian.version> 
+    
+    <!-- tomcat 7.0.32 + arq-tomcat 1.0.0.CR6 is the magic combination that works.. :/ -->
+    <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
+    <version.org.jboss.arquillian.container.tomcat>1.0.0.CR6</version.org.jboss.arquillian.container.tomcat>
   </properties>
 
   <dependencyManagement>
@@ -47,6 +52,36 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+    
+      <!-- Other -->
+         <dependency>
+        <groupId>org.jboss.logmanager</groupId>
+        <artifactId>jboss-logmanager</artifactId>
+        <version>1.4.0.Final</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!--  tomcat -->
+      <dependency>
+        <groupId>org.jboss.arquillian.container</groupId>
+        <artifactId>arquillian-tomcat-managed-7</artifactId>
+        <version>1.0.0.CR6</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tomcat</groupId>
+        <artifactId>apache-tomcat</artifactId>
+        <version>${version.org.apache.tomcat}</version>
+        <type>zip</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <!-- ARQ-1456 -->
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.6</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -61,6 +96,8 @@
               <fileset>
                 <directory>${basedir}</directory>
                 <includes>
+                  <include>*db</include>
+                  <include>btm*log</include>
                   <include>repository/</include>
                   <include>.niogit/</include>
                   <include>.index/</include>
