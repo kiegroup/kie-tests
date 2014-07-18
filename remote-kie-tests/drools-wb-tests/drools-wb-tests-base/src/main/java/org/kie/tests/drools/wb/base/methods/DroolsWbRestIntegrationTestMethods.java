@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.kie.tests.drools.wb.base.methods.TestConstants.PASSWORD;
-import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
+import static org.kie.tests.drools.wb.base.util.TestConstants.PASSWORD;
+import static org.kie.tests.drools.wb.base.util.TestConstants.USER;
 
 import java.net.URL;
 import java.util.Collection;

@@ -8,10 +8,10 @@
     <version>6.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>remote-kie-tests-base</artifactId>
+  <artifactId>remote-kie-tests-util</artifactId>
   <packaging>jar</packaging>
 
-  <name>Remote KIE Integration Tests :: Base</name>
+  <name>Remote KIE Integration Tests :: Utility classes</name>
 
   <dependencies>
     <dependency>

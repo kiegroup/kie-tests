@@ -51,13 +51,13 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
             }
         } 
 
-        // Replace kie-services-remote jar with the one we just generated
+        // Replace kie-remote-services jar with the one we just generated
         String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote" },
-                { "org.kie.remote", "kie-services-jaxb" }
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.kie.remote", "kie-remote-jaxb" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
-        String oldClientJar = "kie-services-client";
+        String oldClientJar = "kie-remote-client";
         war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
         logger.info( "Deleting " + oldClientJar + " from test war");
         for( String [] jar : jarsToReplace ) { 

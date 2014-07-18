@@ -24,7 +24,7 @@
     </dependency>
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
-      <artifactId>remote-kie-tests-base</artifactId>
+      <artifactId>remote-kie-tests-util</artifactId>
     </dependency>
 
     <dependency>

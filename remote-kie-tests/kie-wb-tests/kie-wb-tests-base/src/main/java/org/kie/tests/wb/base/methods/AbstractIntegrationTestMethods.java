@@ -1,35 +1,30 @@
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.kie.tests.wb.base.util.TestConstants.EVALUTAION_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.client.ClientResponse;
 import org.jbpm.process.audit.AuditLogService;
-import org.jbpm.process.audit.CommandBasedAuditLogService;
 import org.jbpm.process.audit.VariableInstanceLog;
-import org.jbpm.services.task.commands.GetTaskCommand;
-import org.junit.Assume;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.runtime.rule.FactHandle;
 import org.kie.api.task.TaskService;
-import org.kie.api.task.model.Status;
-import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.services.client.api.RemoteRestRuntimeFactory;
-import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.services.client.api.RestRequestHelper;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.test.objects.Person;
 import org.kie.tests.wb.base.test.objects.Request;
+import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

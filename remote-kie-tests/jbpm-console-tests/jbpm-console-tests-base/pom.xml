@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
+      <artifactId>kie-remote-client</artifactId>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-ext</artifactId>
@@ -40,11 +40,6 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
-    <!-- kjar deployment -->
-    <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-ci</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.jboss.spec.javax.ejb</groupId>
       <artifactId>jboss-ejb-api_3.1_spec</artifactId>

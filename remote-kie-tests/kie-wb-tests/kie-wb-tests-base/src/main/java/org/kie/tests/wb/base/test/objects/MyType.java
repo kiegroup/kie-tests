@@ -52,6 +52,6 @@ public class MyType implements Serializable {
 
     @Override
     public String toString() {
-        return "MyType{" + "text=" + text + '}';
+        return "MyType{" + "text=" + text + ", data=" + data + "}";
     }
 }

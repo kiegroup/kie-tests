@@ -1,4 +1,4 @@
-package org.kie.tests.drools.wb.eap;
+package org.kie.tests.drools.wb.jboss;
 
 import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
 import static org.kie.remote.tests.base.DeployUtil.replaceJars;
@@ -14,11 +14,11 @@ import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrationTest {
+public class KieDroolsWbRestJbossIntegrationTest extends AbstractDroolsWbIntegrationTest {
 
     protected static WebArchive createTestWar() {
         // Import kie-wb war
-        WebArchive war = getWebArchive("org.kie", "kie-drools-wb-distribution-wars", "eap-6_1", PROJECT_VERSION);
+        WebArchive war = getWebArchive("org.kie", "kie-drools-wb-distribution-wars", "jboss-as7", PROJECT_VERSION);
 
         String [][] jarsToReplace = { 
                 { "org.drools", "drools-wb-rest" },

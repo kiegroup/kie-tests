@@ -23,25 +23,30 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.methods.TestConstants.ARTIFACT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.CLASSPATH_ARTIFACT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_OWN_TYPE_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.KRIS_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.KRIS_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.SCRIPT_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.VERSION;
+import static org.kie.remote.tests.base.RestUtil.checkResponsePostTime;
+import static org.kie.remote.tests.base.RestUtil.get;
+import static org.kie.remote.tests.base.RestUtil.getResponseEntity;
+import static org.kie.remote.tests.base.RestUtil.post;
+import static org.kie.remote.tests.base.RestUtil.setAcceptHeader;
+import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.CLASSPATH_ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_OWN_TYPE_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,7 +65,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.FileUtils;
@@ -77,7 +81,6 @@ import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
 import org.jboss.resteasy.spi.ReaderException;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
-import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.AuditLogService;
 import org.jbpm.process.audit.ProcessInstanceLog;
@@ -101,9 +104,9 @@ import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
-import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
+import org.kie.services.client.api.builder.RemoteRestRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
@@ -113,6 +116,7 @@ import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
+import org.kie.services.client.serialization.jaxb.impl.audit.JaxbProcessInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
@@ -124,8 +128,8 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
-import org.kie.tests.wb.base.services.data.JaxbProcessInstanceSummary;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,56 +210,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * Helper methods
      */
 
-    private ClientResponse<?> checkResponse(ClientResponse<?> responseObj) throws Exception {
-        return checkResponse(responseObj, 200);
-    }
-
-    private ClientResponse<?> checkResponse(ClientResponse<?> responseObj, int status) throws Exception {
-        responseObj.resetStream();
-        int reqStatus = responseObj.getStatus();
-        if (reqStatus != status) {
-            logger.warn("Response with exception:\n" + responseObj.getEntity(String.class));
-            fail("Incorrect status: " + reqStatus);
-        }
-        String contentType = (String) responseObj.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
-        if( contentType != null ) { 
-            if( ! (contentType.startsWith(MediaType.APPLICATION_XML)) && ! (contentType.startsWith(MediaType.APPLICATION_JSON)) ) { 
-               logger.warn("Incorrect format for response: " + contentType + "\n" + responseObj.getEntity(String.class) );
-               fail("Incorrect response media type: " + contentType );
-            }
-        }
-        return responseObj;
-    }
-
-    private ClientResponse<?> get(ClientRequest restRequest) throws Exception {
-        setAcceptHeader(restRequest);
-        logger.debug(">> [GET " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
-        return checkResponse(restRequest.get());
-    }
-
-    private ClientResponse<?> post(ClientRequest restRequest) throws Exception {
-        setAcceptHeader(restRequest);
-        logger.debug(">> [POST " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
-        return checkResponse(restRequest.post());
-    }
-    
-    private void setAcceptHeader(ClientRequest restRequest) { 
-        restRequest.getHeaders().putSingle(HttpHeaderNames.ACCEPT, this.mediaType.getType() + "/" + this.mediaType.getSubtype());
-        assertEquals( 1, restRequest.getHeaders().get(HttpHeaderNames.ACCEPT).size());
-    }
-
-    private ClientResponse<?> checkResponsePostTime(ClientRequest restRequest, int status) throws Exception {
-        setAcceptHeader(restRequest);
-        
-        long before, after;
-        logger.debug("BEFORE: " + sdf.format((before = System.currentTimeMillis())));
-        ClientResponse<?> responseObj = checkResponse(restRequest.post(), status);
-        logger.debug("AFTER: " + sdf.format((after = System.currentTimeMillis())));
-        long duration = (after - before);
-        assertTrue("Call took longer than " + restCallDurationLimit / 1000 + " seconds: " + duration + "ms", duration < restCallDurationLimit);
-        return responseObj;
-    }
-
     private void addToRequestBody(ClientRequest restRequest, Object obj) throws Exception {
         if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
             String body = jaxbSerializationProvider.serialize(obj);
@@ -281,7 +235,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .addUserName(user)
                 .addPassword(password)
                 .useFormBasedAuth(useFormBasedAuth)
-                .build();
+                .buildFactory();
         return r3eFactory;
     }
     
@@ -329,27 +283,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             Assume.assumeFalse(checkDeployFlagFile());
         }
         
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
-    
-        // Check list of deployments 
-        ClientRequest restRequest = requestHelper.createRequest("deployment/");
-        ClientResponse<?> responseObj = get(restRequest);
-        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
-        assertNotNull( "Null answer!", depList);
-        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
-   
-        // Check deployment 
-        String deploymentId = (new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION)).getIdentifier();
-    
-        restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
-    
-        if (! isDeployed(deploymentUnit, restRequest.get())) {
-            // Deploy
-            deploy(deploymentUnit, user, password, deploymentUrl);
-        } 
-        
-        restRequest = requestHelper.createRequest("deployment/" + deploymentId + "/");
-        assertTrue( "[" + deploymentId + "] has not been deployed!", isDeployed(deploymentUnit, restRequest.get()));
+        RestRepositoryDeploymentUtil deployUtil = new RestRepositoryDeploymentUtil(deploymentUrl, user, password);
+       
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "playground";
+        String project = "integration-tests";
+        String deploymentId = "org.test:kjar:1.0";
+        String orgUnit = "integTestUser";
+        deployUtil.createAndDeployRepository(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
+        System.out.println( "DONE!" );
+        int wait = 2 + 2;
     }
 
     private JaxbDeploymentJobResult deploy(KModuleDeploymentUnit depUnit, String user, String password, URL appUrl) throws Exception {
@@ -393,7 +336,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         try {
             String contentType = response.getHeaders().getFirst("Content-Type");
             if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
-                result = response.getEntity();
+                result = getResponseEntity(response, JaxbDeploymentJobResult.class);
             } else {
                 logger.error("Response body: {}",
                 // get response as string
@@ -426,9 +369,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Exists, so undeploy
         ClientRequest restRequest = requestHelper.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy");
     
-        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 202);
-    
+        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, mediaType, 202);
         JaxbDeploymentJobResult jaxbJobResult = responseObj.getEntity(JaxbDeploymentJobResult.class);
+        
         assertEquals("Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY");
         logger.info("UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]"
                 + jaxbJobResult.getExplanation());
@@ -460,7 +403,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         try {
             int status = responseObj.getStatus();
             if (status == 200) {
-                JaxbDeploymentUnit jaxbDepUnit = responseObj.getEntity(JaxbDeploymentUnit.class);
+                JaxbDeploymentUnit jaxbDepUnit = getResponseEntity(responseObj, JaxbDeploymentUnit.class);
                 JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
                 if( deploy && jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED) {
                     return true;
@@ -481,8 +424,9 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 }
             }
         } catch( Exception e ) { 
-           logger.error( "Unable to check if deployed: " + responseObj.getEntity(String.class)); 
-           return false;
+            responseObj.resetStream();
+            logger.error( "Unable to check if '{}' deployed: {}", deploymentId, responseObj.getEntity(String.class)); 
+            return false;
         } finally {
             responseObj.releaseConnection();
         }
@@ -509,37 +453,32 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start");
-        ClientResponse<?> responseObj = post(restRequest);
-        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
-                .getEntity(JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse processInstance = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
         restRequest = queryRequestHelper.createRequest("task/query?processInstanceId=" + procInstId);
-        responseObj = get(restRequest);
+        JaxbTaskSummaryListResponse taskSumlistResponse = get(restRequest, mediaType, JaxbTaskSummaryListResponse.class);
 
-        JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
-                .getEntity(JaxbTaskSummaryListResponse.class);
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
         assertNotNull( "Null actual owner", taskSum.getActualOwner() );
 
         // get task info
         restRequest = requestHelper.createRequest("task/" + taskId);
-        responseObj = get(restRequest);
-        JaxbTask task = (JaxbTask) responseObj.getEntity(JaxbTask.class);
+        JaxbTask task = get(restRequest, mediaType,JaxbTask.class);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
 
         // start task
         restRequest = requestHelper.createRequest("task/" + taskId + "/start");
-        responseObj = post(restRequest);
-        JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        JaxbGenericResponse resp = post(restRequest, mediaType, JaxbGenericResponse.class);
         assertNotNull("Response from task start is null.", resp);
 
         // get task info
         restRequest = requestHelper.createRequest("task/" + taskId);
-        responseObj = get(restRequest);
-        assertNotNull("Task response is null.", responseObj); 
+        JaxbTask jaxbTask = get(restRequest, mediaType, JaxbTask.class);
+        assertNotNull("Task response is null.", jaxbTask); 
+        assertEquals("Task id is incorrect: ", taskId, jaxbTask.getId().longValue());
     }
 
     /**
@@ -550,7 +489,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
      * @param password
      * @throws Exception
      */
-    public void commandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
+    public void urlsCommandsStartProcess(URL deploymentUrl, String user, String password) throws Exception {
         MediaType originalType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
@@ -563,9 +502,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         addToRequestBody(restRequest, commandMessage);
 
         logger.debug(">> [startProcess] " + restRequest.getUri());
-        ClientResponse<?> responseObj = post(restRequest);
-
-        JaxbCommandsResponse cmdsResp = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
+        JaxbCommandsResponse cmdsResp = post(restRequest, mediaType, JaxbCommandsResponse.class);
         assertFalse("Exception received!", cmdsResp.getResponses().get(0) instanceof JaxbExceptionResponse);
         long procInstId = ((ProcessInstance) cmdsResp.getResponses().get(0)).getId();
 
@@ -575,8 +512,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         addToRequestBody(restRequest, commandMessage);
 
         logger.debug(">> [getTasksByProcessInstanceId] " + restRequest.getUri());
-        responseObj = post(restRequest);
-        JaxbCommandsResponse cmdResponse = (JaxbCommandsResponse) responseObj.getEntity(JaxbCommandsResponse.class);
+        JaxbCommandsResponse cmdResponse = post(restRequest, mediaType, JaxbCommandsResponse.class);
         List<?> list = (List<?>) cmdResponse.getResponses().get(0).getResult();
         long taskId = (Long) list.get(0);
 
@@ -588,7 +524,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
-        responseObj = post(restRequest);
+        ClientResponse<?> responseObj = post(restRequest, mediaType);
         responseObj.releaseConnection();
 
         restRequest = helper.createRequest("task/execute");
@@ -600,8 +536,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // Get response
         logger.debug(">> [completeTask] " + restRequest.getUri());
-        responseObj = post(restRequest);
-        JaxbCommandsResponse jaxbResp = responseObj.getEntity(JaxbCommandsResponse.class);
+        JaxbCommandsResponse jaxbResp = post(restRequest, mediaType, JaxbCommandsResponse.class);
         assertNotNull( "Response is null", jaxbResp);
         
         // TODO: check that above has completed?
@@ -652,7 +587,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
-    public void commandsTaskCommands(URL deploymentUrl, String user, String password) throws Exception {
+    public void urlsCommandsTaskCommands(URL deploymentUrl, String user, String password) throws Exception {
         MediaType origType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
         
@@ -692,10 +627,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         addToRequestBody(restRequest, commandMessage);
 
         logger.debug(">> [" + command.getClass().getSimpleName() + "] " + restRequest.getUri());
-        ClientResponse<JaxbCommandsResponse> responseObj = restRequest.post(JaxbCommandsResponse.class);
-        checkResponse(responseObj);
-
-        JaxbCommandsResponse cmdsResp = responseObj.getEntity();
+        JaxbCommandsResponse cmdsResp = post(restRequest, mediaType, JaxbCommandsResponse.class);
 
         this.mediaType = originalMediaType;
         return cmdsResp.getResponses().get(0);
@@ -707,28 +639,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Start process
         ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
         logger.debug(">> " + restRequest.getUri());
-        ClientResponse<?> responseObj = post(restRequest);
-        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
-                .getEntity(JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse processInstance = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // instances/
         {
-            String histOp = "/history/instances";
-            restRequest = helper.createRequest("runtime/" + deploymentId + histOp);
-            logger.debug(">> [history] " + restRequest.getUri());
-            responseObj = get(restRequest);
-            JaxbHistoryLogList runtimeResult = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
-            List<AuditEvent> runtimeLogList = runtimeResult.getResult();
-
-            restRequest = helper.createRequest(histOp);
+            restRequest = helper.createRequest("history/instances");
             logger.debug(">> [runtime] " + restRequest.getUri());
-            responseObj = get(restRequest);
-            JaxbHistoryLogList historyResult = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
-            List<AuditEvent> historyLogList = runtimeResult.getResult();
-
-            assertEquals("command name", historyResult.getCommandName(), runtimeResult.getCommandName());
-            assertEquals("list size", historyLogList.size(), runtimeLogList.size());
+            JaxbHistoryLogList historyResult = get(restRequest, mediaType, JaxbHistoryLogList.class);
+            List<AuditEvent> historyLogList = historyResult.getResult();
 
             for (AuditEvent event : historyLogList) {
                 assertTrue("ProcessInstanceLog", event instanceof ProcessInstanceLog);
@@ -756,20 +675,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // instance/{procInstId}/node/{nodeId}
 
         // instance/{procInstId}/variable/{variable}
-        restRequest = helper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/x");
+        restRequest = helper.createRequest("history/instance/" + procInstId + "/variable/x");
         logger.debug(">> [runtime]" + restRequest.getUri());
-        responseObj = get(restRequest);
-        JaxbHistoryLogList historyLogList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        JaxbHistoryLogList historyLogList = get(restRequest, mediaType, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> historyVarLogList = historyLogList.getHistoryLogList();
         
-        restRequest = helper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/x");
+        restRequest = helper.createRequest("history/instance/" + procInstId + "/variable/x");
         logger.debug(">> [runtime]" + restRequest.getUri());
-        responseObj = get(restRequest);
-        JaxbHistoryLogList runtimeLogList = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        JaxbHistoryLogList runtimeLogList = get(restRequest, mediaType, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> runtimeVarLogList = runtimeLogList.getHistoryLogList();
         assertTrue("Incorrect number of variable logs: " + runtimeVarLogList.size(), 4 <= runtimeVarLogList.size());
 
-        assertEquals( "runtime/history list size", historyVarLogList.size(), runtimeVarLogList.size());
+        assertEquals( "history list size", historyVarLogList.size(), runtimeVarLogList.size());
         
         for(int i = 0; i < runtimeVarLogList.size(); ++i) {
             JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) runtimeVarLogList.get(i);
@@ -786,34 +703,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // variable/{varId}/{value}
 
-        // runtime/{depId}/history/variable/{varId}/instances
+        // history/variable/{varId}/instances
 
-        // runtime/{depId}/history/variable/{varId}/value/{val}/instances
+        // history/variable/{varId}/value/{val}/instances
 
-    }
-
-    public void urlsDataServiceCoupling(URL deploymentUrl, String user, String password) throws Exception {
-        MediaType origType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
-        
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
-        ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/"
-                + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
-
-        // Get and check response
-        logger.debug(">> " + restRequest.getUri());
-        ClientResponse<?> responseObj = post(restRequest);
-        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
-                .getEntity(JaxbProcessInstanceResponse.class);
-        long procInstId = processInstance.getId();
-
-        restRequest = requestHelper.createRequest("data/process/instance/" + procInstId);
-        logger.debug(">> [data/process instance]" + restRequest.getUri());
-        responseObj = get(restRequest);
-        JaxbProcessInstanceSummary summary = (JaxbProcessInstanceSummary) responseObj.getEntity(JaxbProcessInstanceSummary.class);
-        assertEquals("Incorrect initiator.", user, summary.getInitiator());
-        
-        this.mediaType = origType;
     }
 
     public void urlsJsonJaxbStartProcess(URL deploymentUrl, String user, String password) throws Exception {
@@ -825,8 +718,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         String startProcessOper = "runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start";
         ClientRequest restRequest = requestHelper.createRequest(startProcessOper);
         logger.debug(">> " + restRequest.getUri());
-        ClientResponse<?> responseObj = post(restRequest);
-        String result = (String) responseObj.getEntity(String.class);
+        String result = post(restRequest, mediaType, String.class);
         assertTrue("Doesn't start like a JAXB string!", result.startsWith("<"));
 
         // JSON
@@ -834,8 +726,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         restRequest = requestHelper.createRequest(startProcessOper);
         logger.debug(">> " + restRequest.getUri());
-        responseObj = post(restRequest);
-        result = (String) responseObj.getEntity(String.class);
+        result = post(restRequest, mediaType, String.class);
         if( ! result.startsWith("{") ) { 
             logger.error( "Should be JSON:\n" + result );
             fail("Doesn't start like a JSON string!");
@@ -850,40 +741,32 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Start process
         ClientRequest restRequest = requestHelper.createRequest(
                 "runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start?map_userName=John");
-        ClientResponse<?> responseObj = post(restRequest);
-        JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
-                .getEntity(JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse processInstance = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
         restRequest = requestHelper.createRequest("task/query?processInstanceId=" + procInstId);
-        responseObj = get(restRequest);
-
-        JaxbTaskSummaryListResponse taskSumlistResponse = (JaxbTaskSummaryListResponse) responseObj
-                .getEntity(JaxbTaskSummaryListResponse.class);
+        JaxbTaskSummaryListResponse taskSumlistResponse = get(restRequest, mediaType, JaxbTaskSummaryListResponse.class);
+        
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
 
         // start task
         restRequest = requestHelper.createRequest("task/" + taskId + "/start");
-        responseObj = post(restRequest);
-        JaxbGenericResponse resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        JaxbGenericResponse resp = post(restRequest, mediaType,JaxbGenericResponse.class);
         assertNotNull("Response from task start operation is null.", resp);
 
         // complete task
         String georgeVal = "George";
         restRequest = requestHelper.createRequest("task/" + taskId + "/complete?map_outUserName=" + georgeVal);
-        responseObj = post(restRequest);
-        resp = (JaxbGenericResponse) responseObj.getEntity(JaxbGenericResponse.class);
+        resp = post(restRequest, mediaType, JaxbGenericResponse.class);
 
-        restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/history/instance/" + procInstId + "/variable/userName");
-        responseObj = get(restRequest);
+        restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
+        ClientResponse<?> responseObj = get(restRequest, mediaType);
         responseObj.releaseConnection();
         
         restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
-        responseObj = get(restRequest);
-
-        JaxbHistoryLogList histResp = (JaxbHistoryLogList) responseObj.getEntity(JaxbHistoryLogList.class);
+        JaxbHistoryLogList histResp = get(restRequest, mediaType, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for (AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList) {
@@ -980,8 +863,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Get it via the URL
         this.mediaType = origType;
         ClientRequest restRequest = getRestRequestHelper(deploymentUrl, user, password).createRequest("task/" + taskId);
-        ClientResponse<?> responseObj = get(restRequest);
-        JaxbTask jaxbTask = responseObj.getEntity(JaxbTask.class);
+        JaxbTask jaxbTask = get(restRequest, mediaType, JaxbTask.class);
         checkReturnedTask((Task) jaxbTask, taskId);
 
         // Get it via the remote API
@@ -1004,8 +886,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 + "/start");
 
         // Start process
-        ClientResponse<?> responseObj = post(restRequest);
-        ProcessInstance procInst = responseObj.getEntity(JaxbProcessInstanceResponse.class).getResult();
+        JaxbProcessInstanceResponse jaxbProcInstResp = post(restRequest, mediaType,JaxbProcessInstanceResponse.class);
+        ProcessInstance procInst = jaxbProcInstResp.getResult();
 
         int procStatus = procInst.getState();
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
@@ -1019,24 +901,22 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + TASK_CONTENT_PROCESS_ID + "/start");
 
         // Start process
-        ClientResponse<?> responseObj = post(restRequest);
-        ProcessInstance procInst = responseObj.getEntity(JaxbProcessInstanceResponse.class).getResult();
+        JaxbProcessInstanceResponse jaxbProcInstResp = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
+        ProcessInstance procInst = jaxbProcInstResp.getResult();
 
         int procStatus = procInst.getState();
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_ACTIVE, procStatus);
 
         // Get taskId
         restRequest = requestHelper.createRequest("task/query?processInstanceId=" + procInst.getId());
-        responseObj = get(restRequest);
-        JaxbTaskSummaryListResponse taskSumList = responseObj.getEntity(JaxbTaskSummaryListResponse.class);
+        JaxbTaskSummaryListResponse taskSumList = get(restRequest, mediaType, JaxbTaskSummaryListResponse.class);
         assertFalse( "No tasks found!", taskSumList.getResult().isEmpty() );
         TaskSummary taskSum = taskSumList.getResult().get(0);
         long taskId = taskSum.getId();
         
         // get task content
         restRequest = requestHelper.createRequest("task/" + taskId + "/content");
-        responseObj = get(restRequest);
-        JaxbContent content = responseObj.getEntity(JaxbContent.class);
+        JaxbContent content = get(restRequest, mediaType, JaxbContent.class);
         assertNotNull( "No content retrieved!", content.getContentMap() );
         assertEquals( "reviewer", content.getContentMap().get("GroupId"));
         
@@ -1044,8 +924,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         MediaType origType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_JSON_TYPE;
         restRequest = getRestRequestHelper(deploymentUrl, user, password).createRequest("task/" + taskId);
-        responseObj = get(restRequest);
-        JaxbTask jsonTask = responseObj.getEntity(JaxbTask.class);
+        JaxbTask jsonTask = get(restRequest, mediaType, JaxbTask.class);
+        
         assertNotNull( "No task retrieved!", jsonTask);
         assertEquals( "task id", taskId, jsonTask.getId().intValue());
         this.mediaType = origType;
@@ -1059,14 +939,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         String varVal = "10";
         ClientRequest restRequest 
             = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=" + varVal);
-        ClientResponse<?> responseObj = post(restRequest);
-        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse procInstResp = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();
        
         // var
         restRequest = requestHelper.createRequest("history/variable/" + varId);
-        responseObj = get(restRequest);
-        JaxbHistoryLogList jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        JaxbHistoryLogList jhll = get(restRequest, mediaType, JaxbHistoryLogList.class);
         List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
         if (jhll != null) {
             List<AuditEvent> history = jhll.getResult();
@@ -1085,8 +963,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
        
         // proc log
         restRequest = requestHelper.createRequest("history/variable/" + varId + "/instances");
-        responseObj = get(restRequest);
-        jhll = responseObj.getEntity(JaxbHistoryLogList.class);
+        jhll = get(restRequest, mediaType, JaxbHistoryLogList.class);
         
         assertNotNull("Empty ProcesInstanceLog list", jhll);
         List<ProcessInstanceLog> piLogs = new ArrayList<ProcessInstanceLog>();
@@ -1108,16 +985,14 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
       
         ClientRequest restRequest = requestHelper.createRequest("deployment/");
-        ClientResponse<?> responseObj = get(restRequest);
-        JaxbDeploymentUnitList depList = responseObj.getEntity(JaxbDeploymentUnitList.class);
+        JaxbDeploymentUnitList depList = get(restRequest, mediaType, JaxbDeploymentUnitList.class);
         assertNotNull( "Null answer!", depList);
         assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
         assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
        
         String deploymentId = depList.getDeploymentUnitList().get(0).getIdentifier();
         restRequest = requestHelper.createRequest("deployment/" + deploymentId);
-        responseObj = get(restRequest);
-        JaxbDeploymentUnit dep = responseObj.getEntity(JaxbDeploymentUnit.class);
+        JaxbDeploymentUnit dep = get(restRequest, mediaType, JaxbDeploymentUnit.class);
         assertNotNull( "Null answer!", dep);
         assertNotNull( "Null deployment list!", dep);
         assertEquals( "Empty status!", JaxbDeploymentStatus.DEPLOYED, dep.getStatus());
@@ -1196,47 +1071,49 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.toString(), procInstVar );
         
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId );
-        ClientResponse<?> response = get(restRequest);
-        JaxbProcessInstanceResponse jaxbProcInstResp = response.getEntity(JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse jaxbProcInstResp = get(restRequest, mediaType,JaxbProcessInstanceResponse.class);
         ProcessInstance procInst = jaxbProcInstResp.getResult();
         assertNotNull( procInst );
         assertEquals( "Unequal process instance id.", procInstId, procInst.getId());
        
         restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName );
-        response = get(restRequest);
-      
-        String xmlStr = response.getEntity(String.class);
+        String xmlStr = get(restRequest, mediaType, String.class);
         MyType retrievedVar = (MyType) jaxbSerializationProvider.deserialize(xmlStr);
+        
         assertNotNull( "Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
         assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
     }
     
-
-    public void urlsCloneAndDeployJbpmPlaygroundEvaluationProject() {
-        // https://github.com/droolsjbpm/jbpm-playground.git
-
-    }
-    
     public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) { 
-        RemoteRuntimeEngineFactory krisRemoteEngineFactory 
-            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, KRIS_USER, KRIS_PASSWORD, useFormBasedAuth );
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
-            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD, useFormBasedAuth);
-        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
-            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD, useFormBasedAuth);
-        runHumanTaskGroupIdTest(krisRemoteEngineFactory.newRuntimeEngine(), 
-               johnRemoteEngineFactory.newRuntimeEngine(), 
-               maryRemoteEngineFactory.newRuntimeEngine());
+        RemoteRestRuntimeEngineBuilder runtimeEngineBuilder
+            = RemoteRestRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addUrl(deploymentUrl)
+            .useFormBasedAuth(useFormBasedAuth);
+       
+        RemoteRuntimeEngine krisRemoteEngine = runtimeEngineBuilder
+                .addUserName(KRIS_USER)
+                .addPassword(KRIS_PASSWORD)
+                .build();
+        RemoteRuntimeEngine maryRemoteEngine = runtimeEngineBuilder
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
+                .build();
+        RemoteRuntimeEngine johnRemoteEngine = runtimeEngineBuilder
+                .addUserName(JOHN_USER)
+                .addPassword(JOHN_PASSWORD)
+                .build();
+            
+        runHumanTaskGroupIdTest(krisRemoteEngine, johnRemoteEngine, maryRemoteEngine);
     }
     
     public void remoteApiGroupAssignmentTest(URL deploymentUrl) throws Exception { 
         RestRequestHelper maryReqHelper = RestRequestHelper.newInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
         RestRequestHelper johnReqHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD);
        
-        ClientRequest request = maryReqHelper.createRequest("runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start");
-        ClientResponse<?> response = post(request);
-        JaxbProcessInstanceResponse procInstResp = response.getEntity(JaxbProcessInstanceResponse.class);
+        ClientRequest restRequest = maryReqHelper.createRequest("runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start");
+        JaxbProcessInstanceResponse procInstResp = post(restRequest, mediaType,JaxbProcessInstanceResponse.class);
         assertEquals(ProcessInstance.STATE_ACTIVE, procInstResp.getState());
         long procInstId = procInstResp.getId();
 
@@ -1248,16 +1125,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals("Task 1", taskSummary.getName());
 
         // complete 'Task 1' as mary
-        request = maryReqHelper.createRequest("task/"+ taskId + "/claim");
-        response = post(request);
-        response.releaseConnection();
+        restRequest = maryReqHelper.createRequest("task/"+ taskId + "/claim");
+        ClientResponse<?> responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
         
-        request = maryReqHelper.createRequest("task/"+ taskId + "/start");
-        response = post(request);
-        response.releaseConnection();
-        request = maryReqHelper.createRequest("task/"+ taskId + "/complete");
-        response = post(request);
-        response.releaseConnection();
+        restRequest = maryReqHelper.createRequest("task/"+ taskId + "/start");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
+        restRequest = maryReqHelper.createRequest("task/"+ taskId + "/complete");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
 
         // now make sure that the next task has been assigned to the
         // correct person. it should be mary.
@@ -1267,15 +1144,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         taskId = taskSummary.getId();
 
         // complete 'Task 2' as john
-        request = maryReqHelper.createRequest("task/"+ taskId + "/release");
-        response = post(request);
-        response.releaseConnection();
-        request = johnReqHelper.createRequest("task/"+ taskId + "/start");
-        response = post(request);
-        response.releaseConnection();
-        request = johnReqHelper.createRequest("task/"+ taskId + "/complete");
-        response = post(request);
-        response.releaseConnection();
+        restRequest = maryReqHelper.createRequest("task/"+ taskId + "/release");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
+        restRequest = johnReqHelper.createRequest("task/"+ taskId + "/start");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
+        restRequest = johnReqHelper.createRequest("task/"+ taskId + "/complete");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
 
         // now make sure that the next task has been assigned to the
         // correct person. it should be john.
@@ -1285,27 +1162,23 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         taskId = taskSummary.getId();
         
         // complete 'Task 3' as john
-        request = johnReqHelper.createRequest("task/"+ taskId + "/start");
-        response = post(request);
-        response.releaseConnection();
-        request = johnReqHelper.createRequest("task/"+ taskId + "/complete");
-        response = post(request);
-        response.releaseConnection();
+        restRequest = johnReqHelper.createRequest("task/"+ taskId + "/start");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
+        restRequest = johnReqHelper.createRequest("task/"+ taskId + "/complete");
+        responseObj = post(restRequest, mediaType);
+        responseObj.releaseConnection();
 
         // assert process finished
-        request = maryReqHelper.createRequest("history/instance/" + procInstId);
-        response = get(request);
-        JaxbHistoryLogList logList = response.getEntity(JaxbHistoryLogList.class);
-        List<AuditEvent> eventLogList = logList.getResult();
-        assertEquals("Expected one history (procInst) object", 1, eventLogList.size());
-        ProcessInstanceLog procInstLog = (ProcessInstanceLog) eventLogList.get(0);
+        restRequest = maryReqHelper.createRequest("history/instance/" + procInstId);
+        JaxbProcessInstanceLog jaxbProcInstLog = get(restRequest, mediaType, JaxbProcessInstanceLog.class);
+        ProcessInstanceLog procInstLog = jaxbProcInstLog.getResult();
         assertEquals( "Process instance has not completed!", ProcessInstance.STATE_COMPLETED, procInstLog.getStatus().intValue());
     }
    
     private TaskSummary getTaskSummary(RestRequestHelper requestHelper, long processInstanceId, Status status) throws Exception {
-        ClientRequest request = requestHelper.createRequest("task/query?processInstanceId=" + processInstanceId+ "&status=" + status.toString() );
-        ClientResponse<?> response = get(request);
-        JaxbTaskSummaryListResponse taskSumListResp = response.getEntity(JaxbTaskSummaryListResponse.class);
+        ClientRequest restRequest = requestHelper.createRequest("task/query?processInstanceId=" + processInstanceId+ "&status=" + status.toString() );
+        JaxbTaskSummaryListResponse taskSumListResp = get(restRequest, mediaType,JaxbTaskSummaryListResponse.class);
         List<TaskSummary> taskSumList = taskSumListResp.getResult();
         assertEquals(1, taskSumList.size());
         return taskSumList.get(0);
@@ -1316,7 +1189,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         // Start process
         ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/workitem/200" );
-        ClientResponse<?> responseObj = get(restRequest);
+        ClientResponse<?> responseObj = get(restRequest, mediaType);
     }
   
     public void remoteApiHumanTaskGroupVarAssignTest(URL deploymentUrl) { 
@@ -1326,7 +1199,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             .addUserName(MARY_USER)
             .addPassword(MARY_PASSWORD)
             .addUrl(deploymentUrl)
-            .build();
+            .buildFactory();
 
         RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
 
@@ -1352,7 +1225,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             .addPassword(JOHN_PASSWORD)
             .addUrl(deploymentUrl)
             .addExtraJaxbClasses(MyType.class)
-            .build();
+            .buildFactory();
 
         RemoteRuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
         runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditLogService());
@@ -1403,8 +1276,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private void startProcessWithUserDefinedClass(RestRequestHelper requestHelper) throws Exception {
         String varId = "myobject";
         ClientRequest restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
-        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, 200);
-        JaxbProcessInstanceResponse procInstResp = responseObj.getEntity(JaxbProcessInstanceResponse.class);
+        ClientResponse<?> responseObj = checkResponsePostTime(restRequest, mediaType, 200);
+        JaxbProcessInstanceResponse procInstResp = getResponseEntity(responseObj, JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();;
         assertTrue( "Process instance should be larger than 0: " + procInstId, procInstId > 0 );
     }
@@ -1413,9 +1286,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
-        ClientRequest restRequest = helper.createRequest("deployments/processes/" );
-        ClientResponse<?> responseObj = get(restRequest);
-        JaxbProcessDefinitionList jaxbProcDefList = responseObj.getEntity(JaxbProcessDefinitionList.class);
+        ClientRequest restRequest = helper.createRequest("deployment/processes/" );
+        JaxbProcessDefinitionList jaxbProcDefList = get(restRequest, mediaType, JaxbProcessDefinitionList.class);
        
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
         for( JaxbProcessDefinition jaxbProcDef : procDefList ) { 
@@ -1427,7 +1299,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private void validateProcessDefinition( JaxbProcessDefinition procDef ) { 
        String id = procDef.getId();
        assertFalse("Process def " + id + ": null deployment id", procDef.getDeploymentId() == null || procDef.getDeploymentId().isEmpty() ); 
-       assertFalse("Process def " + id + ": null forms", procDef.getForms() == null || procDef.getForms().isEmpty() );
        assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty() );
        assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty() );
        assertFalse("Process def " + id + ": null variables", procDef.getVariables() == null || procDef.getVariables().isEmpty() );
@@ -1442,7 +1313,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         
         // Check that project is not deployed
         ClientRequest restRequest = requestHelper.createRequest("deployment/" + classpathDeploymentId + "/");
-        setAcceptHeader(restRequest);
+        setAcceptHeader(restRequest, mediaType);
   
         // Run test the first time
         if ( ! isDeployed(kDepUnit, restRequest.get()) ) { 
@@ -1456,7 +1327,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .addUrl(deploymentUrl)
                 .addUserName(user)
                 .addPassword(password)
-                .build().newRuntimeEngine();
+                .build();
                 
         runClassPathProcessTest(runtimeEngine);
            
@@ -1501,8 +1372,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
         
         ClientRequest restRequest = requestHelper.createRequest("/deployment/processes");
-        ClientResponse<?> restResponse = get(restRequest);
-        JaxbProcessDefinitionList jaxbProcDefList = restResponse.getEntity(JaxbProcessDefinitionList.class);
+        JaxbProcessDefinitionList jaxbProcDefList = get(restRequest, mediaType, JaxbProcessDefinitionList.class);
         
         assertTrue( "Null response!", jaxbProcDefList != null);
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();

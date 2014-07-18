@@ -17,8 +17,26 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEYSTORE_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEY_TRUSTSTORE_LOCATION;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SALA_USER;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -45,7 +63,6 @@ import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQJMSConnectionFactory;
-import org.jboss.resteasy.client.ClientRequest;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
@@ -62,8 +79,7 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
-import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
+import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
@@ -281,7 +297,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiHumanTaskProcess(String user, String password) throws Exception {
-        RemoteJmsRuntimeEngineFactory remoteJmsEngineFactory = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RemoteRuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -294,7 +310,6 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .build();
 
         // create JMS request
-        RuntimeEngine engine = remoteJmsEngineFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         assertNotNull( "Null process instance!", processInstance);
@@ -327,7 +342,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiException(String user, String password) throws Exception {
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RemoteRuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId("non-existing-deployment")
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -335,7 +350,6 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .build();
 
         // create JMS request
-        RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
         try {
             ksession.startProcess(HUMAN_TASK_PROCESS_ID);
@@ -347,8 +361,12 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiNoProcessInstanceFound(String user, String password) throws Exception {
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext,
-                user, password);
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory = RemoteJmsRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(deploymentId)
+                .addRemoteInitialContext(remoteInitialContext)
+                .addUserName(user)
+                .addPassword(password)
+                .buildFactory();
 
         // create JMS request
         RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
@@ -370,7 +388,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // Via the remote api
 
         // setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RemoteRuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -383,7 +401,6 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .addTruststorePassword(CLIENT_KEYSTORE_PASSWORD)
                 .build();
         
-        RuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = engine.getKieSession();
 
         // start process
@@ -486,8 +503,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
         // Remote API setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext,
-                user, password);
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addRemoteInitialContext(remoteInitialContext)
+            .addUserName(user)
+            .addPassword(password)
+            .buildFactory();
+
         RemoteRuntimeEngine engine = remoteSessionFactory.newRuntimeEngine();
 
         testExtraJaxbClassSerialization(engine);
@@ -495,8 +518,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void remoteApiRuleTaskProcess(String user, String password) {
         // setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext,
-                user, password);
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addRemoteInitialContext(remoteInitialContext)
+            .addUserName(user)
+            .addPassword(password)
+            .buildFactory();
+
         RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
 
         runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
@@ -504,8 +533,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void remoteApiInitiatorIdentityTest(String user, String password) {
         // setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext,
-                user, password);
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addRemoteInitialContext(remoteInitialContext)
+            .addUserName(user)
+            .addPassword(password)
+            .buildFactory();
+
         RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
 
         KieSession ksession = runtimeEngine.getKieSession();
@@ -529,8 +564,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     public void remoteApiStartScriptProcess(String user, String password) {
         // setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory = new RemoteJmsRuntimeEngineFactory(deploymentId, remoteInitialContext,
-                user, password);
+        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addRemoteInitialContext(remoteInitialContext)
+            .addUserName(user)
+            .addPassword(password)
+            .buildFactory();
+
         RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
 
@@ -542,7 +583,8 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) {
-        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RemoteJmsRuntimeEngineBuilder jreBuilder 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId)
                 .useSsl(true)
                 .addHostName("localhost")
@@ -552,7 +594,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .useKeystoreAsTruststore();
                
         try { 
-            jreFactoryBuilder
+            jreBuilder
             .addTaskServiceQueue((Queue) remoteInitialContext.lookup(TASK_QUEUE_NAME))
             .addKieSessionQueue((Queue) remoteInitialContext.lookup(KSESSION_QUEUE_NAME))
             .addResponseQueue((Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME));
@@ -562,24 +604,21 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
             fail(msg);
         }
 
-        RemoteRuntimeEngineFactory krisRemoteEngineFactory = jreFactoryBuilder
+        RuntimeEngine krisRuntimeEngine = jreBuilder
                 .addUserName(KRIS_USER)
                 .addPassword(KRIS_PASSWORD)
                 .build();
 
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory = jreFactoryBuilder
+        RuntimeEngine maryRuntimeEngine = jreBuilder
                 .addUserName(MARY_USER)
                 .addPassword(MARY_PASSWORD)
                 .build();
 
-        RemoteRuntimeEngineFactory johnRemoteEngineFactory = jreFactoryBuilder
+        RuntimeEngine johnRuntimeEngine = jreBuilder
                 .addUserName(JOHN_USER)
                 .addPassword(JOHN_PASSWORD)
                 .build();
 
-        RuntimeEngine krisRuntimeEngine = krisRemoteEngineFactory.newRuntimeEngine();
-        RuntimeEngine johnRuntimeEngine = johnRemoteEngineFactory.newRuntimeEngine();
-        RuntimeEngine maryRuntimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
         runHumanTaskGroupIdTest(krisRuntimeEngine, johnRuntimeEngine, maryRuntimeEngine);
     }
 
@@ -644,16 +683,14 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
     
     public void remoteApiHistoryVariablesTest(URL deploymentUrl) { 
-        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RemoteJmsRuntimeEngineBuilder jreBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId)
                 .addJbossServerUrl(deploymentUrl)
                 .useSsl(false)
                 .addUserName(JOHN_USER)
                 .addPassword(JOHN_PASSWORD);
         
-        RemoteRuntimeEngineFactory runtimeEngineFactory = jreFactoryBuilder.build();
-        
-        RemoteRuntimeEngine runtimeEngine = runtimeEngineFactory.newRuntimeEngine();
+        RemoteRuntimeEngine runtimeEngine = jreBuilder.build();
       
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("myobject", 10l);

@@ -2,6 +2,8 @@ package org.kie.remote.tests.base;
 
 import java.io.File;
 
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.slf4j.Logger;
@@ -10,6 +12,19 @@ import org.slf4j.LoggerFactory;
 public class DeployUtil {
 
     protected static final Logger logger = LoggerFactory.getLogger(DeployUtil.class);
+   
+    public static WebArchive getWebArchive(String groupId, String artifactId, String classifier, String projectVersion) { 
+        File [] warFile = 
+                Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .resolve( groupId + ":" + artifactId + ":war:" + classifier + ":" + projectVersion )
+                .withoutTransitivity()
+                .asFile();
+        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(warFile[0]);
+        
+        WebArchive war = zipWar.as(WebArchive.class);
+        return war;
+    }
     
     public static void replaceJars(WebArchive war, String projectVersion, String [][] jarsToReplace) { 
          String [] jarsArg = new String[jarsToReplace.length];

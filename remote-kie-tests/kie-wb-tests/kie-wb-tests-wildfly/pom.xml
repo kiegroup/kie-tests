@@ -25,7 +25,6 @@
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
 
-
     <version.org.wildfly>8.1.0.Final</version.org.wildfly>
     <wildfly.server.name>wildfly-${version.org.wildfly}</wildfly.server.name>
   </properties>
@@ -33,7 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
+      <artifactId>kie-remote-client</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -45,8 +44,7 @@
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
-      <version>${project.version}</version>
-      <classifier>wildfly</classifier>
+      <classifier>wildfly8</classifier>
       <scope>test</scope>
       <type>war</type>
     </dependency>
@@ -90,7 +88,6 @@
     <dependency>
       <groupId>org.jboss.logmanager</groupId>
       <artifactId>jboss-logmanager</artifactId>
-      <version>1.4.0.Final</version>
       <scope>test</scope>
     </dependency>
 
@@ -108,103 +105,7 @@
     <dependency>
       <groupId>org.wildfly</groupId>
       <artifactId>wildfly-arquillian-container-managed</artifactId>
-      <version>${version.org.wildfly}</version>
       <scope>test</scope>
-    </dependency>
-
-    <!-- libs needed for (test) war integration -->
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxb-provider</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-cdi</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.solder</groupId>
-      <artifactId>solder-impl</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-persistence-jpa</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-human-task-audit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-runtime-manager</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-shared-services</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- kie nio providers -->
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-nio2-fs</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-nio2-model</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-io</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j</artifactId>
-          <groupId>log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>helix-core</artifactId>
-          <groupId>org.apache.helix</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- data service -->
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-console-ng-business-domain-api</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>errai-bus</artifactId>
-          <groupId>org.jboss.errai</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jbpm-console-ng-human-tasks-api</artifactId>
-          <groupId>org.jbpm</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    
-    <!-- maven's broken -->
-    <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-guice</artifactId>
-      <version>3.0.3</version>
     </dependency>
   </dependencies>
 

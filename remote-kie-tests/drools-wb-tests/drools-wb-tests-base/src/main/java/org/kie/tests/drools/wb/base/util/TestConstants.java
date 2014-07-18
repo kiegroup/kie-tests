@@ -1,4 +1,4 @@
-package org.kie.tests.drools.wb.base.methods;
+package org.kie.tests.drools.wb.base.util;
 
 import java.util.Properties;
 

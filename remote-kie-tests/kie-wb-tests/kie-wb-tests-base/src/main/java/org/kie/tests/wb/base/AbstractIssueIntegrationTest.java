@@ -1,29 +1,17 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.SALA_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.SALA_USER;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 
 import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
-import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
-import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
-import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
-import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RestRepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +19,6 @@ public abstract class AbstractIssueIntegrationTest {
     
     protected static final Logger logger = LoggerFactory.getLogger(AbstractIssueIntegrationTest.class);
     
-    private final RestIntegrationTestMethods restTests;
-
     @ArquillianResource
     URL deploymentUrl;
    
@@ -43,7 +29,7 @@ public abstract class AbstractIssueIntegrationTest {
     public abstract long getTimeout();
    
     public AbstractIssueIntegrationTest() { 
-         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth(), getStrategy());
+    
     }
 
     
@@ -51,13 +37,6 @@ public abstract class AbstractIssueIntegrationTest {
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
         logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
-        Thread.sleep(sleep);
-    }
-
-    @BeforeClass
-    public static void waitForDeployedKmodulesToLoad() throws InterruptedException {
-        long sleep = 2000;
-        logger.info("Waiting " + sleep / 1000 + " secs for KieModules to deploy and load..");
         Thread.sleep(sleep);
     }
 
@@ -69,12 +48,15 @@ public abstract class AbstractIssueIntegrationTest {
     @Test
     public void issueTest() throws Exception { 
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
-        Thread.sleep(5000);
-        restTests.urlsDeploymentProcessDefinitions(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        RestRepositoryDeploymentUtil deploymentUtil = new RestRepositoryDeploymentUtil(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "playground";
+        String project = "integration-tests";
+        String deploymentId = "org.test:kjar:1.0";
+        String orgUnit = "integTestUser";
+        String user = MARY_USER;
+        deploymentUtil.createAndDeployRepository(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
     }
-    
-    // JMS ------------------------------------------------------------------------------------------------------------------------
-
     
 }

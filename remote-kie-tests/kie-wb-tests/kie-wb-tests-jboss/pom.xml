@@ -31,7 +31,7 @@
   <dependencies>
     <dependency>
       <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
+      <artifactId>kie-remote-client</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -107,25 +107,8 @@
       <artifactId>jaxrs-api</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- data service -->
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-console-ng-business-domain-api</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>errai-bus</artifactId>
-          <groupId>org.jboss.errai</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jbpm-console-ng-human-tasks-api</artifactId>
-          <groupId>org.jbpm</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
   </dependencies>
-
+    
   <dependencyManagement>
     <!-- overrides because we're testing with JBoss AS 7 -->
     <dependencies>

@@ -1,12 +1,12 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.SALA_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.SALA_USER;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.SALA_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.SALA_USER;
 
 import java.net.URL;
 
@@ -17,12 +17,10 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
-import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
 import org.slf4j.Logger;
@@ -75,7 +73,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @BeforeClass
     public static void waitForDeployedKmodulesToLoad() throws InterruptedException {
         long sleep = 2000;
-        logger.info("Waiting " + sleep / 1000 + " secs for KieModules to deploy and load..");
+        logger.info("Waiting " + sleep / 1000 + " secs for server to finish starting up.");
         Thread.sleep(sleep);
     }
 
@@ -124,7 +122,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestExecuteStartProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.commandsStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsCommandsStartProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
@@ -140,19 +138,11 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestExecuteTaskCommands() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.commandsTaskCommands(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsCommandsTaskCommands(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
-    @InSequence(REST_FAILING)
-    public void testRestDataServicesCoupling() throws Exception {
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.urlsDataServiceCoupling(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_SUCCEEDING)
     public void testRestJsonAndXmlStartProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -216,7 +206,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsVariableHistory() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -366,7 +356,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testJmsRemoteApiGroupAssignmentEngineering() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
-        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RuntimeEngine runtimeEngine = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(KJAR_DEPLOYMENT_ID)
                 .useSsl(true)
                 .addHostName("localhost")
@@ -375,10 +365,10 @@ public abstract class AbstractRemoteApiIntegrationTest {
                 .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
                 .useKeystoreAsTruststore()
                 .addUserName(JOHN_USER)
-                .addPassword(JOHN_PASSWORD);
-                        
+                .addPassword(JOHN_PASSWORD)
+                .addJbossServerUrl(deploymentUrl)
+                .build();
         
-        RuntimeEngine runtimeEngine = jreFactoryBuilder.build().newRuntimeEngine();
         jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
     }
     

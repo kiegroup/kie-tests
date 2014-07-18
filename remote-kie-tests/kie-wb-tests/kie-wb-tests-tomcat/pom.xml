@@ -29,7 +29,7 @@
     <!--  client -->
     <dependency>
       <groupId>org.kie.remote</groupId>
-      <artifactId>kie-services-client</artifactId>
+      <artifactId>kie-remote-client</artifactId>
       <scope>test</scope>
     </dependency>
 

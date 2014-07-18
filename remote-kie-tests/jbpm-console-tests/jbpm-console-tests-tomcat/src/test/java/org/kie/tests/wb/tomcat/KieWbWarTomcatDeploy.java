@@ -62,17 +62,17 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
                 "classes/META-INF/services/org.uberfire.security.auth.AuthenticationSource");
         war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
 
-        // Replace kie-services-remote jar with the one we just generated
-        war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
+        // Replace kie-remote-services jar with the one we just generated
+        war.delete("WEB-INF/lib/kie-remote-client-" + projectVersion + ".jar");
         String [][] jarsToReplace = { 
-                { "org.kie.remote", "kie-services-remote", null },
-                { "org.kie.remote", "kie-services-jaxb", null },
+                { "org.kie.remote", "kie-remote-services", null },
+                { "org.kie.remote", "kie-remote-jaxb", null },
                 // BZ-1070502
                 { "org.hibernate.common", "hibernate-commons-annotations", null },
                 { "org.antlr", "antlr", "3.1.1" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
-        String oldClientJar = "kie-services-client";
+        String oldClientJar = "kie-remote-client";
         war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
         logger.info( "Deleting " + oldClientJar + " from test war");
         for( String [] jar : jarsToReplace ) { 

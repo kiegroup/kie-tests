@@ -17,9 +17,7 @@
  */
 package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
@@ -41,7 +39,7 @@ public class TomcatMemoryRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
-        return createTestWar("tomcat7");
+        return createTestWar();
     }
 
     @ArquillianResource
@@ -52,7 +50,7 @@ public class TomcatMemoryRemoteApiIntegrationTest {
    
     @Test
     public void deployAndRunMemoryTest() throws Exception { 
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, 5000);
     }
 }

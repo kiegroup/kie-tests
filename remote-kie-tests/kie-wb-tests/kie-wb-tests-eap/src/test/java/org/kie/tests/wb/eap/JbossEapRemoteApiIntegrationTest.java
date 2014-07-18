@@ -35,7 +35,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
-        return createTestWar("eap-6_1");
+        return createTestWar();
     }
  
     public boolean doDeploy() { 

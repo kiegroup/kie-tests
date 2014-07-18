@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss;
+package org.kie.tests.wb.wildfly;
 
-import static org.kie.tests.wb.jboss.KieWbWarWildflyDeploy.createTestWar;
+import static org.kie.tests.wb.wildfly.KieWbWarWildflyDeploy.createTestWar;
 
 import javax.ws.rs.core.MediaType;
 
@@ -31,7 +31,7 @@ import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-jboss")
     public static Archive<?> createWar() {

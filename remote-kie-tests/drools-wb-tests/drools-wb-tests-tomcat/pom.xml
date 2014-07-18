@@ -196,7 +196,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>check-drools-wb-war</id>
+            <id>check-kie-drools-wb-war</id>
             <phase>generate-test-resources</phase>
             <goals>
               <goal>copy</goal>
@@ -204,8 +204,8 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.drools</groupId>
-                  <artifactId>drools-wb-distribution-wars</artifactId>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-drools-wb-distribution-wars</artifactId>
                   <classifier>tomcat7</classifier>
                   <type>war</type>
                   <overWrite>false</overWrite>

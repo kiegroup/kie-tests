@@ -19,10 +19,7 @@ package org.kie.tests.wb.eap;
 
 import static org.kie.tests.wb.base.methods.RestIntegrationTestMethods.*;
 import static org.junit.Assert.*;
-import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.methods.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.MalformedURLException;
@@ -57,7 +54,7 @@ public class JbossEapWebServicesIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap-ws")
     public static Archive<?> createWar() {
-        return createTestWar("eap-6_1");
+        return createTestWar();
     }
 
     private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
@@ -89,7 +86,6 @@ public class JbossEapWebServicesIntegrationTest {
 
         if( ! checkDeployFlagFile() ) { 
             restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-            Thread.sleep(15);
         }
         
         logger.info("[Client] Webservice request.");

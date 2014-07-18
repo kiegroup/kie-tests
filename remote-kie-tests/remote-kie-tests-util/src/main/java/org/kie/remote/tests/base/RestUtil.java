@@ -17,7 +17,10 @@
  */
 package org.kie.remote.tests.base;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -40,6 +43,20 @@ public class RestUtil {
 
     public static long restCallDurationLimit = 500;
 
+    public static <T extends Object> T getResponseEntity(ClientResponse<?> responseObj, Class<T> responseType ) { 
+        T responseEntity = null;
+        try { 
+            responseEntity = responseObj.getEntity(responseType);
+        } catch( Exception e ) { 
+            String msg = "Unable to serialize " + responseType.getSimpleName() + " instance";
+            responseObj.resetStream();
+            logger.error("{}:\n {}", msg, responseObj.getEntity(String.class), e);
+            fail(msg);
+            throw new RuntimeException("Fail should keep this exception from being thrown!");
+        }
+        return responseEntity;
+    }
+    
     public static ClientResponse<?> checkTimeResponse(ClientResponse<?> responseObj) throws Exception {
         long start = System.currentTimeMillis();
         try { 
@@ -72,6 +89,27 @@ public class RestUtil {
         return responseObj;
     }
 
+    public static <T> T  delete(ClientRequest restRequest, MediaType mediaType, Class<T> responseType) throws Exception {
+        setAcceptHeader(restRequest, mediaType);
+        logger.debug(">> [GET " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
+        ClientResponse<?> responseObj = checkResponse(restRequest.delete());
+        return getResponseEntity(responseObj, responseType);
+    }
+
+    public static <T> T get(ClientRequest restRequest, MediaType mediaType, Class<T> responseType) throws Exception {
+        setAcceptHeader(restRequest, mediaType);
+        logger.debug(">> [GET " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
+        ClientResponse<?> responseObj = checkResponse(restRequest.get());
+        return getResponseEntity(responseObj, responseType);
+    }
+
+    public static <T> T post(ClientRequest restRequest, MediaType mediaType, Class<T> responseType) throws Exception {
+        setAcceptHeader(restRequest, mediaType);
+        logger.debug(">> [POST " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());
+        ClientResponse<?> responseObj = checkResponse(restRequest.post());
+        return getResponseEntity(responseObj, responseType);
+    }
+    
     public static ClientResponse<?> delete(ClientRequest restRequest, MediaType mediaType) throws Exception {
         setAcceptHeader(restRequest, mediaType);
         logger.debug(">> [GET " + restRequest.getHeaders().getFirst(HttpHeaderNames.ACCEPT) + "] " + restRequest.getUri());

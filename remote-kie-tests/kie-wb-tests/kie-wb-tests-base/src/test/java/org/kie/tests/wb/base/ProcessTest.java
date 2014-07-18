@@ -1,13 +1,11 @@
 package org.kie.tests.wb.base;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.kie.tests.wb.base.methods.AbstractIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.methods.TestConstants.ARTIFACT_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.methods.TestConstants.VERSION;
+import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,8 +40,8 @@ import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.wb.base.methods.TestConstants;
 import org.kie.tests.wb.base.test.objects.MyType;
+import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +112,9 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         Map<String, Object> params = new HashMap<String, Object>();
         String varId = "myobject";
         int varVal = 10;
-        params.put(varId, new MyType("test", varVal));
+        String txtVal = "test";
+        MyType type = new MyType(txtVal, varVal);
+        params.put(varId, type);
         ProcessInstance procInst = ksession.startProcess(TestConstants.OBJECT_VARIABLE_PROCESS_ID, params);
         long processInstanceId = procInst.getId();
 
@@ -134,7 +134,8 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         assertNotNull("Empty VariableInstanceLog instance.", vil);
         assertEquals("Process instance id", vil.getProcessInstanceId(), processInstanceId);
         assertEquals("Variable id", vil.getVariableId(), "myobject");
-        assertEquals("Variable value", vil.getValue(), String.valueOf(varVal));
+        assertEquals("Variable value", vil.getValue(), type.toString());
+
 
         ksession.getWorkItemManager().completeWorkItem(testWih.workItemList.poll().getId(), null);
         procInst = ksession.getProcessInstance(processInstanceId);
@@ -162,7 +163,8 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         // setup
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
         resources.put("repo/test/humanTask.bpmn2", ResourceType.BPMN2);
-        RuntimeManager runtimeManager = createRuntimeManager(resources);
+        RuntimeManager runtimeManager = createRuntimeManager(resources)
+                ;
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
         KieSession ksession = runtimeEngine.getKieSession();

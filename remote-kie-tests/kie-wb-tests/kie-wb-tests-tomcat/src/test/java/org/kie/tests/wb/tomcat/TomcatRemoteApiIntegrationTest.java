@@ -35,7 +35,7 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
-        return createTestWar("tomcat7");
+        return createTestWar();
     }
 
     public boolean doDeploy() {

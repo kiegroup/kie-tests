@@ -1,2 +1,5 @@
 # created by build-helper-maven-plugin : reserve-network-port
 port.properties
+
+# directories created by kie-wb/console/kie-drools-wb integration tests
+repositories/

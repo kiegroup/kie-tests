@@ -11,7 +11,7 @@
   <artifactId>kie-drools-wb-tests-eap</artifactId>
   <packaging>jar</packaging>
 
-  <name>Drools Workbench Integration Tests :: kie-drools-wb on EAP 6</name>
+  <name>Drools Workbench Integration Tests :: EAP 6</name>
 
   <properties>
     <version.org.jboss.as.dist>7.4.0.Final-redhat-17</version.org.jboss.as.dist>
@@ -26,11 +26,6 @@
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
       <artifactId>drools-wb-tests-base</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.kie.tests.remote</groupId>
-      <artifactId>remote-kie-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
 
