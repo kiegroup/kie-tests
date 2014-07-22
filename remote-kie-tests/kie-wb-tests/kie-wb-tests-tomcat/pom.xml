@@ -14,7 +14,6 @@
   <name>KIE Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
 
@@ -25,14 +24,19 @@
       <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
-    
-    <!--  client -->
     <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-remote-client</artifactId>
       <scope>test</scope>
     </dependency>
-
+   
+    <!--  webservices --> 
+    <dependency>
+      <groupId>org.kie.remote.ws</groupId>
+      <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
     <!--  war -->
     <dependency>
       <groupId>org.kie</groupId>
@@ -42,19 +46,29 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- arquillian tomcat container -->
+    <!-- arquillian -->
+   <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-container</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.shrinkwrap</groupId>
+      <artifactId>shrinkwrap-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+      <scope>test</scope>
+    </dependency>
+   
+    <!-- arquillian tomcat --> 
     <dependency>
       <groupId>org.jboss.arquillian.container</groupId>
       <artifactId>arquillian-tomcat-managed-7</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>apache-tomcat</artifactId>
-      <type>zip</type>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <!-- ARQ-1456 -->
       <groupId>commons-codec</groupId>
@@ -62,6 +76,20 @@
       <scope>test</scope>
     </dependency>
 
+    <!--  rest -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>jaxrs-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- test -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+ 
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -100,22 +128,18 @@
       <artifactId>jta</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <scope>test</scope>
     </dependency>
+    -->
     
-    <!-- JAAS use -->
+    <!-- temp -->
     <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-tomcat-integration</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.security.jacc</groupId>
-      <artifactId>javax.security.jacc-api</artifactId>
-      <scope>test</scope>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxb-provider</artifactId>
     </dependency>
   </dependencies>
 
@@ -136,7 +160,7 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>unpack-jboss</id>
+            <id>unpack-tomcat</id>
             <phase>generate-test-resources</phase>
             <goals>
               <goal>unpack</goal>
@@ -211,12 +235,14 @@
                   <type>jar</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
+                <!-- 
                 <artifactItem>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-jdk14</artifactId>
                   <type>jar</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
+                --> 
                 <artifactItem>
                   <groupId>org.kie</groupId>
                   <artifactId>kie-tomcat-integration</artifactId>

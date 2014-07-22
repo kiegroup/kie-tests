@@ -18,7 +18,7 @@ public class KieWbWarWildflyDeploy {
         String [][] jarsToReplace = {
                 { "org.kie.remote", "kie-remote-services" }, 
                 { "org.kie.remote", "kie-remote-jaxb" },
-                { "org.kie.remote", "kie-remote-client" }
+                { "org.kie.remote", "kie-remote-common" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
         

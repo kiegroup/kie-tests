@@ -53,7 +53,7 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
 
     @Override
     public boolean useFormBasedAuth() {
-        return true;
+        return false;
     }
 
     @Override

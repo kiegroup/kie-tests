@@ -128,6 +128,7 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstan
 import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
+import org.kie.services.shared.ServicesVersion;
 import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
@@ -138,6 +139,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private static Logger logger = LoggerFactory.getLogger(RestIntegrationTestMethods.class);
 
     private static final String taskUserId = "salaboy";
+    private static final String DEPLOY_FLAG_FILE_NAME = ".deployed";
 
     private final String deploymentId;
     private final KModuleDeploymentUnit deploymentUnit;
@@ -248,11 +250,12 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         props.load(RestIntegrationTestMethods.class.getResourceAsStream("/test.properties"));
         String buildDir = (String) props.get("build.dir");
 
-        File deployFlag = new File(buildDir + "/deployed");
+        String fileNameLocation = buildDir + "/" + DEPLOY_FLAG_FILE_NAME;
+        File deployFlag = new File(fileNameLocation);
         if (!deployFlag.exists()) {
             PrintWriter output = null;
             try  {
-                output = new PrintWriter(buildDir + "/deployed");
+                output = new PrintWriter(fileNameLocation);
                 String date = sdf.format(new Date());
                 output.println(date);
             } finally { 
@@ -499,6 +502,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         String executeOp = "runtime/" + deploymentId + "/execute";
         ClientRequest restRequest = helper.createRequest(executeOp);
         JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, new StartProcessCommand(HUMAN_TASK_PROCESS_ID));
+        commandMessage.setVersion(ServicesVersion.VERSION);
         addToRequestBody(restRequest, commandMessage);
 
         logger.debug(">> [startProcess] " + restRequest.getUri());
@@ -509,6 +513,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         // query tasks
         restRequest = helper.createRequest(executeOp);
         commandMessage = new JaxbCommandsRequest(deploymentId, new GetTasksByProcessInstanceIdCommand(procInstId));
+        commandMessage.setVersion(ServicesVersion.VERSION);
         addToRequestBody(restRequest, commandMessage);
 
         logger.debug(">> [getTasksByProcessInstanceId] " + restRequest.getUri());
@@ -521,6 +526,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         logger.debug(">> [startTask] " + restRequest.getUri());
         restRequest = helper.createRequest(executeOp);
         commandMessage = new JaxbCommandsRequest(new StartTaskCommand(taskId, taskUserId));
+        commandMessage.setVersion(ServicesVersion.VERSION);
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
@@ -531,7 +537,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         Map<String, Object> results = new HashMap<String, Object>();
         results.put("myType", new MyType("serialization", 3224950));
         commandMessage = new JaxbCommandsRequest(new CompleteTaskCommand(taskId, taskUserId, results));
-
+        commandMessage.setVersion(ServicesVersion.VERSION);
         addToRequestBody(restRequest, commandMessage);
 
         // Get response
@@ -756,6 +762,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbGenericResponse resp = post(restRequest, mediaType,JaxbGenericResponse.class);
         assertNotNull("Response from task start operation is null.", resp);
 
+        // claim task
+        restRequest = requestHelper.createRequest("task/" + taskId + "/claim");
+        resp = post(restRequest, mediaType,JaxbGenericResponse.class);
+        assertNotNull("Response from task start operation is null.", resp);
+
         // complete task
         String georgeVal = "George";
         restRequest = requestHelper.createRequest("task/" + taskId + "/complete?map_outUserName=" + georgeVal);
@@ -942,14 +953,17 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbProcessInstanceResponse procInstResp = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();
        
-        // var
+        // var log
         restRequest = requestHelper.createRequest("history/variable/" + varId);
         JaxbHistoryLogList jhll = get(restRequest, mediaType, JaxbHistoryLogList.class);
         List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
         if (jhll != null) {
             List<AuditEvent> history = jhll.getResult();
             for (AuditEvent ae : history) {
-                viLogs.add((VariableInstanceLog) ae);
+                VariableInstanceLog viLog = (VariableInstanceLog) ae;
+                if( viLog.getProcessInstanceId() == procInstId ) { 
+                    viLogs.add(viLog);
+                }
             }
         }
 
@@ -1077,8 +1091,16 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "Unequal process instance id.", procInstId, procInst.getId());
        
         restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName );
-        String xmlStr = get(restRequest, mediaType, String.class);
-        MyType retrievedVar = (MyType) jaxbSerializationProvider.deserialize(xmlStr);
+        String xmlOrJsonStr = get(restRequest, mediaType, String.class);
+        MyType retrievedVar;
+        if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) { 
+            retrievedVar = (MyType) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
+        } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) { 
+            jsonSerializationProvider.setDeserializeOutputClass(MyType.class);
+            retrievedVar = (MyType) jsonSerializationProvider.deserialize(xmlOrJsonStr);
+        } else { 
+            throw new IllegalStateException("Unknown media type: " + mediaType.getType() + "/" + mediaType.getSubtype() );
+        }
         
         assertNotNull( "Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
