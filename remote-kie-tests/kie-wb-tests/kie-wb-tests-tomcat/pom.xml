@@ -151,7 +151,7 @@
       </testResource>
       <testResource>
         <directory>src/test/resources-tomcat7</directory>
-        <filtering>false</filtering>
+        <filtering>true</filtering>
       </testResource>
     </testResources>
 
@@ -275,7 +275,8 @@
               <overwrite>true</overwrite>
               <resources>
                 <resource>
-                  <directory>${basedir}/src/test/resources-tomcat7/config</directory>
+                  <!-- so that files with (maven) filtered values are used -->
+                  <directory>${project.build.directory}/test-classes/config</directory>
                 </resource>
               </resources>
             </configuration>
