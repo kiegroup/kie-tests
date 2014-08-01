@@ -38,9 +38,9 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.tests.MyType;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
-import org.kie.tests.wb.base.test.objects.MyType;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,7 +238,10 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
         KModuleDeploymentUnit depUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
-        new RestIntegrationTestMethods(depUnit).runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
+        RestIntegrationTestMethods testMethods = RestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(depUnit.getIdentifier())
+                .build();
+        testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
     }
 
     @Test

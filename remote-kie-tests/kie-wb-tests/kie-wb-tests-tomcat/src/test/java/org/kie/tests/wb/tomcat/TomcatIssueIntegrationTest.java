@@ -1,7 +1,7 @@
 /*
  * JBoss, Home of Professional Open Source
  * 
- * Copyright 2012, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2014, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  * 
@@ -15,54 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.eap;
+package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
+import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
+
+import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
+import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class TomcatIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-eap")
+    @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
         return createTestWar();
     }
- 
-    public boolean doDeploy() { 
-        return true;
-    }
- 
-    public MediaType getMediaType() { 
+
+    @ArquillianResource
+    URL deploymentUrl;
+    
+    @Override
+    public MediaType getMediaType() {
         return MediaType.APPLICATION_JSON_TYPE;
     }
 
-    @Override
-    public boolean jmsQueuesAvailable() {
-        return true;
-    }
-
-    @Override
-    public boolean doRestTests() {
-        return true;
-    }
-
-    @Override
-    public RuntimeStrategy getStrategy() {
-        return RuntimeStrategy.SINGLETON;
-    }
-   
-    @Override
-    public int getTimeout() {
-        return 1000;
-    }
 }

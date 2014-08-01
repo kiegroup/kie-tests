@@ -57,7 +57,8 @@ public class JbossEapWebServicesIntegrationTest {
         return createTestWar();
     }
 
-    private RestIntegrationTestMethods restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+    private RestIntegrationTestMethods restTests 
+        = RestIntegrationTestMethods.newBuilderInstance().setDeploymentId(KJAR_DEPLOYMENT_ID).build();
 
     @ArquillianResource
     URL deploymentUrl;

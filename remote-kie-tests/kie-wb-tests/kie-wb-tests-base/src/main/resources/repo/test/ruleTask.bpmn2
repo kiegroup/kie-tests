@@ -15,7 +15,7 @@
   <itemDefinition id="_personItem" structureRef="org.kie.tests.wb.base.test.objects.Person" />
   <itemDefinition id="_stringItem" structureRef="java.lang.String" />
     
-  <process id="com.bpms.flood.RuleTask" drools:version="1" drools:packageName="com.bpms.flood" drools:adHoc="false" 
+  <process id="org.test.kjar.RuleTask" drools:version="1" drools:packageName="com.bpms.flood" drools:adHoc="false" 
                  name="RuleTask" isExecutable="true">
   
     <!-- process variables -->

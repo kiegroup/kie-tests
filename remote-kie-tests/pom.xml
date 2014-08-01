@@ -31,6 +31,11 @@
     <!-- tomcat 7.0.32 + arq-tomcat 1.0.0.CR6 is the magic combination that works.. :/ -->
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <version.org.jboss.arquillian.container.tomcat>1.0.0.CR6</version.org.jboss.arquillian.container.tomcat>
+    
+    <!-- jboss as  -->
+    <override.version.org.jboss.as>7.2.0.Final</override.version.org.jboss.as>
+    <version.org.jboss.as.dist>7.4.0.Final-redhat-17</version.org.jboss.as.dist>
+    <jboss.server.name>jboss-eap-6.3</jboss.server.name>
   </properties>
 
   <dependencyManagement>
@@ -88,6 +93,14 @@
         <artifactId>commons-codec</artifactId>
         <version>1.6</version>
         <scope>test</scope>
+      </dependency>
+      
+      <!-- jboss as/eap -->
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-dist</artifactId>
+        <version>${version.org.jboss.as.dist}</version>
+        <type>zip</type>
       </dependency>
     </dependencies>
   </dependencyManagement>

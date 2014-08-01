@@ -19,7 +19,7 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
@@ -40,12 +40,16 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public abstract MediaType getMediaType();
     public abstract boolean jmsQueuesAvailable();
     public abstract boolean doRestTests();
-    public abstract boolean useFormBasedAuth();
     public abstract RuntimeStrategy getStrategy();
-    public abstract long getTimeout();
+    public abstract int getTimeout();
    
     public AbstractRemoteApiIntegrationTest() { 
-         restTests = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, getMediaType(), useFormBasedAuth(), getStrategy());
+         restTests = RestIntegrationTestMethods.newBuilderInstance()
+                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                 .setMediaType(getMediaType())
+                 .setStrategy(getStrategy())
+                 .setTimeout(getTimeout())
+                 .build();
          if( jmsQueuesAvailable() ) { 
              jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
          } else { 
@@ -154,7 +158,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestHumanTaskCompleteWithVariable() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.urlsHumanTaskWithFormVariableChange(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsHumanTaskWithVariableChangeFormParameters(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
@@ -234,7 +238,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestUrlsGroupAssignmentProcess() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.remoteApiGroupAssignmentTest(deploymentUrl);
+        restTests.urlsGroupAssignmentTest(deploymentUrl);
     }
    
     @Test

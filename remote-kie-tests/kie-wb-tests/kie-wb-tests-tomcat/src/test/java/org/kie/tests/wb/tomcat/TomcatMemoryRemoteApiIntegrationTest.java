@@ -17,7 +17,9 @@
  */
 package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
@@ -46,7 +48,10 @@ public class TomcatMemoryRemoteApiIntegrationTest {
     URL deploymentUrl;
     
     private RestIntegrationTestMethods restTests 
-        = new RestIntegrationTestMethods(KJAR_DEPLOYMENT_ID, MediaType.APPLICATION_XML_TYPE, true);
+        = RestIntegrationTestMethods.newBuilderInstance()
+        .setDeploymentId(KJAR_DEPLOYMENT_ID)
+        .setMediaType( MediaType.APPLICATION_XML_TYPE)
+        .build();
    
     @Test
     public void deployAndRunMemoryTest() throws Exception { 

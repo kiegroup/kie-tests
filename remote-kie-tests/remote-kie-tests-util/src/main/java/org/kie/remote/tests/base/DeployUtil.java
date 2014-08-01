@@ -30,7 +30,7 @@ public class DeployUtil {
          String [] jarsArg = new String[jarsToReplace.length];
          for( String [] jar : jarsToReplace ) { 
              logger.info( "Deleting '{}' from war", jar[1] );
-             String version = projectVersion;
+             String version = projectVersion;DeployUtil
              if( jar.length > 2 ) { 
                  version = jar[2];
              }
@@ -38,7 +38,6 @@ public class DeployUtil {
          }
          for( int i = 0; i < jarsToReplace.length; ++i ) { 
              jarsArg[i] = jarsToReplace[i][0] + ":" + jarsToReplace[i][1];
-             logger.info("Resolving '{}'", jarsArg[i]);
          }
          
          File [] kieRemoteDeps = Maven.resolver()

@@ -7,7 +7,7 @@
   <bpmn2:signal id="MySignal" name="MySignal"/>
   <bpmn2:itemDefinition id="__2_outMyObjectOutputItem" structureRef="org.kie.tests.wb.base.test.objects.MyType" />
 
-  <bpmn2:process id="org.kie.wb.test.HumanTaskWithOwnType" 
+  <bpmn2:process id="org.test.kjar.HumanTaskWithOwnType" 
     drools:packageName="org.jbpm" drools:version="1.0" 
     name="HumanTaskWithOwnType" isExecutable="true">
 

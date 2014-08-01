@@ -3,7 +3,7 @@
   <bpmn2:itemDefinition id="__2_GroupIdInputItem" structureRef="Object"/>
   <bpmn2:itemDefinition id="__3_GroupIdInputItem" structureRef="Object"/>
   <bpmn2:itemDefinition id="__4_GroupIdInputItem" structureRef="Object"/>
-  <bpmn2:process id="org.jboss.qa.bpms.GroupAssignmentHumanTask" drools:packageName="defaultPackage" drools:version="1.0" name="GroupAssignmentHumanTask" isExecutable="true">
+  <bpmn2:process id="org.test.kjar.GroupAssignmentHumanTask" drools:packageName="defaultPackage" drools:version="1.0" name="GroupAssignmentHumanTask" isExecutable="true">
     <bpmn2:laneSet id="_DX9f8BABEeOAGIwPn3A9KA">
       <bpmn2:lane id="_350DFD30-049C-4B4F-B1F2-83CD70B793E9" drools:bgcolor="#ffffff" drools:selectable="true" name="Swimlane">
         <bpmn2:flowNodeRef>_2</bpmn2:flowNodeRef>

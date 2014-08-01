@@ -27,11 +27,12 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class JbossEapIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
@@ -43,26 +44,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public MediaType getMediaType() { 
-        return MediaType.APPLICATION_JSON_TYPE;
+        return MediaType.APPLICATION_XML_TYPE;
     }
 
-    @Override
-    public boolean jmsQueuesAvailable() {
-        return true;
-    }
-
-    @Override
-    public boolean doRestTests() {
-        return true;
-    }
-
-    @Override
-    public RuntimeStrategy getStrategy() {
-        return RuntimeStrategy.SINGLETON;
-    }
-   
-    @Override
-    public int getTimeout() {
-        return 1000;
-    }
 }

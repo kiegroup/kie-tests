@@ -66,12 +66,14 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.net.util.Base64;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.drools.core.command.runtime.process.GetProcessIdsCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientExecutor;
@@ -102,7 +104,7 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
@@ -110,6 +112,7 @@ import org.kie.services.client.api.builder.RemoteRestRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
+import org.kie.services.client.serialization.SerializationException;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
@@ -129,7 +132,7 @@ import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListR
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.services.shared.ServicesVersion;
-import org.kie.tests.wb.base.test.objects.MyType;
+import org.kie.tests.MyType;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,20 +146,15 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
     private final String deploymentId;
     private final KModuleDeploymentUnit deploymentUnit;
-    private boolean useFormBasedAuth = false;
-    private boolean testWithHttpUrlConnection = true;
     private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
     private MediaType mediaType;
-    private final int timeout;
+    private int timeout;
     private static final int DEFAULT_TIMEOUT = 10;
-    
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, Boolean tomcatInstance, RuntimeStrategy strategy) {
+  
+    private RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout, RuntimeStrategy strategy) {
         if( mediaType == null ) { 
             mediaType = MediaType.APPLICATION_XML_TYPE;
-        }
-        if( tomcatInstance == null ) { 
-           tomcatInstance = false; 
         }
         if( strategy != null ) { 
             this.strategy = strategy;
@@ -167,34 +165,44 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertEquals( "Deployment unit information", deploymentId, deploymentUnit.getIdentifier());
         this.mediaType = mediaType;
         this.timeout = timeout;
-        this.useFormBasedAuth = tomcatInstance;
-        this.testWithHttpUrlConnection = ! this.useFormBasedAuth;
     }
     
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth, RuntimeStrategy strategy) {
-       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, strategy);
+    public static Builder newBuilderInstance() { 
+        return new Builder();
     }
     
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, Boolean useFormBasedAuth) {
-       this(deploymentId, mediaType, DEFAULT_TIMEOUT, useFormBasedAuth, null);
+    public static class Builder { 
+      
+        private String deploymentId = null;
+        private KModuleDeploymentUnit deploymentUnit = null;
+        private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
+        private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
+        private int timeout = DEFAULT_TIMEOUT;
+        
+        private Builder() { 
+            // default constructor
+        }
+        
+        public Builder setDeploymentId(String deploymentId) { 
+            this.deploymentId = deploymentId; return this;
+        }
+        public Builder setStrategy(RuntimeStrategy strategy) { 
+            this.strategy = strategy; return this;
+        }
+        public Builder setMediaType(MediaType mediaType) { 
+            this.mediaType = mediaType; return this;
+        }
+        public Builder setTimeout(int timeout) { 
+            this.timeout = timeout; return this;
+        }
+        public RestIntegrationTestMethods build() { 
+            if( this.deploymentId == null ) { 
+                throw new IllegalStateException("The deployment id must be set to create the test methods instance!");
+            }
+            return new RestIntegrationTestMethods(deploymentId, mediaType, timeout, strategy);
+        }
     }
     
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeout) {
-       this(deploymentId, mediaType, timeout, null, null);
-    }
-    
-    public RestIntegrationTestMethods(String deploymentId, MediaType mediaType) {
-        this(deploymentId, mediaType, DEFAULT_TIMEOUT, null, null);
-    }
-
-    public RestIntegrationTestMethods(String deploymentId) {
-        this(deploymentId, null, DEFAULT_TIMEOUT, null, null);
-    }
-
-    public RestIntegrationTestMethods(KModuleDeploymentUnit deploymentUnit) {
-        this(deploymentUnit.getIdentifier(), null, DEFAULT_TIMEOUT, null, null);
-    }
-
     private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
     {
         jaxbSerializationProvider.addJaxbClasses(MyType.class);
@@ -223,7 +231,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
     }
 
     private RestRequestHelper getRestRequestHelper(URL deploymentUrl, String user, String password) { 
-        return RestRequestHelper.newInstance(deploymentUrl, user, password, timeout, mediaType, useFormBasedAuth);
+        return RestRequestHelper.newInstance(deploymentUrl, user, password, timeout, mediaType);
     }
    
     private RemoteRuntimeEngineFactory getRemoteRuntimeFactory(URL deploymentUrl, String user, String password) { 
@@ -236,7 +244,6 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
                 .addUrl(deploymentUrl)
                 .addUserName(user)
                 .addPassword(password)
-                .useFormBasedAuth(useFormBasedAuth)
                 .buildFactory();
         return r3eFactory;
     }
@@ -294,8 +301,10 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         String deploymentId = "org.test:kjar:1.0";
         String orgUnit = "integTestUser";
         deployUtil.createAndDeployRepository(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
-        System.out.println( "DONE!" );
-        int wait = 2 + 2;
+        
+        int sleep = 5;
+        logger.info( "Waiting {} more seconds to make sure deploy is done..", sleep);
+        Thread.sleep(sleep*1000);
     }
 
     private JaxbDeploymentJobResult deploy(KModuleDeploymentUnit depUnit, String user, String password, URL appUrl) throws Exception {
@@ -307,23 +316,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             url += "?strategy=" + strategy.toString();
         }
         ClientRequest request;
-        if( useFormBasedAuth ) { 
-            ClientRequestFactory factory = RestRequestHelper.createRequestFactory(appUrl, user, password, useFormBasedAuth);
-            request = factory.createRequest(url);
-        } else { 
-            String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", user, password).getBytes()).trim();
+        String AUTH_HEADER = "Basic " + Base64.encodeBase64String(String.format("%s:%s", user, password).getBytes()).trim();
 
-            DefaultHttpClient httpClient = new DefaultHttpClient();
-            httpClient.getCredentialsProvider().setCredentials(
-                    new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
-                    new UsernamePasswordCredentials(user, password));
-            ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
-            ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getCredentialsProvider().setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+                new UsernamePasswordCredentials(user, password));
+        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
+        ClientRequestFactory factory = new ClientRequestFactory(clientExecutor, ResteasyProviderFactory.getInstance());
 
-            request = factory.createRequest(url).header("Authorization", AUTH_HEADER).accept(mediaType)
-                    .followRedirects(true);
-        } 
-    
+        request = factory.createRequest(url).header("Authorization", AUTH_HEADER).accept(mediaType)
+                .followRedirects(true);
+
         // POST request
         JaxbDeploymentJobResult result = null;
         ClientResponse<JaxbDeploymentJobResult> response = null;
@@ -741,17 +745,19 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         this.mediaType = origType;
     }
 
-    public void urlsHumanTaskWithFormVariableChange(URL deploymentUrl, String user, String password) throws Exception {
+    public void urlsHumanTaskWithVariableChangeFormParameters(URL deploymentUrl, String user, String password) throws Exception {
         RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl, user, password);
 
         // Start process
         ClientRequest restRequest = requestHelper.createRequest(
-                "runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start?map_userName=John");
+                "runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start");
+        restRequest.formParameter("map_userName", "John");
         JaxbProcessInstanceResponse processInstance = post(restRequest, mediaType, JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        restRequest = requestHelper.createRequest("task/query?processInstanceId=" + procInstId);
+        restRequest = requestHelper.createRequest("task/query");
+        restRequest.formParameter("processInstanceId", String.valueOf(procInstId));
         JaxbTaskSummaryListResponse taskSumlistResponse = get(restRequest, mediaType, JaxbTaskSummaryListResponse.class);
         
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
@@ -762,14 +768,17 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbGenericResponse resp = post(restRequest, mediaType,JaxbGenericResponse.class);
         assertNotNull("Response from task start operation is null.", resp);
 
-        // claim task
-        restRequest = requestHelper.createRequest("task/" + taskId + "/claim");
-        resp = post(restRequest, mediaType,JaxbGenericResponse.class);
+        // check task status
+        restRequest = requestHelper.createRequest("task/" + taskId);
+        JaxbTask task  = get(restRequest, mediaType, JaxbTask.class);
         assertNotNull("Response from task start operation is null.", resp);
+        logger.debug("Task {}: status [{}] / owner [{}]", 
+                taskId, task.getTaskData().getStatus().toString(), task.getTaskData().getActualOwner().getId() );
 
         // complete task
         String georgeVal = "George";
-        restRequest = requestHelper.createRequest("task/" + taskId + "/complete?map_outUserName=" + georgeVal);
+        restRequest = requestHelper.createRequest("task/" + taskId + "/complete");
+        restRequest.formParameter("map_outUserName", georgeVal);
         resp = post(restRequest, mediaType, JaxbGenericResponse.class);
 
         restRequest = requestHelper.createRequest("history/instance/" + procInstId + "/variable/userName");
@@ -1010,35 +1019,33 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Null answer!", dep);
         assertNotNull( "Null deployment list!", dep);
         assertEquals( "Empty status!", JaxbDeploymentStatus.DEPLOYED, dep.getStatus());
-        
+
         // test with HttpURLConnection
-        if( testWithHttpUrlConnection ) { 
-            URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/deployment/");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            String authString = user + ":" + password;
-            byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
-            String authStringEnc = new String(authEncBytes);
-            connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
-            connection.setRequestMethod("GET");
+        String authString = user + ":" + password;
+        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+        String authStringEnc = new String(authEncBytes);
+        connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        connection.setRequestMethod("GET");
 
-            logger.debug(">> [GET] " + url.toExternalForm());
-            connection.connect();
-            int respCode = connection.getResponseCode();
-            if (200 != respCode) { 
-                logger.warn(connection.getContent().toString());
-            }
-            assertEquals(200, respCode);
-            
-            JaxbSerializationProvider jaxbSerializer = new JaxbSerializationProvider();
-            String xmlStrObj = getConnectionContent(connection.getContent());
-            logger.info( "Output: |" + xmlStrObj + "|");
-            depList = (JaxbDeploymentUnitList) jaxbSerializer.deserialize(xmlStrObj);
-            
-            assertNotNull( "Null answer!", depList);
-            assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
-            assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
+        logger.debug(">> [GET] " + url.toExternalForm());
+        connection.connect();
+        int respCode = connection.getResponseCode();
+        if (200 != respCode) { 
+            logger.warn(connection.getContent().toString());
         }
+        assertEquals(200, respCode);
+
+        JaxbSerializationProvider jaxbSerializer = new JaxbSerializationProvider();
+        String xmlStrObj = getConnectionContent(connection.getContent());
+        logger.info( "Output: |" + xmlStrObj + "|");
+        depList = (JaxbDeploymentUnitList) jaxbSerializer.deserialize(xmlStrObj);
+
+        assertNotNull( "Null answer!", depList);
+        assertNotNull( "Null deployment list!", depList.getDeploymentUnitList() );
+        assertTrue( "Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
     }
    
     private String getConnectionContent(Object content) throws Exception { 
@@ -1092,16 +1099,38 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
        
         restRequest = requestHelper.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName );
         String xmlOrJsonStr = get(restRequest, mediaType, String.class);
-        MyType retrievedVar;
-        if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) { 
-            retrievedVar = (MyType) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
-        } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) { 
-            jsonSerializationProvider.setDeserializeOutputClass(MyType.class);
-            retrievedVar = (MyType) jsonSerializationProvider.deserialize(xmlOrJsonStr);
-        } else { 
-            throw new IllegalStateException("Unknown media type: " + mediaType.getType() + "/" + mediaType.getSubtype() );
+        JAXBElement<MyType> retrievedVarElem;
+        try { 
+            JAXBElement elem = (new ObjectMapper()).readValue(xmlOrJsonStr, JAXBElement.class);
+            MyType og = (MyType) elem.getValue();
+            System.out.println( "YES! : " + og.toString());
+        } catch( Exception e ) { 
+            System.out.println( "NO." );
+            e.printStackTrace();
+        }
+        try { 
+            MyType og = (new ObjectMapper()).readValue(xmlOrJsonStr, MyType.class);
+            System.out.println( "JA! : " + og.toString());
+        } catch( Exception e ) { 
+            System.out.println( "NEE..." );
+            e.printStackTrace();
         }
         
+        try { 
+            if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) { 
+                retrievedVarElem = (JAXBElement<MyType>) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
+            } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) { 
+                jsonSerializationProvider.setDeserializeOutputClass(JAXBElement.class);
+                retrievedVarElem = (JAXBElement<MyType>) jsonSerializationProvider.deserialize(xmlOrJsonStr);
+            } else { 
+                throw new IllegalStateException("Unknown media type: " + mediaType.getType() + "/" + mediaType.getSubtype() );
+            }
+        } catch( SerializationException se ) { 
+           logger.error( "Could not deserialize string:\n{}", xmlOrJsonStr);
+           throw se;
+        }
+       
+        MyType retrievedVar = retrievedVarElem.getValue();
         assertNotNull( "Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
         assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
@@ -1111,8 +1140,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RemoteRestRuntimeEngineBuilder runtimeEngineBuilder
             = RemoteRestRuntimeEngineFactory.newBuilder()
             .addDeploymentId(deploymentId)
-            .addUrl(deploymentUrl)
-            .useFormBasedAuth(useFormBasedAuth);
+            .addUrl(deploymentUrl);
        
         RemoteRuntimeEngine krisRemoteEngine = runtimeEngineBuilder
                 .addUserName(KRIS_USER)
@@ -1130,7 +1158,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         runHumanTaskGroupIdTest(krisRemoteEngine, johnRemoteEngine, maryRemoteEngine);
     }
     
-    public void remoteApiGroupAssignmentTest(URL deploymentUrl) throws Exception { 
+    public void urlsGroupAssignmentTest(URL deploymentUrl) throws Exception { 
         RestRequestHelper maryReqHelper = RestRequestHelper.newInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
         RestRequestHelper johnReqHelper = RestRequestHelper.newInstance(deploymentUrl, JOHN_USER, JOHN_PASSWORD);
        

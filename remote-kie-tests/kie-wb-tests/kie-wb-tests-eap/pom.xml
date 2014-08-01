@@ -322,7 +322,6 @@
                     <artifactItem>
                       <groupId>org.jboss.as</groupId>
                       <artifactId>jboss-as-dist</artifactId>
-                      <version>${version.org.jboss.as.dist}</version>
                       <type>zip</type>
                       <overWrite>false</overWrite>
                       <outputDirectory>${project.build.directory}</outputDirectory>

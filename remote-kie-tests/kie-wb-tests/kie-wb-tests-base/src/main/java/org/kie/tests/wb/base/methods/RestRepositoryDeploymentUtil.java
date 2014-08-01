@@ -23,7 +23,7 @@ import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.client.core.BaseClientResponse;
 import org.jboss.resteasy.spi.BadRequestException;
 import org.jboss.resteasy.spi.ReaderException;
-import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.services.client.api.RestRequestHelper;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;

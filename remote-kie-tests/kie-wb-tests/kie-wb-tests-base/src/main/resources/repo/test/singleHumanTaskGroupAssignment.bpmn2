@@ -16,7 +16,7 @@
     
   <bpmn2:itemDefinition id="__1_GroupIdInputXItem" structureRef="String"/>
   
-  <bpmn2:process id="org.jbpm.humantask.groupAssign" drools:packageName="org.jbpm" drools:version="1.0" name="" isExecutable="true">
+  <bpmn2:process id="org.test.kjar.groupAssign" drools:packageName="org.jbpm" drools:version="1.0" name="" isExecutable="true">
   
     <bpmn2:startEvent id="processStartEvent" drools:bgcolor="#9acd32" drools:selectable="true" name=""/>
     

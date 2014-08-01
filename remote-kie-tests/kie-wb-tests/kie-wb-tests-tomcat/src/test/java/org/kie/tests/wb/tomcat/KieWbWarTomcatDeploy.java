@@ -23,21 +23,14 @@ public class KieWbWarTomcatDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = {
+                    { "org.jbpm", "jbpm-human-task-audit" }, 
+                    { "org.jbpm", "jbpm-human-task-core" }, 
                     { "org.kie.remote", "kie-remote-services" }, 
                     { "org.kie.remote", "kie-remote-jaxb" },
                     { "org.kie.remote", "kie-remote-common" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
         }
-        // temporary
-        String servletJar = "javax.servlet-api-3.0.1.jar";
-        logger.info( "Deleting {}", servletJar);
-        war.delete("WEB-INF/lib/" + servletJar);
-        
-        String [][] jarsToAdd = { 
-                { "org.jboss.resteasy", "resteasy-jaxb-provider" }
-        };
-        addNewJars(war, jarsToAdd);
         
         // Add data service resource for tests
         war.addPackage("org/kie/tests/wb/base/services/data");

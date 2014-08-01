@@ -4,7 +4,7 @@
   <bpmn2:itemDefinition id="__F3C533B2-7FD2-49FF-B431-8C5101F63DC7_taskInInputXItem" structureRef="String"/>
   <bpmn2:itemDefinition id="__F3C533B2-7FD2-49FF-B431-8C5101F63DC7_GroupIdInputXItem" structureRef="Object"/>
   <bpmn2:itemDefinition id="__F3C533B2-7FD2-49FF-B431-8C5101F63DC7_taskOutOutputXItem" structureRef="String"/>
-  <bpmn2:process id="org.kie.remote.test.usertask.UserTask" drools:packageName="org.kie.remote.test.usertask" drools:version="1.0" name="UserTask" isExecutable="true">
+  <bpmn2:process id="org.test.kjar.UserTask" drools:packageName="org.kie.remote.test.usertask" drools:version="1.0" name="UserTask" isExecutable="true">
     <bpmn2:property id="var" itemSubjectRef="_varItem"/>
     <bpmn2:startEvent id="_D500B3BB-8F9E-40AB-A3BA-80D71204D6D4" drools:bgcolor="#9acd32" drools:selectable="true" name="">
       <bpmn2:outgoing>_30C3E46F-5D56-4CE6-8AB1-064BC1689D52</bpmn2:outgoing>

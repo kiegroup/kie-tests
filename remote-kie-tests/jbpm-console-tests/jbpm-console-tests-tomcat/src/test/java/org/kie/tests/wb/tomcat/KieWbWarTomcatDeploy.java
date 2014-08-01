@@ -63,7 +63,6 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
         war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
 
         // Replace kie-remote-services jar with the one we just generated
-        war.delete("WEB-INF/lib/kie-remote-client-" + projectVersion + ".jar");
         String [][] jarsToReplace = { 
                 { "org.kie.remote", "kie-remote-services", null },
                 { "org.kie.remote", "kie-remote-jaxb", null },
@@ -72,9 +71,6 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
                 { "org.antlr", "antlr", "3.1.1" }
         };
         String [] jarsArg = new String[jarsToReplace.length];
-        String oldClientJar = "kie-remote-client";
-        war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
-        logger.info( "Deleting " + oldClientJar + " from test war");
         for( String [] jar : jarsToReplace ) { 
             logger.info( "Deleting " + jar[1] + " from test war");
             war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");

@@ -16,7 +16,7 @@
   <itemDefinition id="_performanceItem" structureRef="String" />
   <itemDefinition id="_contentItem" structureRef="String" />
 
-  <process processType="Private" isExecutable="true" id="com.sample.evaluation" name="Evaluation" tns:packageName="defaultPackage" >
+  <process processType="Private" isExecutable="true" id="org.test.kjar.evaluation" name="Evaluation" tns:packageName="defaultPackage" >
 
     <!-- process variables -->
     <property id="employee" itemSubjectRef="_employeeItem"/>

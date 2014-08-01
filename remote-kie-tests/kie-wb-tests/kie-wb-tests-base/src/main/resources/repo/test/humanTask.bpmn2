@@ -28,7 +28,7 @@
   <itemDefinition id="_406504CA-672D-4D8D-A344-4817683B167F-approval_translatedDocumentItem" structureRef="String" />
   <itemDefinition id="_406504CA-672D-4D8D-A344-4817683B167F-approval_reviewCommentItem" structureRef="String" />
 
-  <process processType="Private" isExecutable="true" id="org.jbpm.writedocument" name="humanTaskSample" tns:packageName="defaultPackage" tns:version="1">
+  <process processType="Private" isExecutable="true" id="org.test.kjar.writedocument" name="humanTaskSample" tns:packageName="defaultPackage" tns:version="1">
 
     <!-- process variables -->
     <property id="approval_document" itemSubjectRef="_approval_documentItem"/>
@@ -159,70 +159,5 @@
     <sequenceFlow id="_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538-_E524A570-E18B-4659-92A3-B5C454BB6D1B" sourceRef="_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538" targetRef="_E524A570-E18B-4659-92A3-B5C454BB6D1B" />
 
   </process>
-
-  <bpmndi:BPMNDiagram>
-    <bpmndi:BPMNPlane bpmnElement="org.jbpm.writedocument" >
-      <bpmndi:BPMNShape bpmnElement="_2E8E392C-31A0-4E34-8310-05EADDC4C2B5" >
-        <dc:Bounds x="182" y="201" width="48" height="48" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_B4912911-1965-4D1F-9532-81580D8200EE" >
-        <dc:Bounds x="266" y="185" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_0FA84C68-FDF4-4932-B02E-CF7BEACE4405" >
-        <dc:Bounds x="407" y="201" width="48" height="48" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_04D27583-5419-42C8-A0B5-F85E5E35BAFC" >
-        <dc:Bounds x="487" y="70" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_406504CA-672D-4D8D-A344-4817683B167F" >
-        <dc:Bounds x="487" y="280" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538" >
-        <dc:Bounds x="637" y="201" width="48" height="48" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_F9A29108-44D7-42AB-9A2D-F31EA512DC11" >
-        <dc:Bounds x="841" y="197" width="48" height="48" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="_E524A570-E18B-4659-92A3-B5C454BB6D1B" >
-        <dc:Bounds x="720" y="184" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge bpmnElement="_2E8E392C-31A0-4E34-8310-05EADDC4C2B5-_B4912911-1965-4D1F-9532-81580D8200EE" >
-        <di:waypoint x="206" y="225" />
-        <di:waypoint x="316" y="225" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_B4912911-1965-4D1F-9532-81580D8200EE-_0FA84C68-FDF4-4932-B02E-CF7BEACE4405" >
-        <di:waypoint x="316" y="225" />
-        <di:waypoint x="431" y="225" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_0FA84C68-FDF4-4932-B02E-CF7BEACE4405-_04D27583-5419-42C8-A0B5-F85E5E35BAFC" >
-        <di:waypoint x="431" y="225" />
-        <di:waypoint x="431" y="110" />
-        <di:waypoint x="537" y="110" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_0FA84C68-FDF4-4932-B02E-CF7BEACE4405-_406504CA-672D-4D8D-A344-4817683B167F" >
-        <di:waypoint x="431" y="225" />
-        <di:waypoint x="431" y="320" />
-        <di:waypoint x="537" y="320" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_04D27583-5419-42C8-A0B5-F85E5E35BAFC-_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538" >
-        <di:waypoint x="537" y="110" />
-        <di:waypoint x="661" y="110" />
-        <di:waypoint x="661" y="225" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_406504CA-672D-4D8D-A344-4817683B167F-_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538" >
-        <di:waypoint x="537" y="320" />
-        <di:waypoint x="661" y="320" />
-        <di:waypoint x="661" y="225" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_E524A570-E18B-4659-92A3-B5C454BB6D1B-_F9A29108-44D7-42AB-9A2D-F31EA512DC11" >
-        <di:waypoint x="770" y="224" />
-        <di:waypoint x="865" y="221" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="_4EC3DFFF-7756-4ADC-9FDB-7A1793ED5538-_E524A570-E18B-4659-92A3-B5C454BB6D1B" >
-        <di:waypoint x="661" y="225" />
-        <di:waypoint x="770" y="224" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
 
 </definitions>

@@ -30,7 +30,6 @@ public class KieWbWarJbossAsDeploy extends AbstractDeploy {
         
         // Replace kie-remote-services jar with the one we just generated
         war.delete("WEB-INF/lib/kie-remote-services-" + projectVersion + ".jar");
-        war.delete("WEB-INF/lib/kie-remote-client-" + projectVersion + ".jar");
         File [] kieRemoteDeps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
                 .resolve("org.kie.remote:kie-remote-services", "org.kie.remote:kie-remote-client")

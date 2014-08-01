@@ -38,6 +38,7 @@ public class KieWbWarJbossEapDeploy {
         if( replace ) { 
             String [][] jarsToReplace = { 
                     { "org.jbpm", "jbpm-human-task-core" },
+                    { "org.jbpm", "jbpm-human-task-audit" },
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-jaxb" },
                     { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
