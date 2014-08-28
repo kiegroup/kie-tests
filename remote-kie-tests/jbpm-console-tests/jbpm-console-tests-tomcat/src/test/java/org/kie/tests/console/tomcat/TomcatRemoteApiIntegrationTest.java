@@ -15,35 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.jboss;
+package org.kie.tests.console.tomcat;
 
-import static org.kie.tests.wb.jboss.KieWbWarJbossAsDeploy.createTestWar;
-
-import javax.ws.rs.core.MediaType;
+import static org.kie.tests.console.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class TomcatRemoteApiIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-basic-auth")
+    @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
-        return createTestWar("jboss-as7");
+        return createTestWar();
     }
 
-    public boolean doDeploy() { 
-        return true;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_JSON_TYPE;
+    @Test
+    public void dummyTest() {
+        Assert.assertTrue(true);
     }
 
 }

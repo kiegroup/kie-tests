@@ -11,7 +11,7 @@
   <artifactId>jbpm-console-tests-eap</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: JBoss EAP 6</name>
+  <name>jBPM Console NG Integration Tests :: JBoss EAP 6</name>
 
   <!-- IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 
@@ -39,9 +39,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-wb-distribution-wars</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-console-ng-distribution-wars</artifactId>
       <classifier>eap-6_1</classifier>
       <scope>test</scope>
       <type>war</type>

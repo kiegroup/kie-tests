@@ -37,11 +37,17 @@
   <role rolename="user"/>
   <role rolename="manager"/>
   
+  <!-- test roles -->
+  <role rolename="HR"/>
+  <role rolename="PM"/>
+  <role rolename="engineering"/>
+  
    <!-- users --> 
   <user username="tomcat" password="tomcat" roles="manager-script, manager-jmx, manager-gui"/>
-  <user username="krisv" password="krisv123@" roles="admin,analyst"/>
-  <user username="mary" password="mary123@" roles="admin,analyst"/>
-  <user username="salaboy" password="sala123@" roles="admin,analyst"/>
-  <user username="john" password="john123@" roles="admin,analyst"/>
+
+  <user username="mary" password="mary123@" roles="admin,analyst,HR,engineering"/>
+  <user username="salaboy" password="sala123@" roles="admin"/>
+  <user username="john" password="john123@" roles="admin,analyst,PM,engineering"/>
+  <user username="krisv" password="krisv123@" roles="admin,developer,engineering"/>
 
 </tomcat-users>

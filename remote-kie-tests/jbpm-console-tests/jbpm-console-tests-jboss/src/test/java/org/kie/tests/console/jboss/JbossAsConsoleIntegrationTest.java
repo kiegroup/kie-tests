@@ -15,44 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.tomcat;
+package org.kie.tests.console.jboss;
 
-import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
-
-import javax.ws.rs.core.MediaType;
+import static org.kie.tests.console.jboss.KieWbWarJbossAsDeploy.createTestWar;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class JbossAsConsoleIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-tomcat")
+    @Deployment(testable = false, name = "jbpm-console-jboss")
     public static Archive<?> createWar() {
-        return createTestWar("tomcat7");
+        return createTestWar();
     }
 
-    public boolean doDeploy() {
-        return true;
+    @Test
+    public void dummyTest() { 
+       Assert.assertTrue(true); 
     }
-
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_JSON_TYPE;
-    }
-
-    @Override
-    public boolean jmsQueuesAvailable() {
-        return false;
-    }
-
-    @Override
-    public boolean useFormBasedAuth() {
-        return true;
-    }
-
 }

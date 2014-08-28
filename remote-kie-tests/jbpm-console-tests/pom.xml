@@ -11,16 +11,15 @@
   <artifactId>jbpm-console-tests</artifactId>
   <packaging>pom</packaging>
 
-  <name>KIE Workbench Integration Tests</name>
-  <description>Integration tests for the Workbenches</description>
+  <name>jBPM Console NG Integration Tests</name>
+  <description>Integration tests for the jBPM Console</description>
 
   <modules>
     <module>jbpm-console-tests-base</module>
     <module>jbpm-console-tests-jboss</module>
     <module>jbpm-console-tests-tomcat</module>
-    <module>jbpm-console-tests-eap</module>
+    <!-- module>jbpm-console-tests-wildfly</module -->
   </modules>
-
 
   <dependencyManagement>
     <dependencies>
