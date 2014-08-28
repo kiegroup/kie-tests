@@ -20,7 +20,7 @@ public class DeployUtil {
                 .resolve( groupId + ":" + artifactId + ":war:" + classifier + ":" + projectVersion )
                 .withoutTransitivity()
                 .asFile();
-        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(warFile[0]);
+        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, classifier + ".war").importFrom(warFile[0]);
         
         WebArchive war = zipWar.as(WebArchive.class);
         return war;
@@ -30,7 +30,7 @@ public class DeployUtil {
          String [] jarsArg = new String[jarsToReplace.length];
          for( String [] jar : jarsToReplace ) { 
              logger.info( "Deleting '{}' from war", jar[1] );
-             String version = projectVersion;DeployUtil
+             String version = projectVersion;
              if( jar.length > 2 ) { 
                  version = jar[2];
              }

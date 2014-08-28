@@ -62,7 +62,7 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
     }
 
     @Override
-    public int getTimeout() {
-        return 4000;
+    public int getTimeoutInSecs() {
+        return 4;
     }
 }

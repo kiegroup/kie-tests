@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Test;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +44,14 @@ public abstract class AbstractIssueIntegrationTest {
     public void issueTest() throws Exception { 
         printTestName();
         
-        RestIntegrationTestMethods restTests = RestIntegrationTestMethods.newBuilderInstance()
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(getMediaType())
                 .build();
         
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         restTests.urlsGroupAssignmentTest(deploymentUrl);
+        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
 }

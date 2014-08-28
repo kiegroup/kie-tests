@@ -47,7 +47,7 @@
     </dependency>
 
     <!-- arquillian -->
-   <dependency>
+    <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
@@ -235,14 +235,12 @@
                   <type>jar</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
-                <!-- 
                 <artifactItem>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-jdk14</artifactId>
                   <type>jar</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
-                --> 
                 <artifactItem>
                   <groupId>org.kie</groupId>
                   <artifactId>kie-tomcat-integration</artifactId>
@@ -276,7 +274,7 @@
               <resources>
                 <resource>
                   <!-- so that files with (maven) filtered values are used -->
-                  <directory>${project.build.directory}/test-classes/config</directory>
+                  <directory>${basedir}/src/test/resources-tomcat7/config</directory>
                 </resource>
               </resources>
             </configuration>
@@ -300,9 +298,9 @@
               </includes>
               <replacements>
                 <replacement>
-                  <token>&lt;/Host&gt;</token>
+                  <token>  &lt;/Host&gt;</token>
                   <value>&lt;Valve className="org.kie.integration.tomcat.JACCValve" /&gt;
-                    &lt;/Host&gt;</value>
+  &lt;/Host&gt;</value>
                 </replacement>
               </replacements>
             </configuration>

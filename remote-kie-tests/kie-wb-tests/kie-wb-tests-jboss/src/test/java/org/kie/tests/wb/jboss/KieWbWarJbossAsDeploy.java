@@ -11,14 +11,14 @@ import org.slf4j.LoggerFactory;
 public class KieWbWarJbossAsDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossAsDeploy.class);
-    
-    static WebArchive createTestWar(String classifier) {
+   
+    public static WebArchive createTestWar() { 
         // Import kie-wb war
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "jboss-as7", PROJECT_VERSION);
        
         String [][] jarsToReplace = {
+                { "org.jbpm", "jbpm-kie-services" }, 
                 { "org.kie.remote", "kie-remote-services" }, 
-                { "org.kie.remote", "kie-remote-common" },
                 { "org.kie.remote", "kie-remote-jaxb" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
@@ -28,5 +28,5 @@ public class KieWbWarJbossAsDeploy {
         
         return war;
     }
-    
+
 }

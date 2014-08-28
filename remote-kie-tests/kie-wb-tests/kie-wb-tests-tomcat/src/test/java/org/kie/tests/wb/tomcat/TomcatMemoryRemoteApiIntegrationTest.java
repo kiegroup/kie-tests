@@ -27,16 +27,13 @@ import java.net.URL;
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 
-@RunAsClient
-@RunWith(Arquillian.class)
+//@RunAsClient
+//@RunWith(Arquillian.class)
 public class TomcatMemoryRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
@@ -47,8 +44,8 @@ public class TomcatMemoryRemoteApiIntegrationTest {
     @ArquillianResource
     URL deploymentUrl;
     
-    private RestIntegrationTestMethods restTests 
-        = RestIntegrationTestMethods.newBuilderInstance()
+    private KieWbRestIntegrationTestMethods restTests 
+        = KieWbRestIntegrationTestMethods.newBuilderInstance()
         .setDeploymentId(KJAR_DEPLOYMENT_ID)
         .setMediaType( MediaType.APPLICATION_XML_TYPE)
         .build();

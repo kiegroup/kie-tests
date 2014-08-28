@@ -17,6 +17,7 @@
  */
 package org.kie.tests.wb.base.methods;
 
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -63,8 +64,6 @@ import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQJMSConnectionFactory;
-import org.jbpm.process.audit.ProcessInstanceLog;
-import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
@@ -73,25 +72,27 @@ import org.jbpm.services.task.commands.StartTaskCommand;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
+import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.remote.client.jaxb.JaxbCommandsRequest;
+import org.kie.remote.client.jaxb.JaxbCommandsResponse;
+import org.kie.remote.client.jaxb.JaxbTaskResponse;
+import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
-import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsRequest;
-import org.kie.services.client.serialization.jaxb.impl.JaxbCommandsResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
-import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskResponse;
-import org.kie.services.client.serialization.jaxb.impl.task.JaxbTaskSummaryListResponse;
 
-public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
+public class KieWbJmsIntegrationTestMethods {
 
     private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
     private boolean useSsl = false;
@@ -106,15 +107,15 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
     private final InitialContext remoteInitialContext;
     private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
 
-    public JmsIntegrationTestMethods(String deploymentId) {
+    public KieWbJmsIntegrationTestMethods(String deploymentId) {
        this(deploymentId, true, false);
     }
     
-    public JmsIntegrationTestMethods(String deploymentId, boolean useSSL) {
+    public KieWbJmsIntegrationTestMethods(String deploymentId, boolean useSSL) {
        this(deploymentId, true, useSSL);
     }
     
-    public JmsIntegrationTestMethods(String deploymentId, boolean remote, boolean useSSL) {
+    public KieWbJmsIntegrationTestMethods(String deploymentId, boolean remote, boolean useSSL) {
         this.deploymentId = deploymentId;
         this.useSsl = useSSL;
         if( remote ) { 
@@ -548,7 +549,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Null process instance!", procInst);
         long procId = procInst.getId();
 
-        List<ProcessInstanceLog> procLogs = runtimeEngine.getAuditLogService().findActiveProcessInstances(HUMAN_TASK_PROCESS_ID);
+        List<ProcessInstanceLog> procLogs = (List<ProcessInstanceLog>) runtimeEngine.getAuditLogService().findActiveProcessInstances(HUMAN_TASK_PROCESS_ID);
         boolean procLogFound = false;
         for (ProcessInstanceLog log : procLogs) {
             if (log == null) {
@@ -696,9 +697,10 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         params.put("myobject", 10l);
         runtimeEngine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, params);
         
-        List<VariableInstanceLog> viLogs = runtimeEngine.getAuditLogService().findVariableInstancesByName("myobject", false);
+        List<VariableInstanceLog> viLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditLogService().findVariableInstancesByName("myobject", false);
         assertNotNull( "Null variable instance log list", viLogs);
         logger.info("vi logs: " + viLogs.size());
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
     }
+
 }

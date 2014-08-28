@@ -24,7 +24,7 @@ import org.jboss.resteasy.client.core.BaseClientResponse;
 import org.jboss.resteasy.spi.BadRequestException;
 import org.jboss.resteasy.spi.ReaderException;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.services.client.api.RestRequestHelper;
+import org.kie.remote.tests.base.RestRequestHelper;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
@@ -36,16 +36,16 @@ import org.slf4j.LoggerFactory;
  * </p> 
  * Copied from the RestWorkbenchClient and BusinessCentral classes and then modified. 
  */
-public class RestRepositoryDeploymentUtil {
+public class RepositoryDeploymentUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(RestRepositoryDeploymentUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryDeploymentUtil.class);
 
    
     public static final RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
     
     private RestRequestHelper requestHelper;
     
-    public RestRepositoryDeploymentUtil(URL deploymentUrl, String user, String password) { 
+    public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password) { 
         requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
     }
     
@@ -60,8 +60,6 @@ public class RestRepositoryDeploymentUtil {
         JobRequest createRepoJob = createRepository(repositoryName, repoUrl);
         JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user, repositoryName);
         waitForJobsToFinish(sleepSecs, createRepoJob, createOrgUnitJob);
-        JobRequest installProjectJob = installProject(repositoryName, project);
-        waitForJobsToFinish(sleepSecs, installProjectJob);
         
         JaxbDeploymentJobResult deployJob = createDeploymentUnit(deploymentId, strategy);
         JaxbDeploymentUnit deployUnit = deployJob.getDeploymentUnit();    

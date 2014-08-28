@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jbpm.process.audit.AuditLogService;
-import org.jbpm.process.audit.VariableInstanceLog;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.manager.audit.AuditService;
+import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.TaskSummary;
@@ -28,13 +28,13 @@ import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AbstractIntegrationTestMethods {
+public class KieWbGeneralIntegrationTestMethods {
 
-    protected static Logger logger = LoggerFactory.getLogger(AbstractIntegrationTestMethods.class);
+    protected static Logger logger = LoggerFactory.getLogger(KieWbGeneralIntegrationTestMethods.class);
    
     protected final static int MAX_TRIES = 5;
     
-    protected long findTaskId(Long procInstId, List<TaskSummary> taskSumList) { 
+    public static long findTaskId(Long procInstId, List<TaskSummary> taskSumList) { 
         long taskId = -1;
         TaskSummary task = findTaskSummary(procInstId, taskSumList);
         if( task != null ) { 
@@ -44,7 +44,7 @@ public class AbstractIntegrationTestMethods {
         return taskId;
     }
     
-    protected TaskSummary findTaskSummary(Long procInstId, List<TaskSummary> taskSumList) { 
+    public static TaskSummary findTaskSummary(Long procInstId, List<TaskSummary> taskSumList) { 
         for( TaskSummary task : taskSumList ) { 
             if( procInstId.equals(task.getProcessInstanceId()) ) {
                 return task;
@@ -58,7 +58,7 @@ public class AbstractIntegrationTestMethods {
      * Shared tests
      */
     
-    protected void testExtraJaxbClassSerialization(RemoteRuntimeEngine engine) {
+    public static void testExtraJaxbClassSerialization(RemoteRuntimeEngine engine) {
         
         /**
          * MyType
@@ -76,7 +76,7 @@ public class AbstractIntegrationTestMethods {
         testParamSerialization(engine, new Float [] { 39.391f });
     }
     
-    protected void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
+    public static void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("myobject", param);
         KieSession ksession = engine.getKieSession();
@@ -88,7 +88,7 @@ public class AbstractIntegrationTestMethods {
         /**
          * Check that MyType was correctly deserialized on server side
          */
-        List<VariableInstanceLog> varLogList = engine.getAuditLogService().findVariableInstancesByName("type", false);
+        List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstancesByName("type", false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
             if( varLog.getProcessInstanceId() == procInstId ) { 
@@ -100,12 +100,12 @@ public class AbstractIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
         
         // Double check for BZ-1085267
-        varLogList = engine.getAuditLogService().findVariableInstances(procInstId, "type");
+        varLogList = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstances(procInstId, "type");
         assertNotNull("No variable log list retrieved!", varLogList);
         assertTrue("Variable log list is empty!", varLogList.size() > 0);
     }
     
-    public static void runRuleTaskProcess(KieSession ksession, AuditLogService auditLogService) { 
+    public static void runRuleTaskProcess(KieSession ksession, AuditService auditLogService) { 
         // Setup facts
         Person person = new Person("guest", "Dluhoslav Chudobny");
         person.setAge(25); // >= 18
@@ -126,7 +126,7 @@ public class AbstractIntegrationTestMethods {
 //        assertEquals("Poor customer", ((Request)ksession.getObject(factHandle)).getInvalidReason());
         assertNull(ksession.getProcessInstance(pi.getId()));
         
-        List<VariableInstanceLog> varLogs = auditLogService.findVariableInstancesByName("requestReason", false);
+        List<VariableInstanceLog> varLogs = (List<VariableInstanceLog>) auditLogService.findVariableInstancesByName("requestReason", false);
         for( VariableInstanceLog varLog : varLogs ) { 
             if( varLog.getProcessInstanceId() == pi.getId() ) { 
                 assertEquals( "Poor customer", varLog.getValue() );
@@ -134,7 +134,7 @@ public class AbstractIntegrationTestMethods {
         }
     }
    
-    public void runHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
+    public static void runHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
 
         KieSession ksession = krisRuntimeEngine.getKieSession();
 

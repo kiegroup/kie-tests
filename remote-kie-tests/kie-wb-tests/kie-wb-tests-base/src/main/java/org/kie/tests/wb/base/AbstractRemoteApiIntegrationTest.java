@@ -21,8 +21,8 @@ import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
-import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +30,8 @@ public abstract class AbstractRemoteApiIntegrationTest {
     
     protected static final Logger logger = LoggerFactory.getLogger(AbstractRemoteApiIntegrationTest.class);
     
-    private final RestIntegrationTestMethods restTests;
-    private final JmsIntegrationTestMethods jmsTests;
+    private final KieWbRestIntegrationTestMethods restTests;
+    private final KieWbJmsIntegrationTestMethods jmsTests;
 
     @ArquillianResource
     URL deploymentUrl;
@@ -41,17 +41,17 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public abstract boolean jmsQueuesAvailable();
     public abstract boolean doRestTests();
     public abstract RuntimeStrategy getStrategy();
-    public abstract int getTimeout();
+    public abstract int getTimeoutInSecs();
    
     public AbstractRemoteApiIntegrationTest() { 
-         restTests = RestIntegrationTestMethods.newBuilderInstance()
+         restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                  .setDeploymentId(KJAR_DEPLOYMENT_ID)
                  .setMediaType(getMediaType())
                  .setStrategy(getStrategy())
-                 .setTimeout(getTimeout())
+                 .setTimeout(getTimeoutInSecs())
                  .build();
          if( jmsQueuesAvailable() ) { 
-             jmsTests = new JmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
+             jmsTests = new KieWbJmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);
          } else { 
              jmsTests = null;
          }
@@ -270,7 +270,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestTomcatMemoryLeak() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, getTimeout());
+        restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, getTimeoutInSecs());
     }
     
     @Test
@@ -378,7 +378,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     
     @Test
     @InSequence(JMS_FAILING)
-    public void testRemoteApiHistoryVariablesTest() throws Exception { 
+    public void testJmsRemoteApiHistoryVariablesTest() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
         jmsTests.remoteApiHistoryVariablesTest(deploymentUrl);

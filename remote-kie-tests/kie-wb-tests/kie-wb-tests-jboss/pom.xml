@@ -25,7 +25,7 @@
   <properties>
     <version.org.jboss>7.1.1.Final</version.org.jboss>
     <version.org.jboss.as.dist>7.1.1.Final</version.org.jboss.as.dist>
-    <jboss.server.name>jboss-as-7.1.1.Final</jboss.server.name>
+    <jboss.as.server.name>jboss-as-7.1.1.Final</jboss.as.server.name>
   </properties>
 
   <dependencies>
@@ -39,6 +39,10 @@
       <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
+      <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jackson-provider</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.kie</groupId>
@@ -48,7 +52,7 @@
       <type>war</type>
     </dependency>
 
-    <!-- jms
+    <!-- jms -->
     <dependency>
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-core-client</artifactId>
@@ -59,7 +63,7 @@
       <artifactId>hornetq-jms-client</artifactId>
       <scope>test</scope>
     </dependency>
- -->
+
     <!-- test -->
     <dependency>
       <groupId>junit</groupId>
@@ -100,13 +104,12 @@
       <artifactId>jboss-as-arquillian-container-managed</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- REST -->
     <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>jaxrs-api</artifactId>
+      <groupId>org.jboss.arquillian.protocol</groupId>
+      <artifactId>arquillian-protocol-servlet</artifactId>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
     
   <dependencyManagement>
@@ -190,7 +193,7 @@
                 <portName>jboss.server.port</portName>
                 <portName>jboss.mgmt.server.port</portName>
               </portNames>
-              <outputFile>src/test/resources/port.properties</outputFile>
+              <!-- outputFile>src/test/resources/port.properties</outputFile-->
             </configuration>
           </execution>
         </executions>
@@ -270,7 +273,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
+              <outputDirectory>${project.build.directory}/${jboss.as.server.name}/standalone/configuration</outputDirectory>
               <resources>
                 <resource>
                   <directory>src/test/resources-jboss-as7/config</directory>
@@ -284,71 +287,60 @@
       </plugin>
       <!-- 3. modify server configuration -->
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>xml-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>modify-standalone-full</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>transform</goal>
+            </goals>
+            <configuration>
+              <transformationSets>
+                <transformationSet>
+                  <dir>${project.build.directory}/${jboss.as.server.name}/standalone/configuration</dir>
+                  <outputDir>${project.build.directory}/${jboss.as.server.name}/standalone/configuration</outputDir>
+                  <includes>
+                    <include>standalone-full.xml</include>
+                  </includes>
+                  <stylesheet>src/test/resources-jboss-as7/xslt/addDebugLogging.xslt</stylesheet>
+                </transformationSet>
+                <!-- HORNETQ-408 is not fixed on AS 7.1.1.Final
+                <transformationSet>
+                  <dir>${project.build.directory}/${jboss.as.server.name}/standalone/configuration</dir>
+                  <outputDir>${project.build.directory}/${jboss.as.server.name}/standalone/configuration</outputDir>
+                  <includes>
+                    <include>standalone-full.xml</include>
+                  </includes>
+                  <stylesheet>target/test-classes/xslt/changeJmsMessagingConfig.xslt</stylesheet>
+                </transformationSet>
+                -->
+              </transformationSets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
-        <executions>
+        <version>1.5.3</version>
+          <executions>
           <execution>
             <id>fix-jboss-standalone-xml</id>
             <phase>process-test-resources</phase>
             <goals>
               <goal>replace</goal>
             </goals>
-            <configuration>
-              <file>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</file>
-              <outputFile>${project.build.directory}/${jboss.server.name}/standalone/configuration/standalone-full.xml</outputFile>
-              <replacements>
-                <!-- allow jms queue creation via arquillian server task -->
-                <replacement>
-                  <token>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;\n\s*&lt;journal</token>
-                  <value>&lt;persistence-enabled&gt;true&lt;/persistence-enabled&gt;
-                    &lt;jmx-management-enabled&gt;true&lt;/jmx-management-enabled&gt;
-                    &lt;journal</value>
-                </replacement>
-                <replacement>
-                  <!-- Service jboss.pojo."org.jboss.netty.internal.LoggerConfigurator".DESCRIBED is already registered -->
-                  <token>&lt;extension module="org.jboss.as.pojo"/&gt;</token>
-                  <value></value>
-                </replacement>
-                <replacement>
-                  <token>&lt;subsystem xmlns="urn:jboss:domain:pojo:1.0"/&gt;</token>
-                  <value></value>
-                </replacement>
-                <replacement>
-                  <!--  AUTO-FORMAT: the following line must not be broken up! -->
-                  <token>&lt;security-settings&gt;\s*&lt;security-setting match="#"&gt;\s*&lt;permission type="send" roles="guest"/&gt;\s*&lt;permission type="consume" roles="guest"/&gt;</token>
-                  <value>&lt;security-settings&gt;
-                &lt;security-setting match="#"&gt;
-                    &lt;permission type="send" roles="admin"/&gt;
-                    &lt;permission type="consume" roles="admin"/&gt;</value>
-                </replacement>
-                <replacement>
-                  <token>periodic-rotating-file-handler&gt;</token>
-                  <value>periodic-rotating-file-handler&gt;
-                    &lt;periodic-rotating-file-handler name="DEBUGFILE" autoflush="true"&gt;
-                    &lt;formatter&gt;
-                    &lt;pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/&gt;
-                    &lt;/formatter&gt;
-                    &lt;file relative-to="jboss.server.log.dir" path="debug.server.log"/&gt;
-                    &lt;suffix value=".yyyy-MM-dd"/&gt;
-                    &lt;append value="true"/&gt;
-                    &lt;/periodic-rotating-file-handler&gt;</value>
-                </replacement>
-                <replacement>
-                    <token>&lt;root-logger&gt;\s*&lt;level name="INFO"/&gt;</token>
-                    <value>&lt;root-logger&gt;
-                    &lt;level name="DEBUG"/&gt;
-                    </value>
-                </replacement>
-                <replacement>
-                    <token>&lt;handlers&gt;</token>
-                    <value>&lt;handlers&gt;
-                    &lt;handler name="DEBUGFILE"/&gt;</value>
-                </replacement>
-              </replacements>
-            </configuration>
           </execution>
-        </executions>
-      </plugin>
+          </executions>
+          <configuration>
+               <file>${project.build.directory}/test-classes/test.properties</file>
+               <token>jboss</token>
+               <value>ABC</value>
+            </configuration>
+        </plugin>
     </plugins>
   </build>
 </project>

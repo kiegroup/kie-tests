@@ -26,7 +26,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
@@ -35,7 +35,7 @@ public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
 
     @Deployment(testable = false, name = "kie-wb-jboss")
     public static Archive<?> createWar() {
-        return createTestWar("jboss-as7");
+        return createTestWar();
     }
 
     public boolean doDeploy() { 
@@ -53,11 +53,6 @@ public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     }
 
     @Override
-    public boolean useFormBasedAuth() {
-        return false;
-    }
-
-    @Override
     public boolean doRestTests() {
         return true;
     }
@@ -68,7 +63,7 @@ public class JbossAsRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     }
     
     @Override
-    public long getTimeout() {
-        return 4000l;
+    public int getTimeoutInSecs() {
+        return 4;
     }
 }

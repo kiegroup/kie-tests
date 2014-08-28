@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.tomcat;
+package org.kie.tests.wb.jboss;
 
-import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
+import static org.kie.tests.wb.jboss.KieWbWarJbossAsDeploy.createTestWar;
 
 import java.net.URL;
 
@@ -29,18 +29,17 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class TomcatIssueIntegrationTest extends AbstractIssueIntegrationTest {
+public class JbossAsIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-tomcat")
+    @Deployment(testable = false, name = "kie-wb-jboss")
     public static Archive<?> createWar() {
         return createTestWar();
     }
-
+    
     @ArquillianResource
     URL deploymentUrl;
     

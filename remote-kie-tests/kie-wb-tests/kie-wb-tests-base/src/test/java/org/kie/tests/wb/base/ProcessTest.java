@@ -1,6 +1,6 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.AbstractIntegrationTestMethods.runRuleTaskProcess;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
@@ -39,8 +39,8 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.tests.MyType;
-import org.kie.tests.wb.base.methods.JmsIntegrationTestMethods;
-import org.kie.tests.wb.base.methods.RestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +132,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         assertEquals("VariableInstanceLog list size",  1, viLogs.size());
         VariableInstanceLog vil = viLogs.get(0);
         assertNotNull("Empty VariableInstanceLog instance.", vil);
-        assertEquals("Process instance id", vil.getProcessInstanceId(), processInstanceId);
+        assertEquals("Process instance id", vil.getProcessInstanceId().longValue(), processInstanceId);
         assertEquals("Variable id", vil.getVariableId(), "myobject");
         assertEquals("Variable value", vil.getValue(), type.toString());
 
@@ -185,15 +185,14 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
     }
 
     @Test
-    public void runHumanTaskGroupIdTest() throws Exception {
+    public void humanTaskGroupIdTest() throws Exception {
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
         resources.put("repo/test/evaluation.bpmn2", ResourceType.BPMN2);
         RuntimeManager runtimeManager = createRuntimeManager(resources);
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
         
-        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false, false);
-        jmsTests.runHumanTaskGroupIdTest(runtimeEngine, runtimeEngine, runtimeEngine);
+        runHumanTaskGroupIdTest(runtimeEngine, runtimeEngine, runtimeEngine);
     }
     
     @Test
@@ -205,7 +204,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        JmsIntegrationTestMethods jmsTests = new JmsIntegrationTestMethods("blah", false, false);
+        KieWbJmsIntegrationTestMethods jmsTests = new KieWbJmsIntegrationTestMethods("blah", false, false);
         jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
     }
     
@@ -238,7 +237,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
         KModuleDeploymentUnit depUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
-        RestIntegrationTestMethods testMethods = RestIntegrationTestMethods.newBuilderInstance()
+        KieWbRestIntegrationTestMethods testMethods = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(depUnit.getIdentifier())
                 .build();
         testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
