@@ -62,7 +62,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
    
     @Override
-    public int getTimeout() {
-        return 1000;
+    public int getTimeoutInSecs() {
+        return 4;
     }
 }

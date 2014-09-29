@@ -63,6 +63,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -98,7 +99,6 @@ import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
 import org.kie.remote.jaxb.gen.GetTaskCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
-import org.kie.remote.jaxb.gen.JaxbStringObjectMapEntry;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
@@ -106,7 +106,6 @@ import org.kie.remote.tests.base.AbstractKieRemoteRestMethods;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.builder.RemoteRestRuntimeEngineBuilder;
-import org.kie.services.client.api.builder.RemoteRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
@@ -128,8 +127,6 @@ import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.services.shared.ServicesVersion;
 import org.kie.tests.MyType;
-import org.kie.tests.Person;
-import org.kie.tests.Request;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +143,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
     private MediaType mediaType;
-    private String contentType;
     private int timeoutInSecs;
     private static final int DEFAULT_TIMEOUT = 10;
 
@@ -210,33 +206,41 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             return new KieWbRestIntegrationTestMethods(deploymentId, mediaType, timeout, strategy);
         }
     }
-    
+
     private class RequestCreator {
 
         private final URL baseUrl;
         private final String userName;
         private final String password;
         private final MediaType contentType;
-        
-        public RequestCreator( URL baseUrl, String user, String password, MediaType mediaType) { 
-           this.baseUrl = baseUrl;
-           this.userName = user;
-           this.password = password;
-           this.contentType = mediaType;
+
+        public RequestCreator(URL baseUrl, String user, String password, MediaType mediaType) {
+            StringBuilder urlString = new StringBuilder(baseUrl.toString());
+            if( !urlString.toString().endsWith("/") ) {
+                urlString.append("/");
+            }
+            urlString.append("rest/");
+            try {
+                this.baseUrl = new URL(urlString.toString());
+            } catch(Exception e) { 
+                e.printStackTrace();
+                throw new IllegalStateException("Invalid url: " +  urlString, e);
+            }
+            this.userName = user;
+            this.password = password;
+            this.contentType = mediaType;
         }
-        
-        public KieRemoteHttpRequest createRequest( String relativeUrl ) { 
-           KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(baseUrl)
-                   .basicAuthorization(userName, password)
-                   .relativeRequest(relativeUrl)
-                   .accept(contentType.toString());
-           return request;
+
+        public KieRemoteHttpRequest createRequest( String relativeUrl ) {
+            KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(baseUrl).basicAuthorization(userName, password)
+                    .relativeRequest(relativeUrl).accept(contentType.toString());
+            return request;
         }
     }
 
-    private JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
+    private JaxbSerializationProvider jaxbSerializationProvider;
     {
-        jaxbSerializationProvider.addJaxbClasses(MyType.class);
+        jaxbSerializationProvider = JaxbSerializationProvider.clientSideInstance(MyType.class);
     }
     private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
 
@@ -252,7 +256,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
     @Override
     public String getContentType() {
-        return contentType;
+        return mediaType.toString();
     }
 
     @Override
@@ -366,7 +370,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
 
         // Create request
-        String url = appUrl.toExternalForm() + "rest/deployment/" + depUnit.getIdentifier() + "/deploy";
+        String url = appUrl.toExternalForm() + "deployment/" + depUnit.getIdentifier() + "/deploy";
         if( strategy.equals(RuntimeStrategy.SINGLETON) ) {
             url += "?strategy=" + strategy.toString();
         }
@@ -499,13 +503,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // Start process
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
                 + HUMAN_TASK_PROCESS_ID + "/start");
-        KieRemoteHttpResponse response = httpRequest.accept(contentType).post().response();
+        KieRemoteHttpResponse response = httpRequest.accept(getContentType()).post().response();
         JaxbProcessInstanceResponse processInstance = deserialize(response, JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
         httpRequest = queryRequestCreator.createRequest("task/query?processInstanceId=" + procInstId);
-        response = httpRequest.accept(contentType).get().response();
+        response = httpRequest.accept(getContentType()).get().response();
         JaxbTaskSummaryListResponse taskSumlistResponse = deserialize(response, JaxbTaskSummaryListResponse.class);
 
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
@@ -794,13 +798,22 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
         httpRequest = requestCreator.createRequest(startProcessOper);
         logger.debug(">> " + httpRequest.getUri());
-        String result = post(httpRequest, 200);
+        String result = post(httpRequest, 200, this.mediaType.toString());
         if( !result.startsWith("{") ) {
             logger.error("Should be JSON:\n" + result);
             fail("Doesn't start like a JSON string!");
         }
 
         this.mediaType = origType;
+    }
+   
+    private String post(KieRemoteHttpRequest httpRequest, int status, String contentType) { 
+        logger.debug( "> [POST] " + httpRequest.getUri().toString() );
+        httpRequest.accept(contentType).post();
+        checkResponse(httpRequest, status);
+        String result = httpRequest.response().body();
+        httpRequest.disconnect();
+        return result;
     }
 
     public void urlsHumanTaskWithVariableChangeFormParameters( URL deploymentUrl, String user, String password ) throws Exception {
@@ -815,7 +828,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         // query tasks for associated task Id
         httpRequest = requestCreator.createRequest("task/query");
-        httpRequest.form("processInstanceId", String.valueOf(procInstId));
+        httpRequest.query("processInstanceId", String.valueOf(procInstId));
         JaxbTaskSummaryListResponse taskSumlistResponse = get(httpRequest, JaxbTaskSummaryListResponse.class);
 
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
@@ -853,7 +866,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsHttpURLConnectionAcceptHeaderIsFixed( URL deploymentUrl, String user, String password ) throws Exception {
-        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/"
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "runtime/" + deploymentId + "/process/"
                 + SCRIPT_TASK_PROCESS_ID + "/start");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -939,7 +952,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         // Get it via the URL
         this.mediaType = origType;
-        KieRemoteHttpRequest httpRequest = new RequestCreator(deploymentUrl, user, password, mediaType).createRequest("task/" + taskId);
+        KieRemoteHttpRequest httpRequest = new RequestCreator(deploymentUrl, user, password, mediaType).createRequest("task/"
+                + taskId);
         org.kie.remote.jaxb.gen.Task jaxbTask = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
         checkReturnedTask((Task) jaxbTask, taskId);
 
@@ -996,9 +1010,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         Content content = get(httpRequest, Content.class);
         assertNotNull("No content retrieved!", content.getContentMap());
         String groupId = null;
-        for( JaxbStringObjectMapEntry entry : content.getContentMap().getEntries() ) {
+        for( Entry<String, Object> entry : content.getContentMap().entrySet() ) { 
             if( entry.getKey().equals("GroupId") ) {
-                groupId = new String(entry.getValue());
+                groupId = new String((String) entry.getValue());
                 break;
             }
         }
@@ -1101,7 +1115,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         }
         assertEquals(200, respCode);
 
-        JaxbSerializationProvider jaxbSerializer = new JaxbSerializationProvider();
+        JaxbSerializationProvider jaxbSerializer = JaxbSerializationProvider.clientSideInstance();
         String xmlStrObj = getConnectionContent(connection.getContent());
         logger.info("Output: |" + xmlStrObj + "|");
         depList = (JaxbDeploymentUnitList) jaxbSerializer.deserialize(xmlStrObj);
@@ -1164,7 +1178,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/"
                 + varName);
-        String xmlOrJsonStr = get(httpRequest, String.class);
+        String xmlOrJsonStr = httpRequest.get().response().body();
         JAXBElement<MyType> retrievedVarElem;
         try {
             JAXBElement elem = (new ObjectMapper()).readValue(xmlOrJsonStr, JAXBElement.class);
@@ -1227,7 +1241,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         TaskSummary taskSummary = getTaskSummary(maryRequestCreator, procInstId, Status.Ready);
         long taskId = taskSummary.getId();
         assertNull(taskSummary.getActualOwner());
-        assertTrue(taskSummary.getPotentialOwners().isEmpty());
+        assertNull(taskSummary.getPotentialOwners());
         assertEquals("Task 1", taskSummary.getName());
 
         // complete 'Task 1' as mary
@@ -1420,7 +1434,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         // Check that project is not deployed
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + classpathDeploymentId + "/");
-        httpRequest.accept(contentType);
+        httpRequest.accept(getContentType());
 
         // Run test the first time
         if( !isDeployed(kDepUnit, httpRequest) ) {

@@ -13,14 +13,24 @@ public class DeployUtil {
 
     protected static final Logger logger = LoggerFactory.getLogger(DeployUtil.class);
    
+    public static WebArchive getWebArchive(String groupId, String artifactId, String projectVersion) { 
+       return getWebArchive(groupId, artifactId, null, projectVersion);
+    }
+    
     public static WebArchive getWebArchive(String groupId, String artifactId, String classifier, String projectVersion) { 
+        StringBuilder gavId = new StringBuilder( groupId + ":" + artifactId + ":war:");
+        if( classifier != null && ! classifier.trim().isEmpty() ) {
+           gavId.append(classifier + ":");
+        }
+        gavId.append(projectVersion);
+        
         File [] warFile = 
                 Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve( groupId + ":" + artifactId + ":war:" + classifier + ":" + projectVersion )
+                .resolve( gavId.toString() )
                 .withoutTransitivity()
                 .asFile();
-        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, classifier + ".war").importFrom(warFile[0]);
+        ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(warFile[0]);
         
         WebArchive war = zipWar.as(WebArchive.class);
         return war;

@@ -23,18 +23,15 @@ public class KieWbWarTomcatDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = {
-                    { "org.jbpm", "jbpm-human-task-audit" }, 
-                    { "org.jbpm", "jbpm-human-task-core" }, 
-                    { "org.kie.remote", "kie-remote-services" }, 
+                    { "org.jboss.resteasy", "resteasy-jackson-provider" }, 
+                    
                     { "org.kie.remote", "kie-remote-jaxb" },
+                    { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-common" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
         }
         
-        // Add data service resource for tests
-        war.addPackage("org/kie/tests/wb/base/services/data");
-       
         return war;
     }
 

@@ -1,7 +1,6 @@
 package org.kie.tests.wb.eap;
 
-import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
-import static org.kie.remote.tests.base.DeployUtil.replaceJars;
+import static org.kie.remote.tests.base.DeployUtil.*;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -37,6 +36,7 @@ public class KieWbWarJbossEapDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = { 
+                    { "org.jbpm", "jbpm-kie-services" },
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-jaxb" },
                     { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
@@ -50,6 +50,9 @@ public class KieWbWarJbossEapDeploy {
             addNewJars(war, jarsToAdd);
             replaceWebXmlForWebServices(war);
             */
+           
+            String [] jarsToDel = { "kie-remote-rest-api" };
+            deleteJars(war, jarsToDel);
         }
        
         // Add data service resource for tests

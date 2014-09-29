@@ -105,7 +105,7 @@ public class KieWbJmsIntegrationTestMethods {
 
     private final String deploymentId;
     private final InitialContext remoteInitialContext;
-    private final JaxbSerializationProvider jaxbSerializationProvider = new JaxbSerializationProvider();
+    private final JaxbSerializationProvider jaxbSerializationProvider = JaxbSerializationProvider.clientSideInstance();
 
     public KieWbJmsIntegrationTestMethods(String deploymentId) {
        this(deploymentId, true, false);

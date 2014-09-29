@@ -38,10 +38,12 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
         return createTestWar();
     }
 
+    @Override
     public boolean doDeploy() {
         return true;
     }
 
+    @Override
     public MediaType getMediaType() {
         return MediaType.APPLICATION_JSON_TYPE;
     }
