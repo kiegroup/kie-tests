@@ -8,18 +8,16 @@
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests</artifactId>
+  <artifactId>kie-drools-wb-tests</artifactId>
   <packaging>pom</packaging>
 
   <name>Drools Workbench Integration Tests</name>
 
   <modules>
-    <module>drools-wb-tests-base</module>
-    <module>drools-wb-tests-jboss</module>
-    <module>drools-wb-tests-tomcat</module>
-    <!--
+    <module>kie-drools-wb-tests-base</module>
+    <module>kie-drools-wb-tests-jboss</module>
+    <module>kie-drools-wb-tests-tomcat</module>
     <module>kie-drools-wb-tests-eap</module>
-    -->
   </modules>
 
   <properties>
@@ -70,7 +68,7 @@
       
       <dependency>
         <groupId>org.kie.tests.remote</groupId>
-        <artifactId>drools-wb-tests-base</artifactId>
+        <artifactId>kie-drools-wb-tests-base</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

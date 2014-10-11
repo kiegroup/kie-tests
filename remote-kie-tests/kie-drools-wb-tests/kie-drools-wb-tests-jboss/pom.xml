@@ -4,11 +4,11 @@
 
   <parent>
     <groupId>org.kie.tests.remote</groupId>
-    <artifactId>drools-wb-tests</artifactId>
+    <artifactId>kie-drools-wb-tests</artifactId>
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests-jboss</artifactId>
+  <artifactId>kie-drools-wb-tests-jboss</artifactId>
   <packaging>jar</packaging>
 
   <name>Drools Workbench Integration Tests :: JBoss AS 7</name>
@@ -32,13 +32,13 @@
 
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
-      <artifactId>drools-wb-tests-base</artifactId>
+      <artifactId>kie-drools-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.drools</groupId>
-      <artifactId>drools-wb-distribution-wars</artifactId>
+      <artifactId>kie-drools-wb-distribution-wars</artifactId>
       <classifier>jboss-as7</classifier>
       <version>${project.version}</version>
       <type>0.war</type>
@@ -142,7 +142,7 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>org.drools</groupId>
-                  <artifactId>drools-wb-distribution-wars</artifactId>
+                  <artifactId>kie-drools-wb-distribution-wars</artifactId>
                   <classifier>jboss-as7</classifier>
                   <type>0.war</type>
                   <overWrite>false</overWrite>

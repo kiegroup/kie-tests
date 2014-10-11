@@ -4,11 +4,11 @@
 
   <parent>
     <groupId>org.kie.tests.remote</groupId>
-    <artifactId>drools-wb-tests</artifactId>
+    <artifactId>kie-drools-wb-tests</artifactId>
     <version>6.0.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>drools-wb-tests-base</artifactId>
+  <artifactId>kie-drools-wb-tests-base</artifactId>
   <packaging>jar</packaging>
 
   <name>Drools Workbench Integration Tests :: Test Methods</name>
