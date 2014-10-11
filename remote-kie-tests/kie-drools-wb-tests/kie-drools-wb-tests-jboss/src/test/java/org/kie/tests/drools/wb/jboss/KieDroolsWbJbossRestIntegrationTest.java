@@ -10,11 +10,11 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.runner.RunWith;
-import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
+import org.kie.tests.drools.wb.base.AbstractKieDroolsWbIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class KieDroolsWbRestJbossIntegrationTest extends AbstractDroolsWbIntegrationTest {
+public class KieDroolsWbJbossRestIntegrationTest extends AbstractKieDroolsWbIntegrationTest {
 
     protected static WebArchive createTestWar() {
         // Import kie-wb war

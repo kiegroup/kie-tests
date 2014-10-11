@@ -1,12 +1,13 @@
 package org.kie.tests.drools.wb.base.methods;
 
-import static org.junit.Assert.*;
-import static org.kie.remote.tests.base.RestUtil.checkTimeResponse;
-import static org.kie.remote.tests.base.RestUtil.get;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.kie.tests.drools.wb.base.util.TestConstants.PASSWORD;
 import static org.kie.tests.drools.wb.base.util.TestConstants.USER;
 
-import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -16,9 +17,6 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.guvnor.rest.client.AddRepositoryToOrganizationalUnitRequest;
 import org.guvnor.rest.client.CompileProjectRequest;
@@ -32,22 +30,20 @@ import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryFromOrganizationalUnitRequest;
 import org.guvnor.rest.client.RepositoryRequest;
 import org.guvnor.rest.client.RepositoryResponse;
-import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.client.ClientResponse;
 import org.junit.Test;
-import org.kie.remote.client.rest.KieRemoteHttpRequest;
-import org.kie.remote.jaxb.gen.GetContentCommand;
+import org.kie.remote.common.rest.KieRemoteHttpRequest;
 import org.kie.remote.tests.base.AbstractKieRemoteRestMethods;
-import org.kie.services.client.api.RestRequestHelper;
+import org.kie.remote.tests.base.RestRequestHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * These are various tests for the drools-wb-rest module
  */
-public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethods {
+public class KieDroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethods {
 
-    private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestMethods.class);
+    private static Logger logger = LoggerFactory.getLogger(KieDroolsWbRestIntegrationTestMethods.class);
 
     private final int maxTries = 10;
    
@@ -71,6 +67,12 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         return result;
     }
         
+    private RequestCreator getRequestCreator(URL deploymentUrl) { 
+        return new RequestCreator(deploymentUrl, 
+                USER, PASSWORD, 
+                MediaType.APPLICATION_JSON_TYPE);
+    }
+  
     private RestRequestHelper getRestRequestHelper(URL deploymentUrl) { 
         return RestRequestHelper.newInstance(deploymentUrl, 
                 USER, PASSWORD, 
@@ -98,6 +100,37 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         }
         return result;
     }
+   
+    private class RequestCreator {
+
+        private final URL baseUrl;
+        private final String userName;
+        private final String password;
+        private final MediaType contentType;
+
+        public RequestCreator(URL baseUrl, String user, String password, MediaType mediaType) {
+            StringBuilder urlString = new StringBuilder(baseUrl.toString());
+            if( !urlString.toString().endsWith("/") ) {
+                urlString.append("/");
+            }
+            urlString.append("rest/");
+            try {
+                this.baseUrl = new URL(urlString.toString());
+            } catch(Exception e) { 
+                e.printStackTrace();
+                throw new IllegalStateException("Invalid url: " +  urlString, e);
+            }
+            this.userName = user;
+            this.password = password;
+            this.contentType = mediaType;
+        }
+
+        public KieRemoteHttpRequest createRequest( String relativeUrl ) {
+            KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(baseUrl).basicAuthorization(userName, password)
+                    .relativeRequest(relativeUrl).accept(contentType.toString());
+            return request;
+        }
+    }
     
     // Test methods ---------------------------------------------------------------------------------------------------------------
     
@@ -114,8 +147,8 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
      */
     public void manipulatingRepositories(URL deploymentUrl) throws Exception {
         // rest/repositories GET
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl);
-        KieRemoteHttpRequest httpRequest = requestHelper.createRequest("repositories");
+        RequestCreator requestCreator = getRequestCreator(deploymentUrl);
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("repositories");
         Collection<RepositoryResponse> repoResponses = get(httpRequest, Collection.class);
         assertTrue( repoResponses.size() > 0 );
         String ufPlaygroundUrl = null;
@@ -128,8 +161,31 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         }
         assertEquals( "UF-Playground Git URL", "git://uf-playground", ufPlaygroundUrl );
         
+        { 
+            // rest/repositories POST
+            httpRequest = requestCreator.createRequest("repositories");
+            RepositoryRequest newRepo = new RepositoryRequest();
+            String repoName = UUID.randomUUID().toString();
+            newRepo.setName(repoName);
+            newRepo.setDescription("repo for testing rest services");
+            newRepo.setRequestType("new");
+            newRepo.setPassword("");
+            newRepo.setUserName("");
+            addToRequestBody(httpRequest, newRepo);
+
+            CreateOrCloneRepositoryRequest createJobRequest = postCheckTime(httpRequest, 202, CreateOrCloneRepositoryRequest.class);
+            logger.debug("]] " + httpRequest.response().body() );
+            assertNotNull( "create repo job request", createJobRequest);
+            assertEquals( "job request status", JobStatus.ACCEPTED, createJobRequest.getStatus() );
+            String jobId = createJobRequest.getJobId();
+
+            // rest/jobs/{jobId} GET
+            JobResult jobResult = waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestCreator);
+            assertFalse( "Job did not fail: " + jobResult.getStatus(), JobStatus.SUCCESS.equals(jobResult.getStatus()) );
+        }
+
         // rest/repositories POST
-        httpRequest = requestHelper.createRequest("repositories");
+        httpRequest = requestCreator.createRequest("repositories");
         RepositoryRequest newRepo = new RepositoryRequest();
         String repoName = UUID.randomUUID().toString();
         newRepo.setName(repoName);
@@ -145,10 +201,10 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         String jobId = createJobRequest.getJobId();
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestCreator);
         
         // rest/repositories/{repoName}/projects POST
-        httpRequest = requestHelper.createRequest("repositories/" + repoName + "/projects");
+        httpRequest = requestCreator.createRequest("repositories/" + repoName + "/projects");
         Entity project = new Entity();
         project.setDescription("test project");
         String testProjectName = "test-project";
@@ -158,7 +214,7 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         logger.debug("]] " + httpRequest.response().body());
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(deploymentUrl, jobId, createProjectRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, jobId, createProjectRequest.getStatus(), requestCreator);
     }
    
     /**
@@ -174,8 +230,8 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
     @Test
     public void mavenOperations(URL deploymentUrl) throws Exception { 
         // rest/repositories GET
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl);
-        KieRemoteHttpRequest httpRequest = requestHelper.createRequest("repositories");
+        RequestCreator requestCreator = getRequestCreator(deploymentUrl);
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("repositories");
         Collection<Map<String, String>> repoResponses = get(httpRequest, Collection.class);
         assertTrue( repoResponses.size() > 0 );
         String repoName = repoResponses.iterator().next().get("name");
@@ -183,7 +239,7 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         String projectName = UUID.randomUUID().toString();
         {
         // rest/repositories/{repoName}/projects POST
-        httpRequest = requestHelper.createRequest("repositories/" + repoName + "/projects");
+        httpRequest = requestCreator.createRequest("repositories/" + repoName + "/projects");
         Entity project = new Entity();
         project.setDescription("test project");
         project.setName(projectName);
@@ -193,18 +249,18 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         logger.debug("]] " + httpRequest.response().body() );
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestCreator);
         }
 
         {
         // rest/repositories/{repoName}/projects POST
-        httpRequest = requestHelper.createRequest("repositories/" + repoName + "/projects/" + projectName + "/maven/compile");
+        httpRequest = requestCreator.createRequest("repositories/" + repoName + "/projects/" + projectName + "/maven/compile");
         CompileProjectRequest compileRequest = postCheckTime(httpRequest, 202, CompileProjectRequest.class);
         assertNotNull( "Empty response object", compileRequest );
         logger.debug("]] " + httpRequest.response().body());
         
         // rest/jobs/{jobId} GET
-        waitForJobToComplete(deploymentUrl, compileRequest.getJobId(), compileRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, compileRequest.getJobId(), compileRequest.getStatus(), requestCreator);
         }
        
         // TODO implement GET
@@ -216,12 +272,13 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         /** delete projects, verify that list of projects is now one less */
     }
     
-    private void waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus, RestRequestHelper requestHelper) throws Exception {
+    private JobResult waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus, RequestCreator requestCreator) throws Exception {
         assertEquals( "Initial status of request should be ACCEPTED", JobStatus.ACCEPTED, jobStatus );
         int wait = 0;
+        JobResult jobResult = null;
         while( jobStatus.equals(JobStatus.ACCEPTED) && wait < maxTries ) {
-            KieRemoteHttpRequest httpRequest = requestHelper.createRequest("jobs/" + jobId);
-            JobResult jobResult = get(httpRequest, JobResult.class);
+            KieRemoteHttpRequest httpRequest = requestCreator.createRequest("jobs/" + jobId);
+            jobResult = get(httpRequest, JobResult.class);
             logger.debug( "]] " + httpRequest.response().body() );
             assertEquals( jobResult.getJobId(), jobId );
             jobStatus = jobResult.getStatus();
@@ -229,6 +286,8 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
             Thread.sleep(3*1000);
         }
         assertTrue( "Too many tries!", wait < maxTries );
+        
+        return jobResult;
     }
    
     /**
@@ -243,13 +302,13 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
     @Test
     public void manipulatingOUs(URL deploymentUrl) throws Exception { 
         // rest/organizaionalunits GET
-        RestRequestHelper requestHelper = getRestRequestHelper(deploymentUrl);
-        KieRemoteHttpRequest httpRequest = requestHelper.createRequest("organizationalunits");
+        RequestCreator requestCreator = getRequestCreator(deploymentUrl);
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("organizationalunits");
         Collection<OrganizationalUnit> orgUnits = get( httpRequest, Collection.class);
         int origUnitsSize = orgUnits.size();
         
         // rest/organizaionalunits POST
-        httpRequest = requestHelper.createRequest("organizationalunits");
+        httpRequest = requestCreator.createRequest("organizationalunits");
         OrganizationalUnit orgUnit = new OrganizationalUnit();
         orgUnit.setDescription("Test OU");
         orgUnit.setName(UUID.randomUUID().toString());
@@ -258,15 +317,15 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         CreateOrganizationalUnitRequest createOURequest = postCheckTime(httpRequest, 202, CreateOrganizationalUnitRequest.class);
 
         // rest/jobs/{jobId}
-        waitForJobToComplete(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus(), requestCreator);
        
         // rest/organizaionalunits GET
-        httpRequest = requestHelper.createRequest("organizationalunits");
+        httpRequest = requestCreator.createRequest("organizationalunits");
         orgUnits = get(httpRequest, Collection.class);
         assertEquals( "Exepcted an OU to be added.", origUnitsSize + 1, orgUnits.size());
         
         // rest/repositories POST
-        httpRequest = requestHelper.createRequest("repositories");
+        httpRequest = requestCreator.createRequest("repositories");
         RepositoryRequest newRepo = new RepositoryRequest();
         String repoName = UUID.randomUUID().toString();
         newRepo.setName(repoName);
@@ -280,10 +339,10 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         assertEquals( "job request status", JobStatus.ACCEPTED, createRepoRequest.getStatus() );
                 
         // rest/jobs/{jobId}
-        waitForJobToComplete(deploymentUrl, createRepoRequest.getJobId(), createRepoRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, createRepoRequest.getJobId(), createRepoRequest.getStatus(), requestCreator);
        
         // rest/organizationalunits/{ou}/repositories/{repoName} POST
-        httpRequest = requestHelper.createRequest("organizationalunits/" + orgUnit.getName() + "/repositories/" + repoName);
+        httpRequest = requestCreator.createRequest("organizationalunits/" + orgUnit.getName() + "/repositories/" + repoName);
         
         AddRepositoryToOrganizationalUnitRequest addRepoToOuRequest = postCheckTime(httpRequest, 202, AddRepositoryToOrganizationalUnitRequest.class);
         logger.debug("]] " + httpRequest.response().body());
@@ -291,10 +350,10 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         assertEquals( "job request status", JobStatus.ACCEPTED, addRepoToOuRequest.getStatus() );
         
         // rest/jobs/{jobId}
-        waitForJobToComplete(deploymentUrl, addRepoToOuRequest.getJobId(), addRepoToOuRequest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, addRepoToOuRequest.getJobId(), addRepoToOuRequest.getStatus(), requestCreator);
        
         // rest/organizationalunits/{ou} GET
-        httpRequest = requestHelper.createRequest("organizationalunits/" + orgUnit.getName() );
+        httpRequest = requestCreator.createRequest("organizationalunits/" + orgUnit.getName() );
         
         OrganizationalUnit orgUnitRequest = get( httpRequest, OrganizationalUnit.class);
         logger.debug("]] " + httpRequest.response().body() );
@@ -303,7 +362,7 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         assertTrue( "repository has not been added to organizational unit", orgUnitRequest.getRepositories().contains(repoName));
         
         // rest/organizationalunits/{ou}/repositories/{repoName} DELETE
-        httpRequest = requestHelper.createRequest("organizationalunits/" + orgUnit.getName() + "/repositories/" + repoName);
+        httpRequest = requestCreator.createRequest("organizationalunits/" + orgUnit.getName() + "/repositories/" + repoName);
         
         RemoveRepositoryFromOrganizationalUnitRequest remRepoFromOuRquest = postCheckTime(httpRequest, 202, RemoveRepositoryFromOrganizationalUnitRequest.class);
         logger.debug("]] " + httpRequest.response().body() );
@@ -311,10 +370,10 @@ public class DroolsWbRestIntegrationTestMethods extends AbstractKieRemoteRestMet
         assertEquals( "job request status", JobStatus.ACCEPTED, remRepoFromOuRquest.getStatus() );
         
         // rest/jobs/{jobId}
-        waitForJobToComplete(deploymentUrl, remRepoFromOuRquest.getJobId(), remRepoFromOuRquest.getStatus(), requestHelper);
+        waitForJobToComplete(deploymentUrl, remRepoFromOuRquest.getJobId(), remRepoFromOuRquest.getStatus(), requestCreator);
         
         // rest/organizationalunits/{ou} GET
-        httpRequest = requestHelper.createRequest("organizationalunits/" + orgUnit.getName() );
+        httpRequest = requestCreator.createRequest("organizationalunits/" + orgUnit.getName() );
         
         orgUnitRequest = get( httpRequest, OrganizationalUnit.class);
         logger.debug("]] " + httpRequest.response().body() );

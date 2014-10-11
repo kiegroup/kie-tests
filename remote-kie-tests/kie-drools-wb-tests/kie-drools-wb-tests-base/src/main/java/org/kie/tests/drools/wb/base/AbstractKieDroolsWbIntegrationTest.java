@@ -4,11 +4,11 @@ import java.net.URL;
 
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
-import org.kie.tests.drools.wb.base.methods.DroolsWbRestIntegrationTestMethods;
+import org.kie.tests.drools.wb.base.methods.KieDroolsWbRestIntegrationTestMethods;
 
-public abstract class AbstractDroolsWbIntegrationTest {
+public abstract class AbstractKieDroolsWbIntegrationTest {
 
-    private DroolsWbRestIntegrationTestMethods restTests = new DroolsWbRestIntegrationTestMethods();
+    private KieDroolsWbRestIntegrationTestMethods restTests = new KieDroolsWbRestIntegrationTestMethods();
     
     @ArquillianResource
     URL deploymentUrl;

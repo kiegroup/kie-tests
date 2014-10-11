@@ -11,7 +11,7 @@
   <artifactId>kie-drools-wb-tests</artifactId>
   <packaging>pom</packaging>
 
-  <name>Drools Workbench Integration Tests</name>
+  <name>KIE Drools Workbench Integration Tests</name>
 
   <modules>
     <module>kie-drools-wb-tests-base</module>

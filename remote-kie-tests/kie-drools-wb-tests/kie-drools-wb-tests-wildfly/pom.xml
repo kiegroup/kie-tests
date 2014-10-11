@@ -11,7 +11,7 @@
   <artifactId>kie-drools-wb-tests-wildfly</artifactId>
   <packaging>jar</packaging>
 
-  <name>KIE Workbench Integration Tests :: Wildfly 8</name>
+  <name>KIE Drools Workbench Integration Tests :: Wildfly 8</name>
 
   <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 

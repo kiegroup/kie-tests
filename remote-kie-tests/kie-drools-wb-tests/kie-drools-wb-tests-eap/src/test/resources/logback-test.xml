@@ -10,6 +10,7 @@
   </appender>
 
   <logger name="org.kie.tests" level="debug"/>
+  <logger name="org.uberfire" level="debug"/>
   
   <root level="info">
     <appender-ref ref="consoleAppender" />
