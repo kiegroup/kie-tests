@@ -23,14 +23,16 @@ public class KieWbWarTomcatDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = {
-                    { "org.jboss.resteasy", "resteasy-jackson-provider" }, 
-                    
                     { "org.kie.remote", "kie-remote-jaxb" },
+                    { "org.kie.remote", "kie-remote-rest-api" },
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-common" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
         }
+      
+        String [] jarsToDelete = { "cxf-bundle-jaxrs-2.7.11.jar" };
+        deleteJars(war, jarsToDelete);
         
         return war;
     }

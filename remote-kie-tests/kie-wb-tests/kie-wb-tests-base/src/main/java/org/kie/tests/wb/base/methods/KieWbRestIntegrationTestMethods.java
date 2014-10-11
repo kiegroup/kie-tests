@@ -17,37 +17,9 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.MAX_TRIES;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
-import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.CLASSPATH_ARTIFACT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
-import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_OWN_TYPE_ID;
-import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
-import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.VERSION;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
+import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -92,8 +64,8 @@ import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
-import org.kie.remote.client.rest.KieRemoteHttpRequest;
-import org.kie.remote.client.rest.KieRemoteHttpResponse;
+import org.kie.remote.common.rest.KieRemoteHttpRequest;
+import org.kie.remote.common.rest.KieRemoteHttpResponse;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
@@ -127,6 +99,7 @@ import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.services.shared.ServicesVersion;
 import org.kie.tests.MyType;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods.Builder;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -370,7 +343,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
 
         // Create request
-        String url = appUrl.toExternalForm() + "deployment/" + depUnit.getIdentifier() + "/deploy";
+        String url = appUrl.toExternalForm() + "rest/deployment/" + depUnit.getIdentifier() + "/deploy";
         if( strategy.equals(RuntimeStrategy.SINGLETON) ) {
             url += "?strategy=" + strategy.toString();
         }
@@ -866,7 +839,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsHttpURLConnectionAcceptHeaderIsFixed( URL deploymentUrl, String user, String password ) throws Exception {
-        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "runtime/" + deploymentId + "/process/"
+        URL url = new URL(deploymentUrl, deploymentUrl.getPath() + "rest/runtime/" + deploymentId + "/process/"
                 + SCRIPT_TASK_PROCESS_ID + "/start");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -955,7 +928,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         KieRemoteHttpRequest httpRequest = new RequestCreator(deploymentUrl, user, password, mediaType).createRequest("task/"
                 + taskId);
         org.kie.remote.jaxb.gen.Task jaxbTask = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
-        checkReturnedTask((Task) jaxbTask, taskId);
+        checkReturnedTask(jaxbTask, taskId);
 
         // Get it via the remote API
         task = engine.getTaskService().getTaskById(taskId);
@@ -966,6 +939,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         assertNotNull("Could not retrietve task " + taskId, task);
         assertEquals("Incorrect task retrieved", taskId, task.getId().longValue());
         TaskData taskData = task.getTaskData();
+        assertNotNull(taskData);
+    }
+
+    private void checkReturnedTask( org.kie.remote.jaxb.gen.Task task, long taskId ) {
+        assertNotNull("Could not retrietve task " + taskId, task);
+        assertEquals("Incorrect task retrieved", taskId, task.getId().longValue());
+        org.kie.remote.jaxb.gen.TaskData taskData = task.getTaskData();
         assertNotNull(taskData);
     }
 
@@ -1179,29 +1159,15 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/"
                 + varName);
         String xmlOrJsonStr = httpRequest.get().response().body();
-        JAXBElement<MyType> retrievedVarElem;
-        try {
-            JAXBElement elem = (new ObjectMapper()).readValue(xmlOrJsonStr, JAXBElement.class);
-            MyType og = (MyType) elem.getValue();
-            System.out.println("YES! : " + og.toString());
-        } catch( Exception e ) {
-            System.out.println("NO.");
-            e.printStackTrace();
-        }
-        try {
-            MyType og = (new ObjectMapper()).readValue(xmlOrJsonStr, MyType.class);
-            System.out.println("JA! : " + og.toString());
-        } catch( Exception e ) {
-            System.out.println("NEE...");
-            e.printStackTrace();
-        }
-
+        
+        MyType retrievedVar;
         try {
             if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) {
-                retrievedVarElem = (JAXBElement<MyType>) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
+                jaxbSerializationProvider.addJaxbClasses(true, MyType.class);
+                retrievedVar  = (MyType) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
             } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) {
-                jsonSerializationProvider.setDeserializeOutputClass(JAXBElement.class);
-                retrievedVarElem = (JAXBElement<MyType>) jsonSerializationProvider.deserialize(xmlOrJsonStr);
+                jsonSerializationProvider.setDeserializeOutputClass(MyType.class);
+                retrievedVar = (MyType) jsonSerializationProvider.deserialize(xmlOrJsonStr);
             } else {
                 throw new IllegalStateException("Unknown media type: " + mediaType.getType() + "/" + mediaType.getSubtype());
             }
@@ -1210,7 +1176,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             throw se;
         }
 
-        MyType retrievedVar = retrievedVarElem.getValue();
         assertNotNull("Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
         assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
