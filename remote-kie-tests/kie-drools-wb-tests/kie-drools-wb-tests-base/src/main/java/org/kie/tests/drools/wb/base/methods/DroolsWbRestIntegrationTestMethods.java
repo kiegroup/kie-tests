@@ -70,6 +70,31 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         }
         assertEquals( "UF-Playground Git URL", "git://uf-playground", ufPlaygroundUrl );
         
+        { 
+            // rest/repositories POST
+            urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
+            restRequest = createRequest(requestFactory, urlString);
+            RepositoryRequest newRepo = new RepositoryRequest();
+            String repoName = UUID.randomUUID().toString();
+            newRepo.setName(repoName);
+            newRepo.setDescription("repo for testing rest services");
+            newRepo.setRequestType("new");
+            newRepo.setPassword("");
+            newRepo.setUserName("");
+            addToRequestBody(restRequest, newRepo);
+            responseObj = checkTimeResponse(restRequest.post());
+
+            CreateOrCloneRepositoryRequest createJobRequest = responseObj.getEntity(CreateOrCloneRepositoryRequest.class);
+            logger.debug("]] " + convertObjectToJsonString(createJobRequest));
+            assertNotNull( "create repo job request", createJobRequest);
+            assertEquals( "job request status", JobStatus.ACCEPTED, createJobRequest.getStatus() );
+            String jobId = createJobRequest.getJobId();
+
+            // rest/jobs/{jobId} GET
+            JobResult jobResult = waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestFactory);
+            assertTrue( "Job did not fail: " + jobResult.getStatus(), JobStatus.FAIL.equals(jobResult.getStatus()) );
+        }
+
         // rest/repositories POST
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
@@ -162,14 +187,15 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         /** delete projects, verify that list of projects is now one less */
     }
     
-    private void waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus, ClientRequestFactory requestFactory) throws Exception {
+    private JobResult waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus, ClientRequestFactory requestFactory) throws Exception {
         assertEquals( "Initial status of request should be ACCEPTED", JobStatus.ACCEPTED, jobStatus );
         int wait = 0;
+        JobResult jobResult = null;
         while( jobStatus.equals(JobStatus.ACCEPTED) && wait < maxTries ) {
             String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/jobs/" + jobId).toExternalForm();
             ClientRequest restRequest = createRequest(requestFactory, urlString);
             ClientResponse<?> responseObj = checkResponse(restRequest.get());
-            JobResult jobResult = responseObj.getEntity(JobResult.class);
+            jobResult = responseObj.getEntity(JobResult.class);
             logger.debug( "]] " + convertObjectToJsonString(jobResult) );
             assertEquals( jobResult.getJobId(), jobId );
             jobStatus = jobResult.getStatus();
@@ -177,6 +203,8 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
             Thread.sleep(3*1000);
         }
         assertTrue( "Too many tries!", wait < maxTries );
+        
+        return jobResult;
     }
    
     /**

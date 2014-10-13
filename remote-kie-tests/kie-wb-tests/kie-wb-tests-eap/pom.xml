@@ -19,7 +19,7 @@
   == test setup ==
   generate-test-resources: unpack jboss
   process-test-resources:  place standalone-full.xml
-                           fix standalone-full.xml
+                           fix sstandalone-full.xml
   post-integration-test:   fix weird characters in failsafe reports
    -->
   <properties>
@@ -104,7 +104,7 @@
 
     <!-- arquillian -->
     <dependency>
-      <groupId>org.jboss.arquillian.junit</groupId>
+      <groupId>org.jboss.arquillian.djunit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency> 
@@ -285,44 +285,6 @@
           </executions>
           <configuration>
             <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
-          </configuration>
-        </plugin>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>xml-maven-plugin</artifactId>
-                    <versionRange>[1.0,)</versionRange>
-                    <goals>
-                      <goal>transform</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.jboss.byteman</groupId>
-                    <artifactId>byteman-rulecheck-maven-plugin</artifactId>
-                    <versionRange>[2.0,)</versionRange>
-                    <goals>
-                      <goal>transform</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
           </configuration>
         </plugin>
       </plugins>
@@ -560,7 +522,7 @@
                      <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
                      <includes> 
                        <include>standalone-full.xml</include> 
-                     </includes>
+                     </includes>  
                      <stylesheet>src/test/resources-eap-6/xslt/addDebugLogging.xslt</stylesheet>
                    </transformationSet> 
                    <transformationSet> 

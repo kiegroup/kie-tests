@@ -46,11 +46,11 @@
 
     <!--  war -->
     <dependency>
-      <groupId>org.drools</groupId>
+      <groupId>org.kie</groupId>
       <artifactId>kie-drools-wb-distribution-wars</artifactId>
-      <classifier>tomcat7</classifier>
+      <classifier>tomcat7.0</classifier>
       <version>${project.version}</version>
-      <type>0.war</type>
+      <type>war</type>
       <scope>test</scope>
     </dependency>
 
@@ -220,10 +220,10 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.drools</groupId>
+                  <groupId>org.kie</groupId>
                   <artifactId>kie-drools-wb-distribution-wars</artifactId>
-                  <classifier>tomcat7</classifier>
-                  <type>0.war</type>
+                  <classifier>tomcat7.0</classifier>
+                  <type>war</type>
                   <overWrite>false</overWrite>
                 </artifactItem>
               </artifactItems>

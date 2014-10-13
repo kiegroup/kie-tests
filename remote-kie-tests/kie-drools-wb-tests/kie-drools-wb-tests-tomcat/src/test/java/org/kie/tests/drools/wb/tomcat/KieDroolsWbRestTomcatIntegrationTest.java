@@ -1,7 +1,6 @@
-package org.kie.tests.drools.wb.eap;
+package org.kie.tests.drools.wb.tomcat;
 
-import static org.kie.tests.drools.wb.base.methods.TestConstants.PROJECT_VERSION;
-
+import static org.kie.tests.drools.wb.base.methods.TestConstants.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,27 +27,40 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.resteasy.client.ClientExecutor;
 import org.jboss.resteasy.client.ClientRequestFactory;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.junit.runner.RunWith;
+import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KieDroolsWbWarEapDeploy {
+@RunAsClient
+@RunWith(Arquillian.class)
+public class KieDroolsWbRestTomcatIntegrationTest extends AbstractDroolsWbIntegrationTest {
 
-    private static final String classifier = "eap-6_1";
-
-    private static Logger logger = LoggerFactory.getLogger(KieDroolsWbWarEapDeploy.class);
+    @Deployment(testable = false, name="drools-wb")
+    public static Archive<?> createWar() {
+       return createWarWithTestDeploymentLoader("tomcat");
+    }
+ 
+   private static final String classifier = "tomcat7.0";
     
+    private static Logger logger = LoggerFactory.getLogger(KieDroolsWbRestTomcatIntegrationTest.class);
+
     protected static WebArchive createWarWithTestDeploymentLoader(String deployName) {
         // Import kie-wb war
         File[] warFile = Maven.resolver()
                 .loadPomFromFile("pom.xml")
-                .resolve("org.drools:drools-wb-distribution-wars:war:" + classifier + ":" + PROJECT_VERSION)
+                .resolve("org.kie:kie-drools-wb-distribution-wars:war:" + classifier + ":" + PROJECT_VERSION)
                 .withoutTransitivity().asFile();
         
         ZipImporter zipWar = ShrinkWrap.create(ZipImporter.class, deployName + ".war").importFrom(warFile[0]);
