@@ -16,8 +16,8 @@
   <description>Integration tests involving remote interfaces</description>
 
   <modules>
-    <module>drools-wb-tests</module>
     <module>kie-wb-tests</module>
+    <module>kie-drools-wb-tests</module>
     <!--
     <module>jbpm-console-tests</module>
     -->
