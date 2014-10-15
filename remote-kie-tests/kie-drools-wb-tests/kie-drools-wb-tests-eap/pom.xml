@@ -300,6 +300,7 @@
                   </includes>
                   <unescape>true</unescape>
                   <tokenValueMap>${basedir}/replace-tokenFile.txt</tokenValueMap>
+                <ignoreErrors>true</ignoreErrors>
                 </configuration>
               </execution>
             </executions>

@@ -104,7 +104,7 @@
 
     <!-- arquillian -->
     <dependency>
-      <groupId>org.jboss.arquillian.djunit</groupId>
+      <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency> 
@@ -566,6 +566,7 @@
                   </includes>
                   <unescape>true</unescape>
                   <tokenValueMap>${basedir}/replace-tokenFile.txt</tokenValueMap>
+                  <ignoreErrors>true</ignoreErrors>
                 </configuration>
               </execution>
             </executions>

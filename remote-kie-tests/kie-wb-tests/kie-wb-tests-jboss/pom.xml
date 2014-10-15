@@ -149,22 +149,6 @@
       <artifactId>jbpm-persistence-jpa</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-human-task-audit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-runtime-manager</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-shared-services</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
 
     <!-- kie nio providers -->
     <dependency>
@@ -210,12 +194,6 @@
       </exclusions>
     </dependency>
     
-    <!-- maven's broken -->
-    <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-guice</artifactId>
-      <version>3.0.3</version>
-    </dependency>
   </dependencies>
 
   <build>
