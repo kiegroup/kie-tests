@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jbpm.process.audit.VariableInstanceLog;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.manager.audit.AuditService;
-import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.TaskSummary;
@@ -76,6 +76,7 @@ public class KieWbGeneralIntegrationTestMethods {
         testParamSerialization(engine, new Float [] { 39.391f });
     }
     
+
     public static void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("myobject", param);
@@ -120,7 +121,7 @@ public class KieWbGeneralIntegrationTestMethods {
         // Start process
         ProcessInstance pi = ksession.startProcess(TestConstants.RULE_TASK_PROCESS_ID, params);
         assertNotNull( "No Process instance returned!", pi);
-        ksession.fireAllRules();
+        ksession.fireAllRules();        
         
         // Check
 //        assertEquals("Poor customer", ((Request)ksession.getObject(factHandle)).getInvalidReason());
@@ -135,7 +136,6 @@ public class KieWbGeneralIntegrationTestMethods {
     }
    
     public static void runHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
-
         KieSession ksession = krisRuntimeEngine.getKieSession();
 
         // start a new process instance
