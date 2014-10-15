@@ -68,8 +68,6 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrati
         WebArchive war = zipWar.as(WebArchive.class);
 
         String [][] jarsToReplace = { 
-                { "org.uberfire", "uberfire-commons" },
-                { "org.uberfire", "uberfire-io" },
                 { "org.guvnor", "guvnor-project-backend" },
                 { "org.drools", "drools-wb-rest" },
                 { "org.kie.workbench.services", "kie-wb-common-services-api" }

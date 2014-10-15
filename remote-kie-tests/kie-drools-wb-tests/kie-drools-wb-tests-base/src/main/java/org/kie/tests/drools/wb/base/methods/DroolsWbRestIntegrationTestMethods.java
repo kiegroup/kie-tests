@@ -9,7 +9,9 @@ import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -78,7 +80,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
             String repoName = UUID.randomUUID().toString();
             newRepo.setName(repoName);
             newRepo.setDescription("repo for testing rest services");
-            newRepo.setRequestType("new");
+            newRepo.setRequestType("create");
             newRepo.setPassword("");
             newRepo.setUserName("");
             addToRequestBody(restRequest, newRepo);
@@ -92,7 +94,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
 
             // rest/jobs/{jobId} GET
             JobResult jobResult = waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestFactory);
-            assertTrue( "Job did not fail: " + jobResult.getStatus(), JobStatus.FAIL.equals(jobResult.getStatus()) );
+            assertFalse( "Job did not fail: " + jobResult.getStatus(), JobStatus.SUCCESS.equals(jobResult.getStatus()) );
         }
 
         // rest/repositories POST
@@ -314,7 +316,5 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         
         assertFalse( "repository should have been deleted from organizational unit", orgUnitRequest.getRepositories().contains(repoName));
     }
-    
-
 
 }
