@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jbpm.process.audit.VariableInstanceLog;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.manager.audit.AuditService;
+import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.TaskSummary;
@@ -89,7 +89,8 @@ public class KieWbGeneralIntegrationTestMethods {
         /**
          * Check that MyType was correctly deserialized on server side
          */
-        List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstancesByName("type", false);
+        List<VariableInstanceLog> varLogList 
+            = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstancesByName("type", false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
             if( varLog.getProcessInstanceId() == procInstId ) { 
@@ -101,7 +102,7 @@ public class KieWbGeneralIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
         
         // Double check for BZ-1085267
-        varLogList = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstances(procInstId, "type");
+        varLogList = (List<org.kie.api.runtime.manager.audit.VariableInstanceLog>) engine.getAuditLogService().findVariableInstances(procInstId, "type");
         assertNotNull("No variable log list retrieved!", varLogList);
         assertTrue("Variable log list is empty!", varLogList.size() > 0);
     }

@@ -63,7 +63,12 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     }
     
     @Override
+<<<<<<< Updated upstream:remote-kie-tests/kie-wb-tests/kie-wb-tests-wildfly/src/test/java/org/kie/tests/wb/wildfly/WildflyRemoteApiIntegrationTest.java
     public int getTimeoutInSecs() {
         return 4;
+=======
+    public long getTimeout() {
+        return 7*1000l;
+>>>>>>> Stashed changes:remote-kie-tests/kie-wb-tests/kie-wb-tests-tomcat/src/test/java/org/kie/tests/wb/tomcat/TomcatRemoteApiLeakIntegrationTest.java
     }
 }

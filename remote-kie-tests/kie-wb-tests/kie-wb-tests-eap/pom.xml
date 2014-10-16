@@ -42,19 +42,23 @@
       <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-remote-client</artifactId>
       <scope>test</scope>
     </dependency>
-    
-    <!--  webservices -->
     <dependency>
       <groupId>org.kie.remote.ws</groupId>
       <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-services</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
     <!-- war -->
     <dependency>
       <groupId>org.kie</groupId>
@@ -118,8 +122,51 @@
       <artifactId>jboss-logmanager</artifactId>
       <scope>test</scope>
     </dependency>
+    
+    <!-- webservice test -->
+    <dependency>
+      <groupId>org.jboss.spec.javax.servlet</groupId>
+      <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.kie.remote</groupId>
+        <artifactId>kie-remote-wsdl-cmd</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+    
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-server</artifactId>
+        <version>${version.org.jboss.as.dist}</version>
+        <scope>runtime</scope>
+      </dependency> 
+      <dependency>
+        <groupId>javax.security</groupId>
+        <artifactId>jacc</artifactId>
+        <version>1.0</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-connector</artifactId>
+        <version>${version.org.jboss.as.dist}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.msc</groupId>
+        <artifactId>jboss-msc</artifactId>
+        <version>1.0.4.GA-redhat-1</version>
+        <scope>runtime</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
   <build>
     <testResources>
       <testResource>

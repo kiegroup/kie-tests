@@ -43,8 +43,8 @@ import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.net.util.Base64;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.junit.Assume;
 import org.kie.api.command.Command;
@@ -844,8 +844,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         String authString = user + ":" + password;
-        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
-        String authStringEnc = new String(authEncBytes);
+        byte [] bytes = authString.getBytes();
+        String authStringEnc = Base64Util.encode(bytes, 0, bytes.length);
         connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
         connection.setRequestMethod("POST");
 
@@ -1082,8 +1082,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         String authString = user + ":" + password;
-        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
-        String authStringEnc = new String(authEncBytes);
+        byte [] authStrBytes = authString.getBytes();
+        String authStringEnc = Base64Util.encode(authStrBytes, 0, authStrBytes.length);
         connection.setRequestProperty("Authorization", "Basic " + authStringEnc);
         connection.setRequestMethod("GET");
 
@@ -1330,6 +1330,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         List<VariableInstanceLog> vill = (List<VariableInstanceLog>) auditLogService.findVariableInstances(pi.getId(), "myObject");
         assertNotNull(vill);
+        assertFalse("Empty list of variable instance logs", vill.isEmpty());
         assertEquals(myType.toString(), vill.get(0).getValue());
     }
 

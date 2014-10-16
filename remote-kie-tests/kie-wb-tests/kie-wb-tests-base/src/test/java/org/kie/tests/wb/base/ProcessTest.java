@@ -1,5 +1,6 @@
 package org.kie.tests.wb.base;
 
+import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;

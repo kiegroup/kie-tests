@@ -1,9 +1,11 @@
 package org.kie.tests.wb.eap;
 
 import static org.kie.remote.tests.base.DeployUtil.*;
-import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
+import static org.kie.tests.wb.base.util.TestConstants.*;
+import java.io.File;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,7 @@ public class KieWbWarJbossEapDeploy {
     }
     
     static WebArchive createTestWar(String database, boolean replace) {
-        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "eap-6_1", PROJECT_VERSION);
+        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "eap6_3", PROJECT_VERSION);
         
         // Replace persistence.xml with postgres version
         if( database != null ) { 
@@ -36,28 +38,27 @@ public class KieWbWarJbossEapDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = { 
-                    { "org.jbpm", "jbpm-kie-services" },
+                    { "org.jbpm", "jbpm-runtime-manager" },
+                    
+                    // kie-remote
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-jaxb" },
+                    { "org.kie.remote.ws", "kie-remote-ws-common" },
                     { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
-           
+            
+            // ADD
             /**
             String [][] jarsToAdd = { 
+                    // web services
                     { "javax.xml.ws", "jaxws-api" }
             };
             addNewJars(war, jarsToAdd);
             replaceWebXmlForWebServices(war);
-            */
-           
-            String [] jarsToDel = { "kie-remote-rest-api" };
-            deleteJars(war, jarsToDel);
+            **/
         }
        
-        // Add data service resource for tests
-        war.addPackage("org/kie/tests/wb/base/services/data");
-     
         return war;
     }
 
