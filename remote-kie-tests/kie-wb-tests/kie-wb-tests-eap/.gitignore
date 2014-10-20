@@ -4,3 +4,5 @@
 
 # core dumps (WTF, Oracle?)
 /hs_err*
+/repository/
+/repositories/
