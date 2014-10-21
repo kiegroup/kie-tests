@@ -180,37 +180,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         }
     }
 
-    private class RequestCreator {
-
-        private final URL baseUrl;
-        private final String userName;
-        private final String password;
-        private final MediaType contentType;
-
-        public RequestCreator(URL baseUrl, String user, String password, MediaType mediaType) {
-            StringBuilder urlString = new StringBuilder(baseUrl.toString());
-            if( !urlString.toString().endsWith("/") ) {
-                urlString.append("/");
-            }
-            urlString.append("rest/");
-            try {
-                this.baseUrl = new URL(urlString.toString());
-            } catch(Exception e) { 
-                e.printStackTrace();
-                throw new IllegalStateException("Invalid url: " +  urlString, e);
-            }
-            this.userName = user;
-            this.password = password;
-            this.contentType = mediaType;
-        }
-
-        public KieRemoteHttpRequest createRequest( String relativeUrl ) {
-            KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(baseUrl).basicAuthorization(userName, password)
-                    .relativeRequest(relativeUrl).accept(contentType.toString());
-            return request;
-        }
-    }
-
     private JaxbSerializationProvider jaxbSerializationProvider;
     {
         jaxbSerializationProvider = JaxbSerializationProvider.clientSideInstance(MyType.class);
@@ -521,7 +490,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
         // Start process
-        String executeOp = "runtime/" + deploymentId + "/execute";
+        String executeOp = "execute";
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest(executeOp);
         {
             StartProcessCommand cmd = new StartProcessCommand();
@@ -567,7 +536,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // Get response
         post(httpRequest, 200);
 
-        httpRequest = requestCreator.createRequest("task/execute");
+        httpRequest = requestCreator.createRequest("execute");
         Map<String, Object> results = new HashMap<String, Object>();
         results.put("myType", new MyType("serialization", 3224950));
         {
@@ -663,7 +632,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
         RequestCreator requestCreator = new RequestCreator(appUrl, user, password, mediaType);
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/execute");
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("execute");
 
         JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(command);
         assertNotNull("Commands are null!", commandMessage.getCommands());
