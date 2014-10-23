@@ -534,7 +534,7 @@ public class KieWbJmsIntegrationTestMethods {
     public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
         // Remote API setup
         RemoteRuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
-                .addDeploymentId(password)
+                .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
                 .addPassword(password)
