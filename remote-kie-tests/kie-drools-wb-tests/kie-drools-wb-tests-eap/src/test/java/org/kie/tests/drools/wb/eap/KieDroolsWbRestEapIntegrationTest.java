@@ -68,6 +68,9 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrati
         WebArchive war = zipWar.as(WebArchive.class);
 
         String [][] jarsToReplace = { 
+                // 6.0. roll-up prblems 
+                { "org.uberfire", "uberfire-security-server" },
+                
                 { "org.drools", "drools-wb-rest" },
                 { "org.kie.workbench.services", "kie-wb-common-services-api" }
         };
@@ -89,6 +92,10 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrati
            logger.info( "Replacing " + depFile.getName());
         }
         war.addAsLibraries(kieRemoteDeps);
+
+        // replace web.xml
+        war.delete("WEB-INF/web.xml");
+        war.addAsWebInfResource("WEB-INF/web.xml");
         
         return war;
     }

@@ -137,7 +137,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
      * Tests the following REST urls: 
      * 
      * ../rest/repositories GET
-     * ../rest/repositories/{repo}/projecst POST
+     * ../rest/repositories/{repo}/projects POST
      * ../rest/jobs/{id} GET
      *
      * @param deploymentUrl
@@ -155,6 +155,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         String repoName = repoResponses.iterator().next().get("name");
        
         // rest/repositories/{repoName}/projects POST
+        // - backwards compatibility using Entity
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         Entity project = new Entity();
