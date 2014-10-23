@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,12 +167,17 @@ public class AbstractIntegrationTestMethods {
             taskService.complete(task.getId(), user, results);
         }
 
-        // john from HR
+        // john from PM
         { 
             String user = "john";
             TaskService taskService = johnRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
             TaskSummary task = getProcessInstanceTask(tasks, procInstId);
+            
+            String [] groupidArr = { "PM" };
+            tasks = taskService.getTasksAssignedAsPotentialOwner(user, Arrays.asList(groupidArr), "en-UK", 0, 10);
+            assertTrue( "No tasks returned!", tasks != null && ! tasks.isEmpty() );
+            
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'john' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -180,7 +186,7 @@ public class AbstractIntegrationTestMethods {
             taskService.complete(task.getId(), user, results);
         }
 
-        // mary from PM
+        // mary from HR
         {
             String user = "mary";
             TaskService taskService = maryRuntimeEngine.getTaskService();

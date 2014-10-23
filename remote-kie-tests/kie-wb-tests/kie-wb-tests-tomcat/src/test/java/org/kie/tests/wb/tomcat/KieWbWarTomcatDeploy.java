@@ -68,15 +68,15 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
 
         if( replace ) { 
             // Replace kie-services-remote jar with the one we just generated
-            war.delete("WEB-INF/lib/kie-services-client-" + projectVersion + ".jar");
+            String oldClientJar = "kie-services-client";
+            logger.info( "Deleting " + oldClientJar + " from test war");
+            war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
+            
             String [][] jarsToReplace = { 
                     { "org.kie.remote", "kie-services-remote", null },
                     { "org.kie.remote", "kie-services-jaxb", null }
             };
             String [] jarsArg = new String[jarsToReplace.length];
-            String oldClientJar = "kie-services-client";
-            war.delete("WEB-INF/lib/" + oldClientJar + "-" + projectVersion + ".jar");
-            logger.info( "Deleting " + oldClientJar + " from test war");
             for( String [] jar : jarsToReplace ) { 
                 logger.info( "Deleting " + jar[1] + " from test war");
                 war.delete("WEB-INF/lib/" + jar[1] + "-" + projectVersion + ".jar");
@@ -105,9 +105,4 @@ public class KieWbWarTomcatDeploy extends AbstractDeploy {
         return war;
     }
 
-    protected void printTestName() { 
-        StackTraceElement ste = new Throwable().getStackTrace()[1];
-        logger.info( "] Starting " + ste.getMethodName());
-    }
-    
 }
