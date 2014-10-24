@@ -68,7 +68,7 @@ public class DroolsWbRestIntegrationTestHelperMethods {
     }
     
     protected static ClientResponse<?> checkResponse(ClientResponse<?> responseObj, int expStatus) throws Exception {
-        logger.debug("<< Response received");
+        logger.debug("<< Response received ]] " );
         responseObj.resetStream();
         int status = responseObj.getStatus(); 
         if( status != expStatus ) { 

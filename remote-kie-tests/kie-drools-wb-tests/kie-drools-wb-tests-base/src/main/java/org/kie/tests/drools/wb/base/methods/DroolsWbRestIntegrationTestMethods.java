@@ -8,11 +8,13 @@ import static org.kie.tests.drools.wb.base.methods.TestConstants.PASSWORD;
 import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 import org.jboss.resteasy.client.ClientRequest;
@@ -28,6 +30,7 @@ import org.kie.workbench.common.services.shared.rest.Entity;
 import org.kie.workbench.common.services.shared.rest.JobResult;
 import org.kie.workbench.common.services.shared.rest.JobStatus;
 import org.kie.workbench.common.services.shared.rest.OrganizationalUnit;
+import org.kie.workbench.common.services.shared.rest.ProjectRequest;
 import org.kie.workbench.common.services.shared.rest.RemoveRepositoryFromOrganizationalUnitRequest;
 import org.kie.workbench.common.services.shared.rest.RepositoryRequest;
 import org.kie.workbench.common.services.shared.rest.RepositoryResponse;
@@ -42,6 +45,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
     private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestMethods.class);
 
     private final int maxTries = 10;
+    private final Random random = new Random();
   
     /**
      * Tests the following REST urls: 
@@ -60,14 +64,24 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
         ClientResponse<?> responseObj = checkResponse(restRequest.get());
-        Collection<RepositoryResponse> repoResponses = responseObj.getEntity(Collection.class);
+        
+        List<RepositoryResponse> repoResponses = null;
+        try { 
+            RepositoryResponse [] repoRespArr = responseObj.getEntity(RepositoryResponse[].class);
+            repoResponses = Arrays.asList(repoRespArr);
+        } catch( Exception e ) { 
+            responseObj.resetStream();
+            logger.error( "Unable to deserialize response: " + responseObj.getEntity(String.class) );
+            throw e;
+        }
         assertTrue( repoResponses.size() > 0 );
         String ufPlaygroundUrl = null;
-        Iterator<?> iter = repoResponses.iterator();
+        Iterator<RepositoryResponse> iter = repoResponses.iterator();
         while( iter.hasNext() ) { 
-            Map<String, String> repoRespMap = (Map<String, String>) iter.next();
-            if( "uf-playground".equals(repoRespMap.get("name")) ) { 
-                ufPlaygroundUrl = repoRespMap.get("gitURL");
+            RepositoryResponse repoResp = iter.next();
+            if( "uf-playground".equals(repoResp.getName()) ) { 
+                ufPlaygroundUrl = repoResp.getGitURL();
+                break;
             }
         }
         assertEquals( "UF-Playground Git URL", "git://uf-playground", ufPlaygroundUrl );
@@ -116,8 +130,10 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(deploymentUrl, jobId, createJobRequest.getStatus(), requestFactory);
-        
+       
+        {
         // rest/repositories/{repoName}/projects POST
+        // - backwards compatibility using Entity
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
         Entity project = new Entity();
@@ -131,6 +147,46 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(deploymentUrl, jobId, createProjectRequest.getStatus(), requestFactory);
+        }
+        
+        // rest/repositories/{repoName}/projects POST
+        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        ProjectRequest newProject = new ProjectRequest();
+        newProject.setDescription("test project");
+        String testProjectName = UUID.randomUUID().toString();
+        newProject.setName(testProjectName);
+        String testProjectGroupid = UUID.randomUUID().toString();
+        newProject.setGroupId(testProjectGroupid);
+        String testVersion = "" + random.nextInt(100) + ".0";
+        newProject.setVersion(testVersion);
+        addToRequestBody(restRequest, newProject);
+        responseObj = checkTimeResponse(restRequest.post());
+        CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
+        logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
+        
+        // rest/jobs/{jobId} GET
+        waitForJobToComplete(deploymentUrl, jobId, createProjectRequest.getStatus(), requestFactory);
+        
+        // rest/repositories/{repoName}/projects GET
+        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.get());
+        ProjectRequest [] projectRequests = responseObj.getEntity(ProjectRequest[].class);
+        logger.debug("]] " + convertObjectToJsonString(projectRequests));
+        
+        assertNotNull( "Null project request list", projectRequests );
+        assertFalse( "Empty project request list", projectRequests.length == 0 );
+        ProjectRequest foundProjReq = null;
+        for( ProjectRequest projReq : projectRequests ) { 
+           if( newProject.getName().equals(projReq.getName()) ) { 
+              foundProjReq = projReq;
+              break;
+           }
+        }
+        assertNotNull( "Could not find project", foundProjReq ); 
+        assertEquals( "Project group id", newProject.getGroupId(), foundProjReq.getGroupId() );
+        assertEquals( "Project version", newProject.getVersion(), foundProjReq.getVersion() );
     }
    
     /**
@@ -155,13 +211,16 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         String repoName = repoResponses.iterator().next().get("name");
        
         // rest/repositories/{repoName}/projects POST
-        // - backwards compatibility using Entity
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
-        Entity project = new Entity();
+        ProjectRequest project = new ProjectRequest();
         project.setDescription("test project");
         String projectName = UUID.randomUUID().toString();
+        String groupId = UUID.randomUUID().toString();
+        String version = random.nextInt(1000) + ".0";
         project.setName(projectName);
+        project.setGroupId(groupId);
+        project.setVersion(version);
         addToRequestBody(restRequest, project);
         responseObj = checkTimeResponse(restRequest.post());
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
@@ -170,7 +229,7 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         // rest/jobs/{jobId} GET
         waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
 
-        // rest/repositories/{repoName}/projects POST
+        // rest/repositories/{repoName}/projects/{project}/maven/compile POST
         String mavenOperBase = "rest/repositories/" + repoName + "/projects/" + projectName + "/maven/";
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + mavenOperBase + "compile").toExternalForm();
         restRequest = createRequest(requestFactory, urlString);
@@ -181,10 +240,6 @@ public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationT
         // rest/jobs/{jobId} GET
         waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
        
-        // TODO implement GET
-        // rest/repositories/{repoName}/projects GET
-        /** get projects, compare/verify that new project is in list **/
-        
         // TODO implement DELETE
         // rest/repositories/{repoName}/projects DELETE
         /** delete projects, verify that list of projects is now one less */

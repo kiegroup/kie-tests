@@ -39,6 +39,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrati
     public static Archive<?> createWar() {
        return createWarWithTestDeploymentLoader("test");
     }
-   
+  
     private static final String classifier = "eap-6_1";
 
     private static Logger logger = LoggerFactory.getLogger(KieDroolsWbRestEapIntegrationTest.class);
@@ -70,6 +71,10 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractDroolsWbIntegrati
         String [][] jarsToReplace = { 
                 // 6.0. roll-up prblems 
                 { "org.uberfire", "uberfire-security-server" },
+                
+                // 6.0 project work
+                { "org.guvnor", "guvnor-project-api" },
+                { "org.guvnor", "guvnor-project-backend" },
                 
                 { "org.drools", "drools-wb-rest" },
                 { "org.kie.workbench.services", "kie-wb-common-services-api" }
