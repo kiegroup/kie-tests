@@ -1,6 +1,7 @@
 package org.kie.tests.drools.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
 
 public class DroolsWbRestIntegrationTestHelperMethods {
 
-    private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestMethods.class);
+    private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestHelperMethods.class);
    
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
    

@@ -39,13 +39,13 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.runner.RunWith;
-import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
+import org.kie.tests.drools.wb.base.AbstractKieDroolsWbIntegrationTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class KieDroolsWbRestTomcatIntegrationTest extends AbstractDroolsWbIntegrationTest {
+public class KieDroolsWbRestTomcatIntegrationTest extends AbstractKieDroolsWbIntegrationTest {
 
     @Deployment(testable = false, name="drools-wb")
     public static Archive<?> createWar() {

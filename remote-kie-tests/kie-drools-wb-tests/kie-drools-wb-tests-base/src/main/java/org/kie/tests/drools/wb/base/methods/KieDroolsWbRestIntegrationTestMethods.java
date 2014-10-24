@@ -10,7 +10,6 @@ import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +39,9 @@ import org.slf4j.LoggerFactory;
 /**
  * These are various tests for the drools-wb-rest module
  */
-public class DroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationTestHelperMethods {
+public class KieDroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrationTestHelperMethods {
 
-    private static Logger logger = LoggerFactory.getLogger(DroolsWbRestIntegrationTestMethods.class);
+    private static Logger logger = LoggerFactory.getLogger(KieDroolsWbRestIntegrationTestMethods.class);
 
     private final int maxTries = 10;
     private final Random random = new Random();

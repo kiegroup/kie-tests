@@ -7,11 +7,11 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-import org.kie.tests.drools.wb.base.AbstractDroolsWbIntegrationTest;
+import org.kie.tests.drools.wb.base.AbstractKieDroolsWbIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class DroolsWbRestJbossIntegrationTest extends AbstractDroolsWbIntegrationTest {
+public class DroolsWbRestJbossIntegrationTest extends AbstractKieDroolsWbIntegrationTest {
 
     @Deployment(testable = false, name="drools-wb")
     public static Archive<?> createWar() {
