@@ -28,8 +28,11 @@ public class KieDroolsWbRestEapIntegrationTest extends AbstractKieDroolsWbIntegr
         WebArchive war = getWebArchive("org.kie", "kie-drools-wb-distribution-wars", "eap6_3", PROJECT_VERSION);
 
         String [][] jarsToReplace = { 
-                { "org.guvnor", "guvnor-rest-backend" },
-                { "org.guvnor", "guvnor-rest-client" }
+                { "org.guvnor", "guvnor-project-api" },
+                { "org.guvnor", "guvnor-project-backend" },
+                
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
         

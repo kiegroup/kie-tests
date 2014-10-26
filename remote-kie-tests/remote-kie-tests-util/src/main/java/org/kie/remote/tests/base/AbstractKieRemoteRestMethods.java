@@ -95,8 +95,16 @@ public abstract class AbstractKieRemoteRestMethods {
     }
 
     protected <T> T post( KieRemoteHttpRequest httpRequest, int status, Class<T> entityType ) {
+        return post(httpRequest, status, entityType, Integer.MAX_VALUE);
+    }
+    
+    protected <T> T post( KieRemoteHttpRequest httpRequest, int status, Class<T> entityType, int timeout ) {
         logger.debug( "> [POST] " + httpRequest.getUri().toString() );
+        long after, before = System.currentTimeMillis();
         KieRemoteHttpResponse httpResponse = httpRequest.accept(getContentType()).post().response();
+        after = System.currentTimeMillis();
+        long duration = after - before;
+        assertTrue("Post call took longer than " + timeout + " ms: " + duration, duration <= timeout);
         checkResponse(httpRequest, status);
         try {
             return deserialize(httpResponse, entityType);
@@ -111,15 +119,6 @@ public abstract class AbstractKieRemoteRestMethods {
         checkResponse(httpRequest, status);
         String result = httpRequest.response().body();
         httpRequest.disconnect();
-        return result;
-    }
-
-    protected <T> T postCheckTime( KieRemoteHttpRequest httpRequest, int responseStatus, Class<T> entityType ) {
-        long after, before = System.currentTimeMillis();
-        T result = post(httpRequest, responseStatus, entityType);
-        after = System.currentTimeMillis();
-        long duration = after - before;
-        assertTrue("Post call took longer than 500 ms: " + duration, duration <= 500);
         return result;
     }
 
