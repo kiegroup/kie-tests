@@ -140,7 +140,7 @@ public class AbstractIntegrationTestMethods {
         }
     }
    
-    public void runHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
+    public static void runRemoteApiHumanTaskGroupIdTest(RuntimeEngine krisRuntimeEngine, RuntimeEngine johnRuntimeEngine, RuntimeEngine maryRuntimeEngine) {
 
         KieSession ksession = krisRuntimeEngine.getKieSession();
 
@@ -204,7 +204,7 @@ public class AbstractIntegrationTestMethods {
         System.out.println("Process instance completed");
     }
 
-    private TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) { 
+    private static TaskSummary getProcessInstanceTask(List<TaskSummary> tasks, long procInstId) { 
         TaskSummary result = null;
         for( TaskSummary task : tasks ) { 
             if( task.getProcessInstanceId() == procInstId ) { 
@@ -215,4 +215,69 @@ public class AbstractIntegrationTestMethods {
         return result;
     }
 
+    public static void runRemoteApiGroupAssignmentEngineeringTest(RuntimeEngine runtimeEngine) throws Exception {
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
+        ProcessInstance pi = ksession.startProcess(GROUP_ASSSIGNMENT_PROCESS_ID, null);
+        assertNotNull(pi);
+        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
+
+        // assert the task
+        TaskSummary taskSummary = getTaskSummary(taskService, pi.getId(), Status.Ready);
+        assertNull(taskSummary.getActualOwner());
+        assertNull(taskSummary.getPotentialOwners());
+        assertEquals("Task 1", taskSummary.getName());
+        
+        String [] groupIdArr = { "engineering" };
+        List<TaskSummary> potOwnerTasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, Arrays.asList(groupIdArr), "en-UK", 0, 10);
+        assertTrue( potOwnerTasks.size() >= 1 );
+        potOwnerTasks = taskService.getTasksAssignedAsPotentialOwner(JOHN_USER, Arrays.asList(groupIdArr), "en-UK", 0, 10);
+        assertTrue( potOwnerTasks.size() >= 1 );
+
+        // complete 'Task 1' as mary
+        taskService.claim(taskSummary.getId(), MARY_USER);
+        taskService.start(taskSummary.getId(), MARY_USER);
+        taskService.complete(taskSummary.getId(), MARY_USER, null);
+
+        // now make sure that the next task has been assigned to the
+        // correct person. it should be mary.
+        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
+        assertNotNull( "No task found for Mary", taskSummary);
+        assertEquals("Task 2", taskSummary.getName());
+        assertEquals(MARY_USER, taskSummary.getActualOwner().getId());
+
+        // complete 'Task 2' as john
+        taskService.release(taskSummary.getId(), MARY_USER);
+        taskService.claim(taskSummary.getId(), JOHN_USER);
+        taskService.start(taskSummary.getId(), JOHN_USER);
+        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+
+        // now make sure that the next task has been assigned to the
+        // correct person. it should be john.
+        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
+        assertEquals("Task 3", taskSummary.getName());
+        assertEquals(JOHN_USER, taskSummary.getActualOwner().getId());
+
+        // complete 'Task 3' as john
+        taskService.start(taskSummary.getId(), JOHN_USER);
+        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+
+        // assert process finished
+        pi = ksession.getProcessInstance(pi.getId());
+        assertNull(pi);
+    }
+
+    private static TaskSummary getTaskSummary(TaskService taskService, long procInstId, Status status) {
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.add(status);
+        List<TaskSummary> taskSumList = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        TaskSummary result = null;
+        for (TaskSummary krisTask : taskSumList) {
+            if (krisTask.getProcessInstanceId() == procInstId) {
+                result = krisTask;
+            }
+        }
+        return result;
+    }
 }

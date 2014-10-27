@@ -1,5 +1,6 @@
 package org.kie.tests.wb.base;
 
+import static org.kie.tests.wb.base.methods.AbstractIntegrationTestMethods.*;
 import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
 import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
 import static org.kie.tests.wb.base.methods.TestConstants.KJAR_DEPLOYMENT_ID;
@@ -247,14 +248,6 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
    
     @Test
-    @InSequence(REST_FAILING)
-    public void testRestRemoteApiHumanTaskGroupVarAssign() throws Exception { 
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.remoteApiHumanTaskGroupVarAssignTest(deploymentUrl);
-    }
-    
-    @Test
     @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiHumanTaskOwnType() throws Exception { 
         Assume.assumeTrue(doRestTests());
@@ -276,6 +269,14 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+   
+    @Test
+    @InSequence(REST_FAILING)
+    public void testRestRemoteApiGroupAssignmentEngineering() throws Exception { 
+        Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
+        restTests.remoteApiGroupAssignmentEngineeringTest(deploymentUrl);
     }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
@@ -357,20 +358,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testJmsRemoteApiGroupAssignmentEngineering() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
-        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
-                .addDeploymentId(KJAR_DEPLOYMENT_ID)
-                .useSsl(true)
-                .addHostName("localhost")
-                .addJmsConnectorPort(5446)
-                .addKeystoreLocation("ssl/client_keystore.jks")
-                .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
-                .useKeystoreAsTruststore()
-                .addUserName(JOHN_USER)
-                .addPassword(JOHN_PASSWORD);
-                        
-        
-        RuntimeEngine runtimeEngine = jreFactoryBuilder.build().newRuntimeEngine();
-        jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+        jmsTests.remoteApiGroupAssignmentEngineeringTest(deploymentUrl);
     }
     
     @Test

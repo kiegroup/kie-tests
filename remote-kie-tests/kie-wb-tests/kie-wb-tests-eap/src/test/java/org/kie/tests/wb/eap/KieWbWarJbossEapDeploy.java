@@ -80,10 +80,6 @@ public class KieWbWarJbossEapDeploy extends AbstractDeploy {
                 logger.info("Replacing with " + dep.getName() ); 
             }
             war.addAsLibraries(kieRemoteDeps);
-            
-            // BZ-1067418: dynamic jaxbcontext filter
-            war.delete("WEB-INF/web.xml");
-            war.addAsWebInfResource("WEB-INF/web.xml", "web.xml");
         }
        
         // Add data service resource for tests

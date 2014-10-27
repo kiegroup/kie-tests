@@ -18,6 +18,7 @@
 package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.methods.AbstractIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.TestConstants.*;
 
 import java.net.URL;
@@ -397,7 +398,7 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         long taskId = tasks.get(0);
         assertNotNull("Null task!", taskService.getTaskById(taskId));
 
-        String userId = "admin";
+        String userId = MARY_USER;
         taskService.start(taskId, userId);
         taskService.complete(taskId, userId, null);
 
@@ -580,68 +581,9 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         RuntimeEngine krisRuntimeEngine = krisRemoteEngineFactory.newRuntimeEngine();
         RuntimeEngine johnRuntimeEngine = johnRemoteEngineFactory.newRuntimeEngine();
         RuntimeEngine maryRuntimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
-        runHumanTaskGroupIdTest(krisRuntimeEngine, johnRuntimeEngine, maryRuntimeEngine);
+        runRemoteApiHumanTaskGroupIdTest(krisRuntimeEngine, johnRuntimeEngine, maryRuntimeEngine);
     }
 
-    public void remoteApiGroupAssignmentEngineeringTest(RuntimeEngine runtimeEngine) throws Exception {
-        KieSession ksession = runtimeEngine.getKieSession();
-        TaskService taskService = runtimeEngine.getTaskService();
-
-        ProcessInstance pi = ksession.startProcess(GROUP_ASSSIGNMENT_PROCESS_ID, null);
-        assertNotNull(pi);
-        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
-
-        // assert the task
-        TaskSummary taskSummary = getTaskSummary(taskService, pi.getId(), Status.Ready);
-        assertNull(taskSummary.getActualOwner());
-        assertNull(taskSummary.getPotentialOwners());
-        assertEquals("Task 1", taskSummary.getName());
-
-        // complete 'Task 1' as mary
-        taskService.claim(taskSummary.getId(), MARY_USER);
-        taskService.start(taskSummary.getId(), MARY_USER);
-        taskService.complete(taskSummary.getId(), MARY_USER, null);
-
-        // now make sure that the next task has been assigned to the
-        // correct person. it should be mary.
-        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
-        assertNotNull( "No task found for Mary", taskSummary);
-        assertEquals("Task 2", taskSummary.getName());
-        assertEquals(MARY_USER, taskSummary.getActualOwner().getId());
-
-        // complete 'Task 2' as john
-        taskService.release(taskSummary.getId(), MARY_USER);
-        taskService.claim(taskSummary.getId(), JOHN_USER);
-        taskService.start(taskSummary.getId(), JOHN_USER);
-        taskService.complete(taskSummary.getId(), JOHN_USER, null);
-
-        // now make sure that the next task has been assigned to the
-        // correct person. it should be john.
-        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
-        assertEquals("Task 3", taskSummary.getName());
-        assertEquals(JOHN_USER, taskSummary.getActualOwner().getId());
-
-        // complete 'Task 3' as john
-        taskService.start(taskSummary.getId(), JOHN_USER);
-        taskService.complete(taskSummary.getId(), JOHN_USER, null);
-
-        // assert process finished
-        pi = ksession.getProcessInstance(pi.getId());
-        assertNull(pi);
-    }
-
-    private TaskSummary getTaskSummary(TaskService taskService, long procInstId, Status status) {
-        List<Status> statuses = new ArrayList<Status>();
-        statuses.add(status);
-        List<TaskSummary> taskSumList = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
-        TaskSummary result = null;
-        for (TaskSummary krisTask : taskSumList) {
-            if (krisTask.getProcessInstanceId() == procInstId) {
-                result = krisTask;
-            }
-        }
-        return result;
-    }
     
     public void remoteApiHistoryVariablesTest(URL deploymentUrl) { 
         RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
@@ -663,5 +605,22 @@ public class JmsIntegrationTestMethods extends AbstractIntegrationTestMethods {
         assertNotNull( "Null variable instance log list", viLogs);
         logger.info("vi logs: " + viLogs.size());
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
+    }
+   
+    public void remoteApiGroupAssignmentEngineeringTest(URL deploymentUrl) throws Exception { 
+        RemoteJmsRuntimeEngineFactoryBuilder jreFactoryBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+                .addJbossServerUrl(deploymentUrl)
+                .addDeploymentId(KJAR_DEPLOYMENT_ID)
+                .useSsl(true)
+                .addHostName("localhost")
+                .addJmsConnectorPort(5446)
+                .addKeystoreLocation("ssl/client_keystore.jks")
+                .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
+                .useKeystoreAsTruststore()
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD);
+
+        RuntimeEngine runtimeEngine = jreFactoryBuilder.build().newRuntimeEngine();
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine); 
     }
 }

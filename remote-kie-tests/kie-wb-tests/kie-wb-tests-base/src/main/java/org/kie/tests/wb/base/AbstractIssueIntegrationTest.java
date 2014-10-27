@@ -67,9 +67,10 @@ public abstract class AbstractIssueIntegrationTest {
     }
     
     @Test
-    public void testDeploymentRedeployClassPathTest() throws Exception { 
+    public void testDeploymentGroupAssignment() throws Exception { 
         printTestName();
-        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.remoteApiGroupAssignmentEngineeringTest(deploymentUrl);
     }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------

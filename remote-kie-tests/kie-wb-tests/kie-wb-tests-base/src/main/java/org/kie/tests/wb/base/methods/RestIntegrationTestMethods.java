@@ -29,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
+import org.jbpm.services.task.impl.model.GroupImpl;
 import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
 import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
@@ -75,15 +77,18 @@ import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
+import org.kie.api.task.model.OrganizationalEntity;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
+import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
+import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
@@ -1206,7 +1211,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, MARY_USER, MARY_PASSWORD, useFormBasedAuth);
        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
            = new RemoteRestRuntimeFactory(deploymentId, deploymentUrl, JOHN_USER, JOHN_PASSWORD, useFormBasedAuth);
-       runHumanTaskGroupIdTest(krisRemoteEngineFactory.newRuntimeEngine(), 
+       runRemoteApiHumanTaskGroupIdTest(krisRemoteEngineFactory.newRuntimeEngine(), 
                johnRemoteEngineFactory.newRuntimeEngine(), 
                maryRemoteEngineFactory.newRuntimeEngine());
     }
@@ -1292,44 +1297,8 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         return taskSumList.get(0);
     }
     
-    public void urlsWorkItemTest(URL deploymentUrl, String user, String password) throws Exception {
-        RestRequestHelper helper = getRestRequestHelper(deploymentUrl, user, password);
-
-        // Start process
-        ClientRequest restRequest = helper.createRequest("runtime/" + deploymentId + "/workitem/200" );
-        logger.debug(">> " + restRequest.getUri());
-        ClientResponse<?> responseObj = get(restRequest);
-    }
-  
-    public void remoteApiHumanTaskGroupVarAssignTest(URL deploymentUrl) { 
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
-            = RemoteRestRuntimeEngineFactory.newBuilder()
-            .addDeploymentId(deploymentId)
-            .addUserName(MARY_USER)
-            .addPassword(MARY_PASSWORD)
-            .addUrl(deploymentUrl)
-            .build();
-
-        RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
-
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("taskOwnerGroup", "HR");
-        params.put("taskName", "Mary's Task");
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
-        assertNotNull( "No ProcessInstance!", pi);
-        long procInstId = pi.getId();
-        
-        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
-        assertEquals( 1, taskIds.size());
-
-        List<String> processIds = runtimeEngine.getKieSession().execute(new GetProcessIdsCommand());
-        for( String procId : processIds ) { 
-            System.out.println( "Process: " + procId);
-        }
-     }
-    
     public void remoteApiHumanTaskOwnTypeTest(URL deploymentUrl) { 
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
+        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
             = RemoteRestRuntimeEngineFactory.newBuilder()
             .addDeploymentId(deploymentId)
             .addUserName(JOHN_USER)
@@ -1338,7 +1307,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
             .addExtraJaxbClasses(MyType.class)
             .build();
 
-        RemoteRuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
+        RemoteRuntimeEngine runtimeEngine = johnRemoteEngineFactory.newRuntimeEngine();
         runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditLogService());
      }
     
@@ -1454,5 +1423,18 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
 
         procInst = ksession.getProcessInstance(processInstanceId);
         assertNull(procInst);
+    }
+
+    public void remoteApiGroupAssignmentEngineeringTest( URL deploymentUrl ) throws Exception {
+        RemoteRuntimeEngineFactory johnRemoteEngineFactory 
+            = RemoteRestRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addUserName(JOHN_USER)
+            .addPassword(JOHN_PASSWORD)
+            .addUrl(deploymentUrl)
+            .build();
+
+        RemoteRuntimeEngine runtimeEngine = johnRemoteEngineFactory.newRuntimeEngine();
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine); 
     }
 }
