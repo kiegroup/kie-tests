@@ -11,7 +11,6 @@ import java.net.URL;
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -22,24 +21,50 @@ import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractRemoteApiIntegrationTest {
+public class KieWbRemoteApiIntegrationTest {
     
-    protected static final Logger logger = LoggerFactory.getLogger(AbstractRemoteApiIntegrationTest.class);
+    protected static final Logger logger = LoggerFactory.getLogger(KieWbRemoteApiIntegrationTest.class);
     
     private final KieWbRestIntegrationTestMethods restTests;
     private final KieWbJmsIntegrationTestMethods jmsTests;
 
-    @ArquillianResource
-    URL deploymentUrl;
+    private URL deploymentUrl;
+    {
+        // Modify this string to match your kie-wb/BPMS installation
+        String urlString = "http://localhost:8080/kie-wb/rest/";
+        try { 
+            deploymentUrl = new URL(urlString);
+        } catch( Exception e ) { 
+            System.err.println( "The following URL is not a valid URL: '" + urlString + "'");
+            e.printStackTrace();
+        }
+    }
    
-    public abstract boolean doDeploy();
-    public abstract MediaType getMediaType();
-    public abstract boolean jmsQueuesAvailable();
-    public abstract boolean doRestTests();
-    public abstract RuntimeStrategy getStrategy();
-    public abstract int getTimeoutInSecs();
+    public boolean doDeploy() { 
+       return true; 
+    }
+    
+    public MediaType getMediaType() { 
+       return MediaType.APPLICATION_XML_TYPE; 
+    }
+    
+    public boolean jmsQueuesAvailable() { 
+       return false; 
+    }
+    
+    public boolean doRestTests() { 
+       return true; 
+    }
+    
+    public RuntimeStrategy getStrategy() { 
+       return RuntimeStrategy.SINGLETON; 
+    }
+    
+    public int getTimeoutInSecs() { 
+       return 5; 
+    }
    
-    public AbstractRemoteApiIntegrationTest() { 
+    public KieWbRemoteApiIntegrationTest() { 
          restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                  .setDeploymentId(KJAR_DEPLOYMENT_ID)
                  .setMediaType(getMediaType())

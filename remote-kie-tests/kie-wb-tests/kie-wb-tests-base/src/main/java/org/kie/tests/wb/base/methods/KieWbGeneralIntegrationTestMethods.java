@@ -1,5 +1,6 @@
 package org.kie.tests.wb.base.methods;
 
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -9,6 +10,8 @@ import static org.junit.Assert.fail;
 import static org.kie.tests.wb.base.util.TestConstants.EVALUTAION_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,7 @@ import org.kie.api.runtime.manager.audit.AuditService;
 import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.MyType;
@@ -194,4 +198,62 @@ public class KieWbGeneralIntegrationTestMethods {
         System.out.println("Process instance completed");
     }
 
+    public static void runRemoteApiGroupAssignmentEngineeringTest(RuntimeEngine runtimeEngine) throws Exception {
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+        ProcessInstance pi = ksession.startProcess(GROUP_ASSSIGNMENT_PROCESS_ID, null);
+        assertNotNull(pi);
+        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
+        
+        // assert the task
+        TaskSummary taskSummary = getTaskSummary(taskService, pi.getId(), Status.Ready);
+        assertNull(taskSummary.getActualOwner());
+        assertNull(taskSummary.getPotentialOwners());
+        assertEquals("Task 1", taskSummary.getName());
+
+        // complete 'Task 1' as mary
+        taskService.claim(taskSummary.getId(), MARY_USER);
+        taskService.start(taskSummary.getId(), MARY_USER);
+        taskService.complete(taskSummary.getId(), MARY_USER, null);
+        
+        // now make sure that the next task has been assigned to the
+        // correct person. it should be mary.
+        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
+        assertNotNull( "No task found for Mary", taskSummary);
+        assertEquals("Task 2", taskSummary.getName());
+        assertEquals(MARY_USER, taskSummary.getActualOwner().getId());
+        
+        // complete 'Task 2' as john
+        taskService.release(taskSummary.getId(), MARY_USER);
+        taskService.claim(taskSummary.getId(), JOHN_USER);
+        taskService.start(taskSummary.getId(), JOHN_USER);
+        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+        
+        // now make sure that the next task has been assigned to the
+        // correct person. it should be john.
+        taskSummary = getTaskSummary(taskService, pi.getId(), Status.Reserved);
+        assertEquals("Task 3", taskSummary.getName());
+        assertEquals(JOHN_USER, taskSummary.getActualOwner().getId());
+        
+        // complete 'Task 3' as john
+        taskService.start(taskSummary.getId(), JOHN_USER);
+        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+        
+        // assert process finished
+        pi = ksession.getProcessInstance(pi.getId());
+        assertNull(pi);
+    }
+   
+    private static TaskSummary getTaskSummary(TaskService taskService, long procInstId, Status status) {
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.add(status);
+        List<TaskSummary> taskSumList = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        TaskSummary result = null;
+        for (TaskSummary krisTask : taskSumList) {
+            if (krisTask.getProcessInstanceId() == procInstId) {
+                result = krisTask;
+            }
+        }
+        return result;
+    }
 }

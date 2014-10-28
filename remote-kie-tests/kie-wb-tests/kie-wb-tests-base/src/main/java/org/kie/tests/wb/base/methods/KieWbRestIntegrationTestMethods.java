@@ -17,9 +17,37 @@
  */
 package org.kie.tests.wb.base.methods;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.MAX_TRIES;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
-import static org.kie.tests.wb.base.util.TestConstants.*;
-import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
+import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.CLASSPATH_ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_OWN_TYPE_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,10 +68,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBElement;
 
 import org.apache.commons.io.FileUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.junit.Assume;
@@ -99,7 +125,6 @@ import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.services.shared.ServicesVersion;
 import org.kie.tests.MyType;
-import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods.Builder;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -359,7 +384,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // Exists, so undeploy
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy");
 
-        JaxbDeploymentJobResult jaxbJobResult = postCheckTime(httpRequest, 202, JaxbDeploymentJobResult.class);
+        JaxbDeploymentJobResult jaxbJobResult = post(httpRequest, 202, JaxbDeploymentJobResult.class, 500);
 
         assertEquals("Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY");
         logger.info("UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]"
@@ -1442,5 +1467,16 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
                 logger.info("{}/{} : {}", procDef.getDeploymentId(), procDef.getName(), procDef.getVariables().size());
             }
         }
+    }
+    
+    public void remoteApiGroupAssignmentEngineeringTest( URL deploymentUrl ) throws Exception {
+        RemoteRuntimeEngine runtimeEngine 
+            = RemoteRestRuntimeEngineFactory.newBuilder()
+            .addDeploymentId(deploymentId)
+            .addUserName(MARY_USER)
+            .addPassword(MARY_PASSWORD)
+            .addUrl(deploymentUrl)
+            .build();
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine);
     }
 }

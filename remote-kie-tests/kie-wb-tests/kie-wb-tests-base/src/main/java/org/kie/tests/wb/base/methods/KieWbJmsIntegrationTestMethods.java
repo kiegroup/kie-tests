@@ -726,4 +726,20 @@ public class KieWbJmsIntegrationTestMethods {
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
     }
 
+    public void remoteApiGroupAssignmentEngineeringTest(URL deploymentUrl) throws Exception {
+        RuntimeEngine runtimeEngine 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addJbossServerHostName(deploymentUrl.getHost())
+            .addDeploymentId(KJAR_DEPLOYMENT_ID)
+            .useSsl(true)
+            .addHostName("localhost")
+            .addJmsConnectorPort(5446)
+            .addKeystoreLocation("ssl/client_keystore.jks")
+            .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
+            .useKeystoreAsTruststore()
+            .addUserName(MARY_USER)
+            .addPassword(MARY_PASSWORD)
+            .build();
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+    }
 }
