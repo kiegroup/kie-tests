@@ -70,6 +70,14 @@ public class KieWbGeneralIntegrationTestMethods {
         testParamSerialization(engine, new MyType("variable", 29));
         
         /**
+         * List
+         */
+        List<String> myList = new ArrayList<String>(2);
+        myList.add("a");
+        myList.add("b");
+        testParamSerialization(engine, myList);
+        
+        /**
          * Float
          */
         testParamSerialization(engine, new Float(23.01));

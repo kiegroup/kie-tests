@@ -1,4 +1,4 @@
-package org.kie.tests.wb.base;
+package org.kie.tests.wb.base.live;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
@@ -31,7 +31,7 @@ public class KieWbRemoteApiIntegrationTest {
     private URL deploymentUrl;
     {
         // Modify this string to match your kie-wb/BPMS installation
-        String urlString = "http://localhost:8080/kie-wb/rest/";
+        String urlString = "http://localhost:8080/kie-wb/";
         try { 
             deploymentUrl = new URL(urlString);
         } catch( Exception e ) { 
@@ -41,7 +41,7 @@ public class KieWbRemoteApiIntegrationTest {
     }
    
     public boolean doDeploy() { 
-       return true; 
+       return false; 
     }
     
     public MediaType getMediaType() { 
@@ -86,12 +86,6 @@ public class KieWbRemoteApiIntegrationTest {
     private final static int REST_SUCCEEDING = 4;
     private final static int REST_RANDOM = 5;
     
-    private final static int JMS_ERROR = 6;
-    private final static int JMS_FAILING = 7;
-    private final static int JMS_REPAIRED = 8;
-    private final static int JMS_SUCCEEDING = 9;
-    private final static int JMS_RANDOM = 10;
-    
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
@@ -117,7 +111,7 @@ public class KieWbRemoteApiIntegrationTest {
         Assume.assumeTrue(doDeploy());
         
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         Thread.sleep(5000);
     }
 
@@ -267,7 +261,7 @@ public class KieWbRemoteApiIntegrationTest {
     }
    
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiHumanTaskGroupVarAssign() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -315,93 +309,6 @@ public class KieWbRemoteApiIntegrationTest {
     }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
-    
-    @Test
-    @InSequence(JMS_RANDOM)
-    public void testJmsStartProcess() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.commandsStartProcess(MARY_USER, MARY_PASSWORD);
-    }
 
-    @Test
-    @InSequence(JMS_RANDOM)
-    public void testJmsRemoteApiHumanTaskProcess() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiHumanTaskProcess(MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(JMS_FAILING)
-    public void testJmsRemoteApiExceptions() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiException(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    @InSequence(JMS_SUCCEEDING)
-    public void testJmsNoProcessInstanceFound() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiNoProcessInstanceFound(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    @InSequence(JMS_SUCCEEDING)
-    public void testJmsCompleteSimpleHumanTask() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiAndCommandsCompleteSimpleHumanTask(MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(JMS_ERROR)
-    public void testJmsExtraJaxbClasses() throws Exception {
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    @InSequence(JMS_RANDOM)
-    public void testJmsRemoteApiRuleTaskProcess() throws Exception { 
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiRuleTaskProcess(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    @InSequence(JMS_RANDOM)
-    public void testJmsRemoteApiStartProcessInstanceInitiator() throws Exception { 
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiInitiatorIdentityTest(MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    @InSequence(JMS_RANDOM)
-    public void testJmsRemoteApiHumanTaskGroupId() throws Exception { 
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiHumanTaskGroupIdTest(deploymentUrl);
-    }
-    
-    @Test
-    @InSequence(JMS_ERROR)
-    public void testJmsRemoteApiGroupAssignmentEngineering() throws Exception { 
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiGroupAssignmentEngineeringTest(deploymentUrl);
-    }
-    
-    @Test
-    @InSequence(JMS_SUCCEEDING)
-    public void testJmsRemoteApiHistoryVariablesTest() throws Exception { 
-        Assume.assumeTrue(jmsQueuesAvailable());
-        printTestName();
-        jmsTests.remoteApiHistoryVariablesTest(deploymentUrl);
-    }
 
 }

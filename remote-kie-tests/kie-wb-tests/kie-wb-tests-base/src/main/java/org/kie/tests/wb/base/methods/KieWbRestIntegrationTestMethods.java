@@ -24,9 +24,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.MAX_TRIES;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
@@ -58,6 +59,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -86,6 +88,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
@@ -207,7 +210,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
     private JaxbSerializationProvider jaxbSerializationProvider;
     {
-        jaxbSerializationProvider = JaxbSerializationProvider.clientSideInstance(MyType.class);
+        Class<?> [] classes = { MyType.class };
+        jaxbSerializationProvider = ClientJaxbSerializationProvider.newInstance(Arrays.asList(classes));
     }
     private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
 
@@ -858,10 +862,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         KieSession ksession = engine.getKieSession();
 
         // start process
-        ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        ProcessInstance procInst = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
         assertNotNull("Null process instance list!", processInstances);
-        assertTrue("No process instances started: " + processInstances.size(), processInstances.size() > 0);
     }
 
     public void remoteApiExtraJaxbClasses( URL deploymentUrl, String user, String password ) throws Exception {
@@ -1009,14 +1013,19 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         String varId = "myobject";
         String varVal = "10";
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=" + varVal);
+
+        // proc log
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("history/variable/" + varId + "/instances");
+        JaxbHistoryLogList jhll = get(httpRequest, JaxbHistoryLogList.class);
+        int initHistSize = jhll.getResult().size();
+
+        httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=" + varVal);
         JaxbProcessInstanceResponse procInstResp = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();
 
         // var log
         httpRequest = requestCreator.createRequest("history/variable/" + varId);
-        JaxbHistoryLogList jhll = get(httpRequest, JaxbHistoryLogList.class);
+        jhll = get(httpRequest, JaxbHistoryLogList.class);
         List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
         if( jhll != null ) {
             List<Object> history = jhll.getResult();
@@ -1049,7 +1058,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             }
         }
         assertNotNull("Empty ProcesInstanceLog list", piLogs);
-        assertEquals("ProcessInstanceLog list size", piLogs.size(), 1);
+        assertEquals("ProcessInstanceLog list size", initHistSize + 1, piLogs.size() );
         ProcessInstanceLog pi = piLogs.get(0);
         assertNotNull(pi);
     }
@@ -1089,7 +1098,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         }
         assertEquals(200, respCode);
 
-        JaxbSerializationProvider jaxbSerializer = JaxbSerializationProvider.clientSideInstance();
+        JaxbSerializationProvider jaxbSerializer = ClientJaxbSerializationProvider.newInstance();
         String xmlStrObj = getConnectionContent(connection.getContent());
         logger.info("Output: |" + xmlStrObj + "|");
         depList = (JaxbDeploymentUnitList) jaxbSerializer.deserialize(xmlStrObj);
@@ -1157,7 +1166,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         MyType retrievedVar;
         try {
             if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) {
-                jaxbSerializationProvider.addJaxbClasses(true, MyType.class);
+                ((ClientJaxbSerializationProvider) jaxbSerializationProvider).addJaxbClasses(MyType.class);
                 retrievedVar  = (MyType) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
             } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) {
                 jsonSerializationProvider.setDeserializeOutputClass(MyType.class);

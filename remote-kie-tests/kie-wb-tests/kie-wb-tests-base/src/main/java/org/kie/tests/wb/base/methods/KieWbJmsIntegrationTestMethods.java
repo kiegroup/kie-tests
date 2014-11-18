@@ -17,14 +17,33 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.logger;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
+import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEYSTORE_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEY_TRUSTSTORE_LOCATION;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SALA_USER;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,7 +53,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
@@ -42,6 +60,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -58,6 +77,9 @@ import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.remote.client.api.RemoteJmsRuntimeEngineBuilder;
+import org.kie.remote.client.api.RemoteJmsRuntimeEngineFactory;
+import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskResponse;
@@ -69,9 +91,7 @@ import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.GetTasksOwnedCommand;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
-import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
@@ -92,7 +112,7 @@ public class KieWbJmsIntegrationTestMethods {
 
     private final String deploymentId;
     private final InitialContext remoteInitialContext;
-    private final JaxbSerializationProvider jaxbSerializationProvider = JaxbSerializationProvider.clientSideInstance();
+    private final JaxbSerializationProvider jaxbSerializationProvider = ClientJaxbSerializationProvider.newInstance();
 
     public KieWbJmsIntegrationTestMethods(String deploymentId) {
        this(deploymentId, true, false);
@@ -173,13 +193,12 @@ public class KieWbJmsIntegrationTestMethods {
             connection.start();
 
             // Create msg
-            BytesMessage msg = session.createBytesMessage();
+            String xmlStr = jaxbSerializationProvider.serialize(req);
+            TextMessage msg = session.createTextMessage(xmlStr);
             msg.setJMSCorrelationID(corrId);
             msg.setIntProperty("serialization", JaxbSerializationProvider.JMS_SERIALIZATION_TYPE);
             msg.setStringProperty("username", MARY_USER);
             msg.setStringProperty("password", MARY_PASSWORD);
-            String xmlStr = jaxbSerializationProvider.serialize(req);
-            msg.writeUTF(xmlStr);
 
             // send
             producer.send(msg);
@@ -191,7 +210,7 @@ public class KieWbJmsIntegrationTestMethods {
             assertNotNull("Response is empty.", response);
             assertEquals("Correlation id not equal to request msg id.", corrId, response.getJMSCorrelationID());
             assertNotNull("Response from MDB was null!", response);
-            xmlStr = ((BytesMessage) response).readUTF();
+            xmlStr = ((TextMessage) response).getText();
             cmdResponse = (JaxbCommandsResponse) jaxbSerializationProvider.deserialize(xmlStr);
             assertNotNull("Jaxb Cmd Response was null!", cmdResponse);
         } finally {
@@ -307,7 +326,7 @@ public class KieWbJmsIntegrationTestMethods {
     }
 
     public void remoteApiHumanTaskProcess(String user, String password) throws Exception {
-        RemoteRuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -366,7 +385,7 @@ public class KieWbJmsIntegrationTestMethods {
             fail("startProcess should fail!");
         } catch (RemoteApiException rae) {
             String errMsg = rae.getMessage();
-            assertTrue("Incorrect error message: " + errMsg, errMsg.contains("DeploymentNotFoundException"));
+            assertTrue("Incorrect error message: " + errMsg, errMsg.contains("No deployments"));
         }
     }
 

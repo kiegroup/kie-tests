@@ -53,7 +53,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
 
     @Override
     public boolean doRestTests() {
-        return true;
+        return false;
     }
 
     @Override
