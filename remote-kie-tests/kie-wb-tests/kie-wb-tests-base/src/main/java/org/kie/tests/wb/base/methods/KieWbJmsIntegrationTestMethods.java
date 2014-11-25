@@ -92,7 +92,6 @@ import org.kie.remote.jaxb.gen.GetTasksOwnedCommand;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
@@ -371,7 +370,7 @@ public class KieWbJmsIntegrationTestMethods {
     }
 
     public void remoteApiException(String user, String password) throws Exception {
-        RemoteRuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId("non-existing-deployment")
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -390,7 +389,7 @@ public class KieWbJmsIntegrationTestMethods {
     }
 
     public void remoteApiNoProcessInstanceFound(String user, String password) throws Exception {
-        RemoteRuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -417,7 +416,7 @@ public class KieWbJmsIntegrationTestMethods {
         // Via the remote api
 
         // setup
-        RemoteRuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -552,7 +551,7 @@ public class KieWbJmsIntegrationTestMethods {
 
     public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
         // Remote API setup
-        RemoteRuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -564,19 +563,19 @@ public class KieWbJmsIntegrationTestMethods {
 
     public void remoteApiRuleTaskProcess(String user, String password) {
         // setup
-        RemoteRuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
                 .addPassword(password)
                 .build();
 
-        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
+        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditService());
     }
 
     public void remoteApiInitiatorIdentityTest(String user, String password) {
         // setup
-        RemoteRuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -589,7 +588,7 @@ public class KieWbJmsIntegrationTestMethods {
         assertNotNull( "Null process instance!", procInst);
         long procId = procInst.getId();
 
-        List<ProcessInstanceLog> procLogs = (List<ProcessInstanceLog>) runtimeEngine.getAuditLogService().findActiveProcessInstances(HUMAN_TASK_PROCESS_ID);
+        List<ProcessInstanceLog> procLogs = (List<ProcessInstanceLog>) runtimeEngine.getAuditService().findActiveProcessInstances(HUMAN_TASK_PROCESS_ID);
         boolean procLogFound = false;
         for (ProcessInstanceLog log : procLogs) {
             if (log == null) {
@@ -613,7 +612,7 @@ public class KieWbJmsIntegrationTestMethods {
             .addPassword(password)
             .buildFactory();
 
-        RemoteRuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
+        RuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
 
         // start process
@@ -733,13 +732,13 @@ public class KieWbJmsIntegrationTestMethods {
                 .addUserName(JOHN_USER)
                 .addPassword(JOHN_PASSWORD);
         
-        RemoteRuntimeEngine runtimeEngine = jreBuilder.build();
+        RuntimeEngine runtimeEngine = jreBuilder.build();
       
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("myobject", 10l);
         runtimeEngine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, params);
         
-        List<VariableInstanceLog> viLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditLogService().findVariableInstancesByName("myobject", false);
+        List<VariableInstanceLog> viLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditService().findVariableInstancesByName("myobject", false);
         assertNotNull( "Null variable instance log list", viLogs);
         logger.info("vi logs: " + viLogs.size());
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );

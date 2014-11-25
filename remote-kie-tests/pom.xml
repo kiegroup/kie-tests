@@ -23,21 +23,29 @@
   </modules>
 
   <properties>
-    <shrinkwrap.resolver.version>2.0.2</shrinkwrap.resolver.version> 
-    <arquillian.version>1.1.4.Final</arquillian.version> 
-    <override.version.org.apache.maven>3.0.5</override.version.org.apache.maven>
+    <shrinkwrap.resolver.version>2.1.1</shrinkwrap.resolver.version> 
+    <arquillian.version>1.1.5.Final</arquillian.version> 
+    
+    <!-- aether/maven, mostly for arquillian/shrinkwrap-->
+    <override.version.org.apache.maven>3.1.1</override.version.org.apache.maven>
+    <override.version.org.eclipse.aether>0.9.0.M2</override.version.org.eclipse.aether>
     
     <!-- tomcat 7.0.32 + arq-tomcat 1.0.0.CR6 is the magic combination that works.. :/ -->
     <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <version.org.jboss.arquillian.container.tomcat>1.0.0.CR6</version.org.jboss.arquillian.container.tomcat>
     
     <!-- jboss as  -->
-    <override.version.org.jboss.as>7.2.0.Final</override.version.org.jboss.as>
-    <version.org.jboss.as.dist>7.4.0.Final-redhat-17</version.org.jboss.as.dist>
+    <override.version.org.jboss.as>7.4.0.Final-redhat-19</override.version.org.jboss.as>
+    <version.org.jboss.as.dist>7.4.0.Final-redhat-19</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.3</jboss.server.name>
     
     <!-- jetty -->    
     <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>
+   
+    <!-- resteasy --> 
+    <version.org.jboss.resteasy>3.0.9.Final</version.org.jboss.resteasy>
+    <version.org.apache.httpcomponents>4.2.6</version.org.apache.httpcomponents>
+    <version.org.apache.httpcomponents.core>4.2.5</version.org.apache.httpcomponents.core>
   </properties>
 
   <dependencyManagement>
@@ -56,7 +64,7 @@
         <version>${project.version}</version>
       </dependency>
     
-      <!-- k-w-p-d #$%s with dependencies --> 
+      <!-- apache maven--> 
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-model</artifactId>
@@ -92,6 +100,28 @@
         <artifactId>maven-aether-provider</artifactId>
         <version>${override.version.org.apache.maven}</version>
         <scope>test</scope>
+      </dependency>
+
+      <!-- eclipse aether -->
+      <dependency>
+       <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-api</artifactId>
+        <version>${override.version.org.eclipse.aether}</version>
+      </dependency>
+      <dependency>
+       <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-spi</artifactId>
+        <version>${override.version.org.eclipse.aether}</version>
+      </dependency>
+      <dependency>
+       <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-impl</artifactId>
+        <version>${override.version.org.eclipse.aether}</version>
+      </dependency>
+      <dependency>
+       <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-util</artifactId>
+        <version>${override.version.org.eclipse.aether}</version>
       </dependency>
 
       <!-- arquillian -->
@@ -141,6 +171,13 @@
         <version>${version.org.jboss.as.dist}</version>
         <type>zip</type>
       </dependency>
+      <!-- 
+      <dependency>
+        <groupId>org.jboss.as</groupId>
+        <artifactId>jboss-as-arquillian-container-managed</artifactId>
+        <version>${override.version.org.jboss.as}</version>
+      </dependency>
+       -->
       
       <!-- jetty -->
      <dependency>
@@ -156,6 +193,43 @@
         <artifactId>wildfly-arquillian-container-managed</artifactId>
         <version>8.1.0.Final</version>
         <scope>test</scope>
+      </dependency>
+     
+      <!-- resteasy --> 
+        <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>jaxrs-api</artifactId>
+        <version>${version.org.jboss.resteasy}</version>
+      </dependency>     
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-jaxrs</artifactId>
+        <version>${version.org.jboss.resteasy}</version>
+      </dependency>     
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-client</artifactId>
+        <version>${version.org.jboss.resteasy}</version>
+      </dependency>     
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-jaxb-provider</artifactId>
+        <version>${version.org.jboss.resteasy}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-jackson-provider</artifactId>
+        <version>${version.org.jboss.resteasy}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${version.org.apache.httpcomponents}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${version.org.apache.httpcomponents.core}</version>
       </dependency>
       
       <!-- Other -->

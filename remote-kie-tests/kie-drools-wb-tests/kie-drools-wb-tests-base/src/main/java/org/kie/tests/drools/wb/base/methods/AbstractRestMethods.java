@@ -1,15 +1,14 @@
 package org.kie.tests.drools.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.Inet6Address;
 import java.net.URL;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ws.rs.client.Client;
@@ -32,31 +31,23 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.ContentHandler;
 
 public abstract class AbstractRestMethods {
  
@@ -196,38 +187,30 @@ public abstract class AbstractRestMethods {
 
             if( response != null ) { 
                 int respStatus = response.getStatus();
-                assertEquals( "Incorrect response code: " + respStatus, status, respStatus );
-                
-                if( result == null && returnType != null ) { 
-                try { 
-                    response.bufferEntity();
-                    if( paramType != null ) { 
-                        result = (T) response.readEntity(new GenericType(paramType));
-                    } else { 
-                        result = (T) response.readEntity(returnType);
-                    }
-                } catch( Exception e ) { 
-                    MediaType responseType = response.getMediaType();
-                    if( responseType.toString().startsWith(MediaType.TEXT_HTML) ) { 
-                        InputStream input = response.readEntity(InputStream.class);
-                        ContentHandler handler = new BodyContentHandler();
-                        boolean htmlParsed = false;
-                        try { 
-                            new HtmlParser().parse(input, handler, new Metadata(), new ParseContext());
-                            htmlParsed = true;
-                        } catch( Exception e2 ) { 
-                            logger.error("]] Unable to unmarshal response: type " + responseType);
+                if( respStatus >= 300 && response.getMediaType().toString().startsWith(MediaType.TEXT_HTML) ) { 
+                    String bodyContent = getHtmlBodyContent(response);
+                    logger.error("]] Request failed:\n" + bodyContent);
+                    fail( "Request failed with status [" + respStatus + "], see log." );
+                } else if( result == null && returnType != null ) { 
+                    assertEquals( "Incorrect response code: " + respStatus, status, respStatus );
+                    try { 
+                        response.bufferEntity();
+                        if( paramType != null ) { 
+                            result = (T) response.readEntity(new GenericType(paramType));
+                        } else { 
+                            result = (T) response.readEntity(returnType);
                         }
-                        if( htmlParsed ) { 
-                            String bodyContent = handler.toString();
+                    } catch( Exception e ) { 
+                        MediaType responseType = response.getMediaType();
+                        if( responseType.toString().startsWith(MediaType.TEXT_HTML) ) { 
+                            String bodyContent = getHtmlBodyContent(response);
                             logger.error("]] Unable to unmarshall content: \n" + bodyContent);
                             fail( "Unable to unmarshall response content [" + target.getUri().toString() + "]");
-                        } 
+                        }
+                        else { 
+                            fail( "Unable to unmarshall response content [" + target.getUri().toString() + "] : " + e.getMessage() );
+                        }
                     }
-                    else { 
-                        fail( "Unable to unmarshall response content [" + target.getUri().toString() + "] : " + e.getMessage() );
-                    }
-                }
                 }
             }
         } finally { 
@@ -238,6 +221,18 @@ public abstract class AbstractRestMethods {
         return result;
     }
 
+    private String getHtmlBodyContent(Response response) { 
+        String bodyContent = response.readEntity(String.class);
+        boolean htmlParsed = false;
+        try { 
+            Document doc = Jsoup.parse(bodyContent);
+            bodyContent = doc.body().text();
+        } catch( Exception e2 ) { 
+            logger.error("]] Unable to unmarshal response: type " + response.getMediaType());
+        } 
+        return bodyContent;
+    }
+    
     /**
      * Creates an request factory that authenticates using the given username and password
      *
@@ -267,39 +262,39 @@ public abstract class AbstractRestMethods {
      * @return A {@link DefaultHttpClient} instance that will authenticate using the given username and password.
      */
     private static HttpClient createPreemptiveAuthHttpClient(String userName, String password, int timeout, HttpContext localContext) {
-        // authentication
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(
-                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                new UsernamePasswordCredentials(userName, password));
-        BasicScheme basicAuth = new BasicScheme();
-        String contextId = UUID.randomUUID().toString();
-        localContext.setAttribute(contextId, basicAuth);
-
-        // user agent
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        BasicHttpParams httpParams = new BasicHttpParams();
+        
         String hostname = "localhost";
         try {
             hostname = Inet6Address.getLocalHost().toString();
         } catch (Exception e) {
             // do nothing
         }
+        
+        // authentication
+        AuthCache authCache = new BasicAuthCache();
+        BasicScheme basicAuth = new BasicScheme();
+        authCache.put(new HttpHost(hostname, 8080), basicAuth);
+        localContext.setAttribute(ClientContext.AUTH_CACHE, authCache);
+
+        // user agent
         String userAgent = "org.kie.tests.remote.client (" + idGen.getAndIncrement() + " / " + hostname + ")";
-
-        // timeout
+        
+        // credentials 
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                new UsernamePasswordCredentials(userName, password));
+        httpClient.setCredentialsProvider(credsProvider);
+       
+        // timeouts
         timeout *= 1000;
-        RequestConfig config = RequestConfig.custom()
-                .setConnectionRequestTimeout(timeout)
-                .setSocketTimeout(timeout)
-                .setAuthenticationEnabled(true)
-                .build();
+        httpParams.setParameter(CoreConnectionPNames.SO_TIMEOUT, timeout);
+        httpParams.setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, timeout);
+        httpParams.setParameter(CoreProtocolPNames.USER_AGENT, userAgent);
 
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider)
-                .setDefaultRequestConfig(config)
-                .addInterceptorFirst(new PreemptiveAuth(contextId))
-                .setUserAgent(userAgent)
-                .build();
-
+        httpClient.setParams(httpParams);
         return httpClient; 
     }
     

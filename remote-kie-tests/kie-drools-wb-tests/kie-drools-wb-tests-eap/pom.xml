@@ -23,15 +23,7 @@
   <properties>
     <skip.integration.tests>true</skip.integration.tests>
 
-    <!-- DO NOT TOUCH THESE PROPERTIES -->
-    <arquillian.version>1.1.1.Final</arquillian.version>
-    <shrinkwrap.resolver.version>2.0.0</shrinkwrap.resolver.version>
-
-    <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
-    
     <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
-    <version.org.jboss.as.dist>7.2.1.Final-redhat-10</version.org.jboss.as.dist>
-    <jboss.server.name>jboss-eap-6.1</jboss.server.name>
   </properties>
 
   <dependencies>
@@ -41,12 +33,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-wb-rest</artifactId>
-      <scope>test</scope>
-    </dependency>
-    
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-drools-wb-distribution-wars</artifactId>
@@ -96,12 +82,6 @@
     </dependency>
   </dependencies>
 
-  <dependencyManagement>
-    <dependencies>
-
-    </dependencies> 
-  </dependencyManagement>
-  
   <build>
     <testResources>
       <testResource>

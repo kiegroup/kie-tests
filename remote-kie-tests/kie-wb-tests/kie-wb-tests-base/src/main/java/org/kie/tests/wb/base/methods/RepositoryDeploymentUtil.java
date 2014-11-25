@@ -1,11 +1,13 @@
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
@@ -20,7 +22,8 @@ import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryRequest;
 import org.guvnor.rest.client.RepositoryRequest;
 import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.spi.BadRequestException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.common.rest.KieRemoteHttpRequest;
 import org.kie.remote.common.rest.KieRemoteHttpResponse;
@@ -311,23 +314,15 @@ public class RepositoryDeploymentUtil {
                 }
                 T res = new ObjectMapper().readValue(responseBody, returnType);
                 return res;
-            }
-            
-            // now that we know that the result is wrong, try to identify the
-            // reason
-            final String errorBody = responseBody.replaceAll("><", ">\n<");
-            final String headerTag = "<h1>";
-            final int h1StartPosition = errorBody.indexOf(headerTag);
-            if (h1StartPosition < 0) {
+            } else if( contentType.startsWith(MediaType.TEXT_HTML) ) {
+                // now that we know that the result is wrong, try to identify the reason
+                Document doc = Jsoup.parse(responseBody);
+                String errorBody = doc.body().text();
                 logger.error("Failed cloning repository. Full response body on DEBUG.");
-                logger.debug("Repository cloning response body: {}", errorBody);
-                throw new IllegalStateException("Unexpected content-type: " + contentType);
-            } else {
-                final int h1EndPosition = errorBody.indexOf("</h1>");
-                final String reason = errorBody.substring(h1StartPosition + headerTag.length(), h1EndPosition);
-                logger.error("Failed cloning repository, reason given: '{}'. Full response body on DEBUG.", reason);
-                logger.debug("Repository cloning response body: {}", errorBody);
+                logger.debug("Repository cloning response body:\n {}", errorBody);
                 throw new IllegalStateException("Failed cloning repository.");
+            } else { 
+                throw new IllegalStateException("Unexpected content-type: " + contentType);
             }
         } catch (Exception ex) {
             logger.error("Bad entity: {}", responseBody );

@@ -62,7 +62,7 @@ public class KieWbGeneralIntegrationTestMethods {
      * Shared tests
      */
     
-    public static void testExtraJaxbClassSerialization(RemoteRuntimeEngine engine) {
+    public static void testExtraJaxbClassSerialization(RuntimeEngine engine) {
         
         /**
          * MyType
@@ -89,7 +89,7 @@ public class KieWbGeneralIntegrationTestMethods {
     }
     
 
-    public static void testParamSerialization(RemoteRuntimeEngine  engine, Object param) { 
+    public static void testParamSerialization(RuntimeEngine  engine, Object param) { 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("myobject", param);
         KieSession ksession = engine.getKieSession();
@@ -102,7 +102,7 @@ public class KieWbGeneralIntegrationTestMethods {
          * Check that MyType was correctly deserialized on server side
          */
         List<VariableInstanceLog> varLogList 
-            = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstancesByName("type", false);
+            = (List<VariableInstanceLog>) engine.getAuditService().findVariableInstancesByName("type", false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
             if( varLog.getProcessInstanceId() == procInstId ) { 
@@ -114,7 +114,7 @@ public class KieWbGeneralIntegrationTestMethods {
         assertEquals( "De/serialization of Kjar type did not work.", param.getClass().getName(), thisProcInstVarLog.getValue() );
         
         // Double check for BZ-1085267
-        varLogList = (List<org.kie.api.runtime.manager.audit.VariableInstanceLog>) engine.getAuditLogService().findVariableInstances(procInstId, "type");
+        varLogList = (List<org.kie.api.runtime.manager.audit.VariableInstanceLog>) engine.getAuditService().findVariableInstances(procInstId, "type");
         assertNotNull("No variable log list retrieved!", varLogList);
         assertTrue("Variable log list is empty!", varLogList.size() > 0);
     }

@@ -88,6 +88,7 @@ import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
@@ -106,8 +107,6 @@ import org.kie.remote.jaxb.gen.StartTaskCommand;
 import org.kie.remote.tests.base.AbstractKieRemoteRestMethods;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.services.client.api.builder.RemoteRestRuntimeEngineBuilder;
-import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
 import org.kie.services.client.serialization.SerializationException;
@@ -257,14 +256,14 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         return jsonSerializationProvider.serialize(entity);
     }
 
-    private RemoteRuntimeEngineFactory getRemoteRuntimeFactory( URL deploymentUrl, String user, String password ) {
-        return getRemoteRuntimeFactory(deploymentUrl, user, password, null);
+    private RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password ) {
+        return getRemoteRuntimeEngine(deploymentUrl, user, password, null);
     }
 
-    private RemoteRuntimeEngineFactory getRemoteRuntimeFactory( URL deploymentUrl, String user, String password,
+    private RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password,
             Class... extraClasses ) {
         // @formatter:off
-        RemoteRestRuntimeEngineBuilder builder = RemoteRestRuntimeEngineFactory.newBuilder()
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addDeploymentId(deploymentId)
                 .addUrl(deploymentUrl)
                 .addUserName(user)
@@ -274,7 +273,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             builder.addExtraJaxbClasses(extraClasses);
         }
 
-        return builder.buildFactory();
+        return builder.build();
     }
 
     /**
@@ -345,8 +344,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         if( strategy.equals(RuntimeStrategy.SINGLETON) ) {
             url += "?strategy=" + strategy.toString();
         }
-        KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(url).basicAuthorization(user, password)
-                .followRedirects(true);
+        KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(url)
+                .basicAuthorization(user, password)
+                .followRedirects(true)
+                .timeout(timeoutInSecs);
 
         // POST request
         JaxbDeploymentJobResult result = null;
@@ -386,7 +387,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private void undeploy( KModuleDeploymentUnit kDepUnit, URL deploymentUrl, RequestCreator requestCreator ) throws Exception {
         logger.info("undeploy");
         // Exists, so undeploy
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy");
+        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy")
+                .timeout(timeoutInSecs);
 
         JaxbDeploymentJobResult jaxbJobResult = post(httpRequest, 202, JaxbDeploymentJobResult.class, 500);
 
@@ -598,8 +600,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
      */
     public void remoteApiHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
         // create REST request
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         assertNotNull("Null ProcessInstance!", processInstance);
@@ -636,8 +637,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         MediaType origType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RuntimeEngine runtimeEngine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
 
@@ -857,8 +857,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
     public void remoteApiSerialization( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = engine.getKieSession();
 
         // start process
@@ -875,19 +874,17 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private void runRemoteApiExtraJaxbClassesTest( String deploymentId, URL deploymentUrl, String user, String password )
             throws Exception {
         // Remote API setup
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         // test
         testExtraJaxbClassSerialization(engine);
     }
 
     public void remoteApiRuleTaskProcess( URL deploymentUrl, String user, String password ) {
         // Remote API setup
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RemoteRuntimeEngine runtimeEngine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
 
         // runTest
-        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditLogService());
+        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditService());
     }
 
     public void remoteApiGetTaskInstance( URL deploymentUrl, String user, String password ) throws Exception {
@@ -895,8 +892,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
         // Remote API setup
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
 
         KieSession ksession = engine.getKieSession();
         ProcessInstance processInstance = null;
@@ -1122,8 +1118,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
     public void urlsGetRealProcessVariable( URL deploymentUrl, String user, String password ) throws Exception {
         // Setup
-        RemoteRuntimeEngineFactory restSessionFactory = getRemoteRuntimeFactory(deploymentUrl, user, password);
-        RemoteRuntimeEngine engine = restSessionFactory.newRuntimeEngine();
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         logger.info("deployment url: " + deploymentUrl.toExternalForm());
         RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
@@ -1137,7 +1132,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
          * Check that MyType was correctly deserialized on server side
          */
         String varName = "myobject";
-        List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) engine.getAuditLogService().findVariableInstancesByName(
+        List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) engine.getAuditService().findVariableInstancesByName(
                 varName, false);
         VariableInstanceLog thisProcInstVarLog = null;
         for( VariableInstanceLog varLog : varLogList ) {
@@ -1188,9 +1183,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         RemoteRestRuntimeEngineBuilder runtimeEngineBuilder = RemoteRestRuntimeEngineFactory.newBuilder()
                 .addDeploymentId(deploymentId).addUrl(deploymentUrl);
 
-        RemoteRuntimeEngine krisRemoteEngine = runtimeEngineBuilder.addUserName(KRIS_USER).addPassword(KRIS_PASSWORD).build();
-        RemoteRuntimeEngine maryRemoteEngine = runtimeEngineBuilder.addUserName(MARY_USER).addPassword(MARY_PASSWORD).build();
-        RemoteRuntimeEngine johnRemoteEngine = runtimeEngineBuilder.addUserName(JOHN_USER).addPassword(JOHN_PASSWORD).build();
+        RuntimeEngine krisRemoteEngine = runtimeEngineBuilder.addUserName(KRIS_USER).addPassword(KRIS_PASSWORD).build();
+        RuntimeEngine maryRemoteEngine = runtimeEngineBuilder.addUserName(MARY_USER).addPassword(MARY_PASSWORD).build();
+        RuntimeEngine johnRemoteEngine = runtimeEngineBuilder.addUserName(JOHN_USER).addPassword(JOHN_PASSWORD).build();
 
         runHumanTaskGroupIdTest(krisRemoteEngine, johnRemoteEngine, maryRemoteEngine);
     }
@@ -1274,11 +1269,16 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void remoteApiHumanTaskGroupVarAssignTest( URL deploymentUrl ) {
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory = RemoteRestRuntimeEngineFactory.newBuilder()
-                .addDeploymentId(deploymentId).addUserName(MARY_USER).addPassword(MARY_PASSWORD).addUrl(deploymentUrl)
-                .buildFactory();
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
+                .addUrl(deploymentUrl)
+                .build();
+        // @formatter:on
 
-        RuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
 
         HashMap<String, Object> params = new HashMap<String, Object>();
         params.put("taskOwnerGroup", "HR");
@@ -1296,18 +1296,17 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
     public void remoteApiHumanTaskOwnTypeTest( URL deploymentUrl ) {
         // @formatter:off
-        RemoteRuntimeEngineFactory maryRemoteEngineFactory 
-            = RemoteRestRuntimeEngineFactory.newBuilder()
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addDeploymentId(deploymentId)
                 .addUserName(JOHN_USER)
                 .addPassword(JOHN_PASSWORD)
                 .addUrl(deploymentUrl)
                 .addExtraJaxbClasses(MyType.class)
-                .buildFactory();
+                .build();
         // @formatter:on
 
-        RemoteRuntimeEngine runtimeEngine = maryRemoteEngineFactory.newRuntimeEngine();
-        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditLogService());
+        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService());
     }
 
     public void runRemoteApiHumanTaskOwnTypeTest( RuntimeEngine runtimeEngine, AuditService auditLogService ) {
@@ -1412,7 +1411,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         }
 
         // Run process
-        RemoteRuntimeEngine runtimeEngine = RemoteRestRuntimeEngineFactory.newBuilder().addDeploymentId(classpathDeploymentId)
+        RuntimeEngine runtimeEngine = RemoteRestRuntimeEngineFactory.newBuilder().addDeploymentId(classpathDeploymentId)
                 .addUrl(deploymentUrl).addUserName(user).addPassword(password).build();
 
         runClassPathProcessTest(runtimeEngine);
@@ -1428,7 +1427,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         runClassPathProcessTest(runtimeEngine);
     }
 
-    private void runClassPathProcessTest( RemoteRuntimeEngine runtimeEngine ) {
+    private void runClassPathProcessTest( RuntimeEngine runtimeEngine ) {
         KieSession ksession = runtimeEngine.getKieSession();
 
         Map<String, Object> params = new HashMap<String, Object>();
@@ -1438,7 +1437,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         ProcessInstance procInst = ksession.startProcess(TestConstants.CLASSPATH_OBJECT_PROCESS_ID, params);
         long processInstanceId = procInst.getId();
 
-        AuditService auditLogService = runtimeEngine.getAuditLogService();
+        AuditService auditLogService = runtimeEngine.getAuditService();
         List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) auditLogService.findVariableInstances(processInstanceId);
 
         assertNotNull("Null variable instance found.", varLogList);
@@ -1446,7 +1445,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             logger.debug(varLog.getVariableId() + " (" + varLog.getValue() + ") ");
         }
 
-        List<VariableInstanceLog> varLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditLogService()
+        List<VariableInstanceLog> varLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditService()
                 .findVariableInstancesByName(varId, false);
         assertTrue(varLogs.size() > 0);
         assertEquals(varId, varLogs.get(0).getVariableId());
@@ -1479,7 +1478,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
     
     public void remoteApiGroupAssignmentEngineeringTest( URL deploymentUrl ) throws Exception {
-        RemoteRuntimeEngine runtimeEngine 
+        RuntimeEngine runtimeEngine 
             = RemoteRestRuntimeEngineFactory.newBuilder()
             .addDeploymentId(deploymentId)
             .addUserName(MARY_USER)

@@ -21,42 +21,12 @@
     <module>kie-drools-wb-tests-wildfly</module>
   </modules>
 
-  <properties>
-    <version.org.jboss.resteasy>3.0.9.Final</version.org.jboss.resteasy>
-  </properties>
-  
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.kie.tests.remote</groupId>
         <artifactId>kie-drools-wb-tests-base</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>jaxrs-api</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jaxrs</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-client</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jaxb-provider</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jackson-provider</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

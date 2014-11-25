@@ -38,7 +38,7 @@ public class KieWbWarJbossEapDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = { 
-                    { "org.jbpm", "jbpm-runtime-manager" },
+                    { "org.jbpm", "jbpm-kie-services" },
                     
                     // kie-remote
                     { "org.kie.remote", "kie-remote-services" },

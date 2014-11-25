@@ -33,14 +33,15 @@ import org.kie.tests.drools.wb.base.AbstractKieDroolsWbIntegrationTest;
 @RunWith(Arquillian.class)
 public class KieDroolsWbWildflyRestIntegrationTest extends AbstractKieDroolsWbIntegrationTest {
 
+    private static final String classifier = "wildfly8";
+    
     protected static WebArchive createTestWar() {
         // Import kie-wb war
-        WebArchive war = getWebArchive("org.kie", "kie-drools-wb-distribution-wars", "wildfly8", PROJECT_VERSION);
+        WebArchive war = getWebArchive("org.kie", "kie-drools-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String [][] jarsToReplace = { 
-                { "org.drools", "drools-wb-rest" },
-                { "org.guvnor", "guvnor-rest-backend" },
-                { "org.guvnor", "guvnor-rest-client" }
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
         

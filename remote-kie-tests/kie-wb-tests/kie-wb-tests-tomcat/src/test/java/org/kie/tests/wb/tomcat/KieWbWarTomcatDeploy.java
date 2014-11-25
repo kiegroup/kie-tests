@@ -23,6 +23,8 @@ public class KieWbWarTomcatDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = {
+                    { "org.jbpm", "jbpm-kie-services" },
+                    
                     { "org.kie.remote", "kie-remote-jaxb" },
                     { "org.kie.remote", "kie-remote-rest-api" },
                     { "org.kie.remote", "kie-remote-services" },
