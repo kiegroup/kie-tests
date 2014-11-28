@@ -88,7 +88,7 @@ public class RepositoryDeploymentUtil {
     private JobRequest deleteRepository(String repositoryName) { 
         logger.info("Deleting repository '{}'", repositoryName);
         RemoveRepositoryRequest entity 
-            = delete(createRequest("repositories/" + repositoryName), 200, RemoveRepositoryRequest.class);
+            = delete(createRequest("repositories/" + repositoryName), 202, RemoveRepositoryRequest.class);
         if (entity.getStatus() == JobStatus.ACCEPTED || entity.getStatus() == JobStatus.SUCCESS) {
             return entity;
         } else {
