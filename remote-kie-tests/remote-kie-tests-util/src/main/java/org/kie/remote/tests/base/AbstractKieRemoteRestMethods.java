@@ -7,6 +7,8 @@ import static org.junit.Assert.fail;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.kie.remote.common.rest.KieRemoteHttpRequest;
 import org.kie.remote.common.rest.KieRemoteHttpResponse;
 import org.slf4j.Logger;
@@ -71,7 +73,13 @@ public abstract class AbstractKieRemoteRestMethods {
     protected void checkResponse( KieRemoteHttpRequest httpRequest, int status ) {
         KieRemoteHttpResponse httpResponse = httpRequest.response();
         if( status != httpResponse.code() ) {
-            logger.warn("Response with exception:\n" + httpResponse.body());
+            String content = httpResponse.header(HttpHeaders.CONTENT_TYPE);
+            String body = httpResponse.body();
+            if( content.startsWith(MediaType.TEXT_HTML) ) { 
+                Document doc = Jsoup.parse(body);
+                body = doc.body().text();
+            }
+            logger.warn("Response with exception:\n" + body);
             fail("Incorrect status: " + httpResponse.code() + " (" + httpRequest.getUri() + ")");
         }
     }

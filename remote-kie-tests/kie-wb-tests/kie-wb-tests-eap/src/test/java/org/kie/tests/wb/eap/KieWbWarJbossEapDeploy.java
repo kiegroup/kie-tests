@@ -38,13 +38,11 @@ public class KieWbWarJbossEapDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = { 
-                    { "org.jbpm", "jbpm-kie-services" },
-                    
                     // kie-remote
-                    { "org.kie.remote", "kie-remote-services" },
-                    { "org.kie.remote", "kie-remote-jaxb" },
                     { "org.kie.remote.ws", "kie-remote-ws-common" },
-                    { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" }
+                    { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" },
+                    { "org.kie.remote", "kie-remote-jaxb" },
+                    { "org.kie.remote", "kie-remote-services" },
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
             

@@ -31,33 +31,41 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-@Ignore
-public class TomcatMemoryRemoteApiIntegrationTest {
+public class TomcatRemoteApiIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
         return createTestWar();
     }
 
+    protected void printTestName() { 
+        String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
+        System.out.println( "-=> " + testName );
+    }
+    
     @ArquillianResource
     URL deploymentUrl;
     
-    private KieWbRestIntegrationTestMethods restTests 
-        = KieWbRestIntegrationTestMethods.newBuilderInstance()
-        .setDeploymentId(KJAR_DEPLOYMENT_ID)
-        .setMediaType( MediaType.APPLICATION_XML_TYPE)
-        .build();
-   
     @Test
-    public void deployAndRunMemoryTest() throws Exception { 
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, 5000);
+    public void issueTest() throws Exception { 
+        printTestName();
+        
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                .setMediaType(MediaType.APPLICATION_XML_TYPE)
+                .setTimeoutInSecs(5)
+                .build();
+        
+        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+       
+        // testing memory
+        // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+        // restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, 5000);
     }
 }

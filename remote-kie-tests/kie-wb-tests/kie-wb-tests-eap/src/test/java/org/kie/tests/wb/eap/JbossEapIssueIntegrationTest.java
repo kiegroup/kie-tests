@@ -26,9 +26,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)

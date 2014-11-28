@@ -143,7 +143,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
     private MediaType mediaType;
-    private int timeoutInSecs;
+    private int timeoutInMillisecs;
     private static final int DEFAULT_TIMEOUT = 10;
 
     private KieWbRestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeoutInSeconds, RuntimeStrategy strategy) {
@@ -160,7 +160,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         this.deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         assertEquals("Deployment unit information", deploymentId, deploymentUnit.getIdentifier());
         this.mediaType = mediaType;
-        this.timeoutInSecs = timeoutInSeconds;
+        this.timeoutInMillisecs = timeoutInSeconds*1000;
     }
 
     public static Builder newBuilderInstance() {
@@ -194,7 +194,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             return this;
         }
 
-        public Builder setTimeout( int timeout ) {
+        public Builder setTimeoutInSecs( int timeout ) {
             this.timeout = timeout;
             return this;
         }
@@ -203,7 +203,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             if( this.deploymentId == null ) {
                 throw new IllegalStateException("The deployment id must be set to create the test methods instance!");
             }
-            return new KieWbRestIntegrationTestMethods(deploymentId, mediaType, timeout, strategy);
+            return new KieWbRestIntegrationTestMethods(deploymentId, mediaType, timeout * 1000, strategy);
         }
     }
 
@@ -328,137 +328,11 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
         String orgUnit = "integTestUser";
-        deployUtil.createAndDeployRepository(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
 
         int sleep = 5;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
         Thread.sleep(sleep * 1000);
-    }
-
-    private JaxbDeploymentJobResult deploy( KModuleDeploymentUnit depUnit, String user, String password, URL appUrl )
-            throws Exception {
-        // This code has been refactored but is essentially the same as the org.jboss.qa.bpms.rest.wb.RestWorkbenchClient code
-
-        // Create request
-        String url = appUrl.toExternalForm() + "rest/deployment/" + depUnit.getIdentifier() + "/deploy";
-        if( strategy.equals(RuntimeStrategy.SINGLETON) ) {
-            url += "?strategy=" + strategy.toString();
-        }
-        KieRemoteHttpRequest request = KieRemoteHttpRequest.newRequest(url)
-                .basicAuthorization(user, password)
-                .followRedirects(true)
-                .timeout(timeoutInSecs);
-
-        // POST request
-        JaxbDeploymentJobResult result = null;
-        try {
-            result = post(request, 202, JaxbDeploymentJobResult.class);
-        } catch( Exception ex ) {
-            logger.error("POST operation failed.", ex);
-            fail("POST operation failed.");
-        }
-
-        // Retrieve request
-        try {
-            String contentType = request.response().contentType();
-            if( !MediaType.APPLICATION_JSON.equals(contentType) && !MediaType.APPLICATION_XML.equals(contentType) ) {
-                // logger.error("Response body: {}",
-                // get response as string
-                // response.getEntity(String.class)
-                // improve HTML readability
-                // .replaceAll("><", ">\n<"));
-                fail("Unexpected content-type: " + contentType);
-            }
-        } catch( Exception ex ) {
-            logger.error("Unmarshalling failed.", ex);
-            fail("Unmarshalling entity failed: " + ex.getMessage());
-        }
-
-        assertNotNull("Null response!", result);
-        assertTrue("The deployment unit was not created successfully.", result.isSuccess());
-
-        // wait for deploy to succeed
-        RequestCreator requestCreator = new RequestCreator(appUrl, user, password, mediaType);
-        waitForDeploymentJobToSucceed(depUnit, true, appUrl, requestCreator);
-
-        return result;
-    }
-
-    private void undeploy( KModuleDeploymentUnit kDepUnit, URL deploymentUrl, RequestCreator requestCreator ) throws Exception {
-        logger.info("undeploy");
-        // Exists, so undeploy
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + kDepUnit.getIdentifier() + "/undeploy")
-                .timeout(timeoutInSecs);
-
-        JaxbDeploymentJobResult jaxbJobResult = post(httpRequest, 202, JaxbDeploymentJobResult.class, 500);
-
-        assertEquals("Undeploy operation", jaxbJobResult.getOperation(), "UNDEPLOY");
-        logger.info("UNDEPLOY : [" + jaxbJobResult.getDeploymentUnit().getStatus().toString() + "]"
-                + jaxbJobResult.getExplanation());
-
-        waitForDeploymentJobToSucceed(kDepUnit, false, deploymentUrl, requestCreator);
-    }
-
-    private void waitForDeploymentJobToSucceed( KModuleDeploymentUnit kDepUnit, boolean deploy, URL deploymentUrl,
-            RequestCreator requestCreator ) throws Exception {
-        boolean success = false;
-        int tries = 0;
-        while( !success && tries++ < MAX_TRIES ) {
-            KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + kDepUnit.getIdentifier() + "/");
-            logger.debug(">> " + httpRequest.getUri());
-            httpRequest.get();
-            success = isDeployRequestComplete(kDepUnit, deploy, httpRequest);
-            if( !success ) {
-                logger.info("Sleeping for " + sleep / 1000 + " seconds");
-                Thread.sleep(sleep);
-            }
-        }
-        assertTrue("No result after " + MAX_TRIES + " checks.", tries < MAX_TRIES);
-    }
-
-    private boolean isDeployed( KModuleDeploymentUnit kDepUnit, KieRemoteHttpRequest httpRequest ) {
-        return isDeployRequestComplete(kDepUnit, true, httpRequest);
-    }
-
-    private boolean isDeployRequestComplete( KModuleDeploymentUnit kDepUnit, boolean deploy, KieRemoteHttpRequest httpRequest ) {
-        try {
-            KieRemoteHttpResponse httpResponse = httpRequest.get().response();
-            int status = httpResponse.code();
-            if( status == 200 ) {
-                JaxbDeploymentUnit jaxbDepUnit = deserialize(httpResponse, JaxbDeploymentUnit.class);
-                JaxbDeploymentStatus jaxbDepStatus = checkJaxbDeploymentUnitAndGetStatus(kDepUnit, jaxbDepUnit);
-                if( deploy && jaxbDepStatus == JaxbDeploymentStatus.DEPLOYED ) {
-                    return true;
-                } else if( !deploy && !jaxbDepStatus.equals(JaxbDeploymentStatus.DEPLOYED) ) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                if( status < 500 ) {
-                    if( deploy ) {
-                        return false;
-                    } else {
-                        return true;
-                    }
-                } else {
-                    throw new IllegalStateException();
-                }
-            }
-        } catch( Exception e ) {
-            logger.error("Unable to check if '{}' deployed: {}", deploymentId, httpRequest.response().body());
-            return false;
-        } finally {
-            httpRequest.disconnect();
-        }
-    }
-
-    private JaxbDeploymentStatus checkJaxbDeploymentUnitAndGetStatus( KModuleDeploymentUnit expectedDepUnit,
-            JaxbDeploymentUnit jaxbDepUnit ) {
-        assertEquals("GroupId", expectedDepUnit.getGroupId(), jaxbDepUnit.getGroupId());
-        assertEquals("ArtifactId", expectedDepUnit.getArtifactId(), jaxbDepUnit.getArtifactId());
-        assertEquals("Version", expectedDepUnit.getVersion(), jaxbDepUnit.getVersion());
-        return jaxbDepUnit.getStatus();
     }
 
     /**
@@ -1395,32 +1269,49 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void remoteApiDeploymentRedeployClassPathTest( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
+        // setup
         KModuleDeploymentUnit kDepUnit = new KModuleDeploymentUnit(GROUP_ID, CLASSPATH_ARTIFACT_ID, VERSION);
         String classpathDeploymentId = kDepUnit.getIdentifier();
 
-        // Check that project is not deployed
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/" + classpathDeploymentId + "/");
-        httpRequest.accept(getContentType());
-
-        // Run test the first time
-        if( !isDeployed(kDepUnit, httpRequest) ) {
-            // Deploy
-            deploy(kDepUnit, user, password, deploymentUrl);
+        // create repo if not present
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password);
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "integration-tests";
+        String project = "integration-tests-classpath";
+        String orgUnit = "Test User";
+      
+        if( ! deployUtil.checkRepositoryExistence(repositoryName) ) { 
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, classpathDeploymentId, orgUnit, user, 5);
+        } else { 
+            deployUtil.deploy(classpathDeploymentId, 5);
         }
+      
+        // test 1: deployment status changes after undeploy
+        deployUtil.undeploy(classpathDeploymentId, 5);
+        JaxbDeploymentUnit depUnit = deployUtil.getDeploymentUnit(classpathDeploymentId);
+        assertTrue( "Incorrect deployment unit status: " + depUnit.getStatus(), depUnit.getStatus().equals(JaxbDeploymentStatus.UNDEPLOYED));
+      
+        // test 2: deploy, test, undeploy, deploy, rerun test..
+        // Deploy
+        deployUtil.deploy(kDepUnit.getIdentifier(), 5);
 
         // Run process
-        RuntimeEngine runtimeEngine = RemoteRestRuntimeEngineFactory.newBuilder().addDeploymentId(classpathDeploymentId)
-                .addUrl(deploymentUrl).addUserName(user).addPassword(password).build();
+        // @formatter:off
+        RuntimeEngine runtimeEngine = RemoteRestRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(classpathDeploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password)
+                .build();
+        // @formatter:on
 
         runClassPathProcessTest(runtimeEngine);
 
         // undeploy..
-        undeploy(kDepUnit, deploymentUrl, requestCreator);
+        deployUtil.undeploy(kDepUnit.getIdentifier(), 5);
 
         // .. and (re)deploy
-        deploy(kDepUnit, user, password, deploymentUrl);
+        deployUtil.deploy(kDepUnit.getIdentifier(), 5);
 
         logger.info("Rerunning test.. is there a CNFE?");
         // Rerun process

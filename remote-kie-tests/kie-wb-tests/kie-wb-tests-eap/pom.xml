@@ -15,23 +15,18 @@
 
   <!-- IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 
-  <!-- 
-  == test setup ==
-  generate-test-resources: unpack jboss
-  process-test-resources:  place standalone-full.xml
-                           fix sstandalone-full.xml
-  post-integration-test:   fix weird characters in failsafe reports
-   -->
+  <!-- == test setup == generate-test-resources: unpack jboss process-test-resources: place standalone-full.xml fix sstandalone-full.xml 
+    post-integration-test: fix weird characters in failsafe reports -->
   <properties>
-    <version.org.jboss.as.dist>7.4.0.Final-redhat-17</version.org.jboss.as.dist>
+
     <jboss.server.name>jboss-eap-6.3</jboss.server.name>
     <skip.integration.tests>true</skip.integration.tests>
-    
+
     <server.keystore.password>SERVER_KEYSTORE_PASSWORD</server.keystore.password>
     <server.truststore.password>SERVER_TRUSTSTORE_PASSWORD</server.truststore.password>
     <client.keystore.password>CLIENT_KEYSTORE_PASSWORD</client.keystore.password>
-    
-    <!--  for Byteman plugin -->
+
+    <!-- for Byteman plugin -->
     <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
     <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
   </properties>
@@ -58,7 +53,7 @@
       <artifactId>kie-remote-services</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- war -->
     <dependency>
       <groupId>org.kie</groupId>
@@ -68,12 +63,12 @@
       <type>war</type>
     </dependency>
 
-  <!-- arquillian -->
+    <!-- arquillian -->
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.jboss.shrinkwrap</groupId>
       <artifactId>shrinkwrap-api</artifactId>
@@ -84,21 +79,21 @@
       <artifactId>shrinkwrap-resolver-api-maven</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- arquillian jboss eap -->
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-arquillian-container-managed</artifactId>
       <scope>test</scope>
     </dependency>
-    
-    <!--  rest -->
+
+    <!-- rest -->
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>jaxrs-api</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- test -->
     <dependency>
       <groupId>junit</groupId>
@@ -122,7 +117,7 @@
       <artifactId>jboss-logmanager</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- webservice test -->
     <dependency>
       <groupId>org.jboss.spec.javax.servlet</groupId>
@@ -139,34 +134,9 @@
         <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
-    
-      <dependency>
-        <groupId>org.jboss.as</groupId>
-        <artifactId>jboss-as-server</artifactId>
-        <version>${version.org.jboss.as.dist}</version>
-        <scope>runtime</scope>
-      </dependency> 
-      <dependency>
-        <groupId>javax.security</groupId>
-        <artifactId>jacc</artifactId>
-        <version>1.0</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.as</groupId>
-        <artifactId>jboss-as-connector</artifactId>
-        <version>${version.org.jboss.as.dist}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.msc</groupId>
-        <artifactId>jboss-msc</artifactId>
-        <version>1.0.4.GA-redhat-1</version>
-        <scope>runtime</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <build>
     <testResources>
       <testResource>
@@ -201,7 +171,7 @@
             </filesets>
           </configuration>
         </plugin>
-      
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
@@ -227,54 +197,8 @@
     </pluginManagement>
 
     <plugins>
-      <!-- check that byteman rules are correct -->
-      <plugin>
-        <groupId>org.jboss.byteman</groupId>
-        <artifactId>byteman-rulecheck-maven-plugin</artifactId>
-        <version>${version.org.jboss.byteman}</version>
-        <executions>
-          <execution>
-            <id>rulecheck-test</id>
-            <goals>
-              <goal>rulecheck</goal>
-            </goals>
-            <phase>process-test-resources</phase>
-            <configuration>
-              <includes>
-                <include>**/*.btm</include>
-              </includes>
-              <verbose>true</verbose>
-            </configuration>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.jboss.jbossts</groupId>
-            <artifactId>jbossjts</artifactId>
-            <version>4.16.4.Final</version>
-            <scope>runtime</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.2.0.SP1</version>
-            <scope>runtime</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-ejb3</artifactId>
-            <version>${version.org.jboss.as}</version>
-            <scope>runtime</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-web</artifactId>
-            <version>${version.org.jboss.as}</version>
-            <scope>runtime</scope>
-          </dependency>
-        </dependencies>
-      </plugin>
-      
+
+
       <!-- only run when -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -283,26 +207,26 @@
           <skipTests>${skip.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      
-       <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
-            <includes>
-              <include>**/*Test.java</include>
-            </includes>
-            <excludes>
-              <exclude>**/*IntegrationTest.java</exclude>
-            </excludes>
-            <argLine>-Xmx1024m -XX:MaxPermSize=128m -Dfile.encoding=UTF-8</argLine>
-            <systemProperties>
-              <property>
-                <name>java.util.logging.config.file</name>
-                <value>src/test/resources/logging.properties</value>
-              </property>
-            </systemProperties>
-          </configuration>
-        </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*IntegrationTest.java</exclude>
+          </excludes>
+          <argLine>-Xmx1024m -XX:MaxPermSize=128m -Dfile.encoding=UTF-8</argLine>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
 
     </plugins>
   </build>
@@ -312,9 +236,84 @@
       <id>integration-tests</id>
       <properties>
         <skip.integration.tests>false</skip.integration.tests>
+        <override.version.org.jboss.as>7.4.0.Final-redhat-19</override.version.org.jboss.as>
+        <version.org.jboss.as.dist>7.4.0.Final-redhat-19</version.org.jboss.as.dist>
       </properties>
+
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-server</artifactId>
+            <version>${version.org.jboss.as.dist}</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-connector</artifactId>
+            <version>${version.org.jboss.as.dist}</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.jboss.msc</groupId>
+            <artifactId>jboss-msc</artifactId>
+            <version>1.0.4.GA-redhat-1</version>
+            <scope>runtime</scope>
+          </dependency>
+
+        </dependencies>
+      </dependencyManagement>
+
       <build>
         <plugins>
+
+          <!-- check that byteman rules are correct -->
+          <plugin>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-rulecheck-maven-plugin</artifactId>
+            <version>${version.org.jboss.byteman}</version>
+            <executions>
+              <execution>
+                <id>rulecheck-test</id>
+                <goals>
+                  <goal>rulecheck</goal>
+                </goals>
+                <phase>process-test-resources</phase>
+                <configuration>
+                  <includes>
+                    <include>**/*.btm</include>
+                  </includes>
+                  <verbose>true</verbose>
+                </configuration>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.jboss.jbossts</groupId>
+                <artifactId>jbossjts</artifactId>
+                <version>4.16.4.Final</version>
+                <scope>runtime</scope>
+              </dependency>
+              <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>4.2.0.SP1</version>
+                <scope>runtime</scope>
+              </dependency>
+              <dependency>
+                <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-ejb3</artifactId>
+                <version>${version.org.jboss.as}</version>
+                <scope>runtime</scope>
+              </dependency>
+              <dependency>
+                <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-web</artifactId>
+                <version>${version.org.jboss.as}</version>
+                <scope>runtime</scope>
+              </dependency>
+            </dependencies>
+          </plugin>
 
           <!-- 1. install server in the build/target dir -->
           <plugin>
@@ -358,25 +357,25 @@
                   </artifactItems>
                 </configuration>
               </execution>
-                <execution>
-            <id>check-kie-wb-war</id>
-            <phase>generate-test-resources</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.kie</groupId>
-                  <artifactId>kie-wb-distribution-wars</artifactId>
-                  <classifier>eap6_3</classifier>
-                  <type>war</type>
-                  <overWrite>false</overWrite>
-                </artifactItem>
-              </artifactItems>
-              <outputDirectory>${project.build.directory}/deployments</outputDirectory>
-            </configuration>
-          </execution>
+              <execution>
+                <id>check-kie-wb-war</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>copy</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.kie</groupId>
+                      <artifactId>kie-wb-distribution-wars</artifactId>
+                      <classifier>eap6_3</classifier>
+                      <type>war</type>
+                      <overWrite>false</overWrite>
+                    </artifactItem>
+                  </artifactItems>
+                  <outputDirectory>${project.build.directory}/deployments</outputDirectory>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
 
@@ -404,11 +403,11 @@
               <execution>
                 <id>copy-postgres-module</id>
                 <phase>process-test-resources</phase>
-                <goals> 
+                <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration>
-                    <outputDirectory>${project.build.directory}/${jboss.server.name}/modules</outputDirectory>
+                  <outputDirectory>${project.build.directory}/${jboss.server.name}/modules</outputDirectory>
                   <resources>
                     <resource>
                       <directory>src/test/resources-eap-6/modules</directory>
@@ -439,55 +438,48 @@
           </plugin>
 
           <!-- 3. modify server configuration -->
-         <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>xml-maven-plugin</artifactId>
-           <version>1.0</version>                      
-           <executions>                        
-             <execution>
-               <id>modify-standalone-full</id>
-               <phase>process-test-resources</phase>
-               <goals>
-                 <goal>transform</goal>
-               </goals>
-               <configuration>                                 
-                 <transformationSets>
-                   <transformationSet> 
-                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
-                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
-                     <includes> 
-                       <include>standalone-full.xml</include> 
-                     </includes>  
-                     <stylesheet>src/test/resources-eap-6/xslt/addDebugLogging.xslt</stylesheet>
-                   </transformationSet> 
-                   <transformationSet> 
-                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
-                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
-                     <includes> 
-                       <include>standalone-full.xml</include> 
-                     </includes>
-                     <stylesheet>src/test/resources-eap-6/xslt/changeJmsMessagingConfig.xslt</stylesheet>
-                   </transformationSet> 
-                   <!-- 
-                   <transformationSet> 
-                     <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> 
-                     <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
-                     <includes> 
-                       <include>standalone-full.xml</include> 
-                     </includes>
-                     <stylesheet>src/test/resources-eap-6/xslt/addPostgresConfig.xslt</stylesheet>
-                   </transformationSet> 
-                   -->
-                 </transformationSets>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin> 
-         
-         <plugin>
-           <groupId>com.google.code.maven-replacer-plugin</groupId>
-           <artifactId>replacer</artifactId>
-           <executions>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>xml-maven-plugin</artifactId>
+            <version>1.0</version>
+            <executions>
+              <execution>
+                <id>modify-standalone-full</id>
+                <phase>process-test-resources</phase>
+                <goals>
+                  <goal>transform</goal>
+                </goals>
+                <configuration>
+                  <transformationSets>
+                    <transformationSet>
+                      <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir>
+                      <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir>
+                      <includes>
+                        <include>standalone-full.xml</include>
+                      </includes>
+                      <stylesheet>src/test/resources-eap-6/xslt/addDebugLogging.xslt</stylesheet>
+                    </transformationSet>
+                    <transformationSet>
+                      <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir>
+                      <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir>
+                      <includes>
+                        <include>standalone-full.xml</include>
+                      </includes>
+                      <stylesheet>src/test/resources-eap-6/xslt/changeJmsMessagingConfig.xslt</stylesheet>
+                    </transformationSet>
+                    <!-- <transformationSet> <dir>${project.build.directory}/${jboss.server.name}/standalone/configuration</dir> <outputDir>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDir> 
+                      <includes> <include>standalone-full.xml</include> </includes> <stylesheet>src/test/resources-eap-6/xslt/addPostgresConfig.xslt</stylesheet> 
+                      </transformationSet> -->
+                  </transformationSets>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>com.google.code.maven-replacer-plugin</groupId>
+            <artifactId>replacer</artifactId>
+            <executions>
               <execution>
                 <id>fix-broken-junit-reports</id>
                 <phase>post-integration-test</phase>

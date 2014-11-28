@@ -44,7 +44,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
                  .setDeploymentId(KJAR_DEPLOYMENT_ID)
                  .setMediaType(getMediaType())
                  .setStrategy(getStrategy())
-                 .setTimeout(getTimeoutInSecs())
+                 .setTimeoutInSecs(getTimeoutInSecs())
                  .build();
          if( jmsQueuesAvailable() ) { 
              jmsTests = new KieWbJmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID);

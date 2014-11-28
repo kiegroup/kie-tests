@@ -49,9 +49,7 @@ public abstract class AbstractIssueIntegrationTest {
                 .setMediaType(getMediaType())
                 .build();
         
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        restTests.urlsGroupAssignmentTest(deploymentUrl);
-        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
 }

@@ -4,7 +4,9 @@ import static org.junit.Assert.fail;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.BadRequestException;
@@ -21,7 +23,7 @@ import org.guvnor.rest.client.JobStatus;
 import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryRequest;
 import org.guvnor.rest.client.RepositoryRequest;
-import org.jboss.resteasy.client.ClientRequest;
+import org.guvnor.rest.client.RepositoryResponse;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
@@ -51,7 +53,7 @@ public class RepositoryDeploymentUtil {
         requestCreator = new RequestCreator(deploymentUrl, user, password, MediaType.APPLICATION_JSON_TYPE);
     }
     
-    public void createAndDeployRepository(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user, int sleepSecs) { 
+    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user, int sleepSecs) { 
         try {
             deleteRepository(repositoryName);
         } catch (Exception ex) {
@@ -63,11 +65,19 @@ public class RepositoryDeploymentUtil {
         JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user, repositoryName);
         waitForJobsToFinish(sleepSecs, createRepoJob, createOrgUnitJob);
         
-        JaxbDeploymentJobResult deployJob = createDeploymentUnit(deploymentId, strategy);
-        JaxbDeploymentUnit deployUnit = deployJob.getDeploymentUnit();    
-        waitForDeploymentToFinish(sleepSecs, deployUnit);
+        deploy(deploymentId, sleepSecs);
     }
-   
+  
+    public void undeploy(String deploymentId, int sleepSecs) { 
+        JaxbDeploymentJobResult deployJob = removeDeploymentUnit(deploymentId);
+        waitForDeploymentToFinish(sleepSecs, false, deployJob.getDeploymentUnit());
+    }
+    
+    public void deploy(String deploymentId, int sleepSecs) { 
+        JaxbDeploymentJobResult deployJob = createDeploymentUnit(deploymentId, strategy);
+        waitForDeploymentToFinish(sleepSecs, true, deployJob.getDeploymentUnit());    
+    }
+    
     // submethods ------------------------------------------------------------------------------------------------------------
    
     /**
@@ -78,7 +88,7 @@ public class RepositoryDeploymentUtil {
     private JobRequest deleteRepository(String repositoryName) { 
         logger.info("Deleting repository '{}'", repositoryName);
         RemoveRepositoryRequest entity 
-            = delete(createRequest("repositories/" + repositoryName), RemoveRepositoryRequest.class);
+            = delete(createRequest("repositories/" + repositoryName), 200, RemoveRepositoryRequest.class);
         if (entity.getStatus() == JobStatus.ACCEPTED || entity.getStatus() == JobStatus.SUCCESS) {
             return entity;
         } else {
@@ -100,9 +110,24 @@ public class RepositoryDeploymentUtil {
         repoRequest.setGitURL(cloneRepoUrl);
         String input = serializeToJsonString(repoRequest);
         KieRemoteHttpRequest request = createRequest("repositories/", input);
-        return post( request, CreateOrCloneRepositoryRequest.class);
+        return post( request, 202, CreateOrCloneRepositoryRequest.class);
     }
-  
+
+    public boolean checkRepositoryExistence(String repositoryName) { 
+        logger.info("Checking existence of repo '{}'", repositoryName);
+        KieRemoteHttpRequest request= createRequest("repositories/" + repositoryName);
+      
+        try { 
+            get( request, 200, RepositoryResponse.class );
+        } catch( IllegalStateException ise ) { 
+            if( ise.getMessage().contains("code: 404") ) { 
+                return false;
+            }
+            throw ise;
+        }
+        return true;
+    }
+    
     /**
      * Create an organizational unit in order to manage the repository
      * @param name The name of the organizational unit
@@ -120,7 +145,7 @@ public class RepositoryDeploymentUtil {
         ou.setName(name);
         ou.setOwner(owner);
         String input = serializeToJsonString(ou);
-        return post(createRequest("organizationalunits/", input), CreateOrganizationalUnitRequest.class);
+        return post(createRequest("organizationalunits/", input), 202, CreateOrganizationalUnitRequest.class);
     }
 
     /**
@@ -147,7 +172,7 @@ public class RepositoryDeploymentUtil {
     private JobRequest installProject(String repositoryName, String project) {
         logger.info("Installing project '{}' from repo '{}'", project, repositoryName);
         KieRemoteHttpRequest request = createMavenOperationRequest(repositoryName, project, "install");
-        return post(request, InstallProjectRequest.class);
+        return post(request, 202, InstallProjectRequest.class);
     }
 
     /**
@@ -170,9 +195,15 @@ public class RepositoryDeploymentUtil {
     private JaxbDeploymentJobResult removeDeploymentUnit(String deploymentId) {
         logger.info("Undeploying '{}'", deploymentId);
         KieRemoteHttpRequest request = createRequest("deployment/" + deploymentId + "/undeploy");
-        return post(request, JaxbDeploymentJobResult.class);
+        return post(request, 202, JaxbDeploymentJobResult.class);
     }
 
+    public JaxbDeploymentUnit getDeploymentUnit(String deploymentId) { 
+        logger.info("Getting info on '{}'", deploymentId);
+        KieRemoteHttpRequest request = createRequest("deployment/" + deploymentId );
+        return get(request, 200, JaxbDeploymentUnit.class); 
+    }
+    
     /**
      * Create (deploy) the deployment unit specified
      * @param deploymentId The deployment unit id
@@ -187,7 +218,7 @@ public class RepositoryDeploymentUtil {
         }
        
         KieRemoteHttpRequest request = createRequest(opUrl);
-        JaxbDeploymentJobResult jr = post(request, JaxbDeploymentJobResult.class); 
+        JaxbDeploymentJobResult jr = post(request, 202, JaxbDeploymentJobResult.class); 
         
         return jr;
     }
@@ -197,19 +228,27 @@ public class RepositoryDeploymentUtil {
        Map<String, JobStatus> requestStatusMap = new HashMap<String, JobStatus>();
      
        int totalTries = 10;
-       int allDone = 0;
        int tryCount = 0;
-       while( allDone < requests.length && tryCount < totalTries ) { 
+       List<JobRequest> checkRequests = new ArrayList<JobRequest>(Arrays.asList(requests));
+       while( ! checkRequests.isEmpty() && tryCount < totalTries ) { 
+           List<JobRequest> done = new ArrayList<JobRequest>(checkRequests.size());
            for( JobRequest request : requests ) { 
                String jobId = request.getJobId();
                JobStatus jobStatus  = requestStatusMap.get(jobId);
                if( JobStatus.SUCCESS.equals(jobStatus) ) { 
-                  ++allDone;
+                  done.add(request);
                   continue;
                }
+               if( JobStatus.FAIL.equals(jobStatus) ) { 
+                   fail( "Job " + jobId + " failed!");
+               }
                KieRemoteHttpRequest restRequest = createRequest( "jobs/" + jobId);
-               JobResult jobResult = get(restRequest, JobResult.class);
+               JobResult jobResult = get(restRequest, 200, JobResult.class);
                requestStatusMap.put(jobId, jobResult.getStatus());
+           }
+           checkRequests.removeAll(done);
+           if( checkRequests.isEmpty()) { 
+               break;
            }
            ++tryCount;
            try { 
@@ -221,23 +260,39 @@ public class RepositoryDeploymentUtil {
     }
    
     // With java 8, this would be SOOOO much shorter and easier.. :/ 
-    private void waitForDeploymentToFinish(int sleepSecs, JaxbDeploymentUnit ...deployUnits ) { 
+    private void waitForDeploymentToFinish(int sleepSecs, boolean deploy, JaxbDeploymentUnit ...deployUnits ) { 
         Map<String, JaxbDeploymentStatus> requestStatusMap = new HashMap<String, JaxbDeploymentStatus>();
       
         int totalTries = 10;
-        int allDone = 0;
         int tryCount = 0;
-        while( allDone < deployUnits.length && tryCount < totalTries ) { 
+        List<JaxbDeploymentUnit> deployRequests = new ArrayList<JaxbDeploymentUnit>(Arrays.asList(deployUnits));
+        while( ! deployRequests.isEmpty() && tryCount < totalTries ) { 
+            List<JaxbDeploymentUnit> done = new ArrayList<JaxbDeploymentUnit>(deployRequests.size());
             for( JaxbDeploymentUnit deployUnit : deployUnits ) { 
                 String deployId = deployUnit.getIdentifier();
                 JaxbDeploymentStatus jobStatus  = requestStatusMap.get(deployId);
-                if( JaxbDeploymentStatus.DEPLOYED.equals(jobStatus) ) { 
-                   ++allDone;
-                   continue;
+                if( deploy ) { 
+                    if( JaxbDeploymentStatus.DEPLOYED.equals(jobStatus) ) { 
+                        done.add(deployUnit);
+                        continue;
+                    } else if( JaxbDeploymentStatus.DEPLOY_FAILED.equals(jobStatus) ) { 
+                        fail( "Deploy of " + deployId + " failed!");
+                    }
+                } else { 
+                    if( JaxbDeploymentStatus.UNDEPLOYED.equals(jobStatus) ) { 
+                        done.add(deployUnit);
+                        continue;
+                    } else if( JaxbDeploymentStatus.UNDEPLOY_FAILED.equals(jobStatus) ) { 
+                        fail( "Undeploy of " + deployId + " failed!");
+                    }
                 }
                 KieRemoteHttpRequest restRequest = createRequest("deployment/" + deployId);
-                JaxbDeploymentUnit requestedDeployUnit = get(restRequest, JaxbDeploymentUnit.class);
+                JaxbDeploymentUnit requestedDeployUnit = get(restRequest, 200, JaxbDeploymentUnit.class);
                 requestStatusMap.put(deployId, requestedDeployUnit.getStatus());
+            }
+            deployRequests.removeAll(done);
+            if( deployRequests.isEmpty() ) { 
+                break;
             }
             ++tryCount;
             try { 
@@ -267,19 +322,19 @@ public class RepositoryDeploymentUtil {
     private static final int POST = 1;
     private static final int DELETE = 2;
 
-    private <T extends Object> T get(KieRemoteHttpRequest request, Class<T> returnType) {
-        return process(request, GET, returnType);
+    private <T extends Object> T get(KieRemoteHttpRequest request, int status, Class<T> returnType) {
+        return process(request, GET, status, returnType);
     }
 
-    private <T extends Object> T post(KieRemoteHttpRequest request, Class<T> returnType) {
-        return process(request, POST, returnType);
+    private <T extends Object> T post(KieRemoteHttpRequest request, int status, Class<T> returnType) {
+        return process(request, POST, status, returnType);
     }
 
-    private <T extends Object> T delete(KieRemoteHttpRequest request, Class<T> returnType) {
-        return process(request, DELETE, returnType);
+    private <T extends Object> T delete(KieRemoteHttpRequest request, int status, Class<T> returnType) {
+        return process(request, DELETE, status, returnType);
     }
     
-    private <T extends Object> T process(KieRemoteHttpRequest request, int method, Class<T> returnType) { 
+    private <T extends Object> T process(KieRemoteHttpRequest request, int method, int status, Class<T> returnType) { 
         KieRemoteHttpResponse response = null;
         try {
             switch (method) {
@@ -300,6 +355,9 @@ public class RepositoryDeploymentUtil {
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+        if( status != response.code() ) { 
+           throw new IllegalStateException("code: " + response.code());
         }
         String responseBody = response.body();
         try {
