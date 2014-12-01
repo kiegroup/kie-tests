@@ -48,12 +48,12 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
 
     @Override
     public boolean jmsQueuesAvailable() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean doRestTests() {
-        return true;
+        return false;
     }
 
     @Override

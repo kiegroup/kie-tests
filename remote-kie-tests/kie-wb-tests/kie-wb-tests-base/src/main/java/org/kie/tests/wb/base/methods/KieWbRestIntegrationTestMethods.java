@@ -203,7 +203,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             if( this.deploymentId == null ) {
                 throw new IllegalStateException("The deployment id must be set to create the test methods instance!");
             }
-            return new KieWbRestIntegrationTestMethods(deploymentId, mediaType, timeout * 1000, strategy);
+            return new KieWbRestIntegrationTestMethods(deploymentId, mediaType, timeout, strategy);
         }
     }
 
@@ -217,8 +217,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
     private long restCallDurationLimit = 2;
-
-    private long sleep = 15 * 1000;
 
     /**
      * Helper methods
@@ -321,14 +319,14 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             Assume.assumeFalse(checkDeployFlagFile());
         }
 
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, timeoutInMillisecs/1000);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-        String repositoryName = "playground";
+        String repositoryName = "tests";
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
-        String orgUnit = "integTestUser";
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit, user, 5);
+        String orgUnit = "integration tests user";
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit, user);
 
         int sleep = 5;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
@@ -1274,26 +1272,26 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         String classpathDeploymentId = kDepUnit.getIdentifier();
 
         // create repo if not present
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, timeoutInMillisecs/1000);
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "integration-tests";
         String project = "integration-tests-classpath";
-        String orgUnit = "Test User";
+        String orgUnit = "Classpath User";
       
         if( ! deployUtil.checkRepositoryExistence(repositoryName) ) { 
-            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, classpathDeploymentId, orgUnit, user, 5);
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, classpathDeploymentId, orgUnit, user);
         } else { 
-            deployUtil.deploy(classpathDeploymentId, 5);
+            deployUtil.deploy(classpathDeploymentId);
         }
       
         // test 1: deployment status changes after undeploy
-        deployUtil.undeploy(classpathDeploymentId, 5);
+        deployUtil.undeploy(classpathDeploymentId);
         JaxbDeploymentUnit depUnit = deployUtil.getDeploymentUnit(classpathDeploymentId);
         assertTrue( "Incorrect deployment unit status: " + depUnit.getStatus(), depUnit.getStatus().equals(JaxbDeploymentStatus.UNDEPLOYED));
       
         // test 2: deploy, test, undeploy, deploy, rerun test..
         // Deploy
-        deployUtil.deploy(kDepUnit.getIdentifier(), 5);
+        deployUtil.deploy(kDepUnit.getIdentifier());
 
         // Run process
         // @formatter:off
@@ -1308,10 +1306,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         runClassPathProcessTest(runtimeEngine);
 
         // undeploy..
-        deployUtil.undeploy(kDepUnit.getIdentifier(), 5);
+        deployUtil.undeploy(kDepUnit.getIdentifier());
 
         // .. and (re)deploy
-        deployUtil.deploy(kDepUnit.getIdentifier(), 5);
+        deployUtil.deploy(kDepUnit.getIdentifier());
 
         logger.info("Rerunning test.. is there a CNFE?");
         // Rerun process

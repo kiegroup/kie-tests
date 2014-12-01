@@ -48,12 +48,13 @@ public class RepositoryDeploymentUtil {
     public static final RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
     
     private RequestCreator requestCreator;
+    private int sleepSecs;
     
-    public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password) { 
+    public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password, int sleepSecs) { 
         requestCreator = new RequestCreator(deploymentUrl, user, password, MediaType.APPLICATION_JSON_TYPE);
     }
     
-    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user, int sleepSecs) { 
+    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user) { 
         try {
             deleteRepository(repositoryName);
         } catch (Exception ex) {
@@ -65,15 +66,15 @@ public class RepositoryDeploymentUtil {
         JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user, repositoryName);
         waitForJobsToFinish(sleepSecs, createRepoJob, createOrgUnitJob);
         
-        deploy(deploymentId, sleepSecs);
+        deploy(deploymentId);
     }
   
-    public void undeploy(String deploymentId, int sleepSecs) { 
+    public void undeploy(String deploymentId) { 
         JaxbDeploymentJobResult deployJob = removeDeploymentUnit(deploymentId);
         waitForDeploymentToFinish(sleepSecs, false, deployJob.getDeploymentUnit());
     }
     
-    public void deploy(String deploymentId, int sleepSecs) { 
+    public void deploy(String deploymentId) { 
         JaxbDeploymentJobResult deployJob = createDeploymentUnit(deploymentId, strategy);
         waitForDeploymentToFinish(sleepSecs, true, deployJob.getDeploymentUnit());    
     }
@@ -315,7 +316,7 @@ public class RepositoryDeploymentUtil {
     }
     
     private KieRemoteHttpRequest createRequest(String resourcePath, String body) {
-        return createRequest(resourcePath).body(body);
+        return createRequest(resourcePath).body(body).timeout(sleepSecs);
     }
   
     private static final int GET = 0;

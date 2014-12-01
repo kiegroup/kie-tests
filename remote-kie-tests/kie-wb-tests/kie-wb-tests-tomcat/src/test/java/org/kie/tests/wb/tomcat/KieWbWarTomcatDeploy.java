@@ -23,10 +23,6 @@ public class KieWbWarTomcatDeploy {
 
         if( replace ) { 
             String [][] jarsToReplace = {
-                    { "org.jbpm", "jbpm-kie-services" },
-                    
-                    { "org.kie.remote", "kie-remote-jaxb" },
-                    { "org.kie.remote", "kie-remote-rest-api" },
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-common" }
             };
@@ -35,6 +31,12 @@ public class KieWbWarTomcatDeploy {
       
         String [] jarsToDelete = { "cxf-bundle-jaxrs-2.7.11.jar" };
         deleteJars(war, jarsToDelete);
+        
+        boolean replaceWebXml = true;
+        if( replaceWebXml ) { 
+          war.delete("WEB-INF/web.xml");
+          war.addAsWebResource("war/web.xml");
+        }
         
         return war;
     }

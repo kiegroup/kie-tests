@@ -61,8 +61,11 @@ public class TomcatRemoteApiIssueIntegrationTest {
                 .setMediaType(MediaType.APPLICATION_XML_TYPE)
                 .setTimeoutInSecs(5)
                 .build();
+       
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
+        restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
         
-        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
        
         // testing memory
         // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
