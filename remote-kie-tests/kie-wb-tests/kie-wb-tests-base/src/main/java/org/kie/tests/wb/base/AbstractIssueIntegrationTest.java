@@ -50,8 +50,12 @@ public abstract class AbstractIssueIntegrationTest {
                 .build();
         
         // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+        // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        //restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
-        restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
 }

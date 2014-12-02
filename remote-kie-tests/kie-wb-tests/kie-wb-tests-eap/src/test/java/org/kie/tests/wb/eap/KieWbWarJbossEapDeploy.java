@@ -1,11 +1,10 @@
 package org.kie.tests.wb.eap;
 
-import static org.kie.remote.tests.base.DeployUtil.*;
-import static org.kie.tests.wb.base.util.TestConstants.*;
-import java.io.File;
+import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
+import static org.kie.remote.tests.base.DeployUtil.replaceJars;
+import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,10 +38,7 @@ public class KieWbWarJbossEapDeploy {
         if( replace ) { 
             String [][] jarsToReplace = { 
                     // kie-remote
-                    { "org.kie.remote.ws", "kie-remote-ws-common" },
-                    { "org.kie.remote.ws", "kie-remote-ws-wsdl-cmd" },
-                    { "org.kie.remote", "kie-remote-jaxb" },
-                    { "org.kie.remote", "kie-remote-services" },
+                    { "org.kie.remote", "kie-remote-services" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
             
@@ -53,8 +49,8 @@ public class KieWbWarJbossEapDeploy {
                     { "javax.xml.ws", "jaxws-api" }
             };
             addNewJars(war, jarsToAdd);
-            replaceWebXmlForWebServices(war);
             **/
+            replaceWebXmlForWebServices(war);
         }
        
         return war;

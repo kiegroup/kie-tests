@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.MAX_TRIES;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
@@ -116,13 +115,15 @@ import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistory
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbHistoryLogList;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbProcessInstanceLog;
 import org.kie.services.client.serialization.jaxb.impl.audit.JaxbVariableInstanceLog;
-import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnitList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinitionList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
+import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
+import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.services.shared.ServicesVersion;
@@ -1375,5 +1376,40 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             .addUrl(deploymentUrl)
             .build();
         runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+    }
+    
+    public void urlsProcessQueryOperationsTest( URL deploymentUrl, String user, String password ) throws Exception  { 
+        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
+
+        KieRemoteHttpRequest request = requestCreator.createRequest("/query/runtime/task");
+        request.query("params", null);
+        
+        KieRemoteHttpResponse response = request.get().response();
+        int statusCode = response.code();
+        assertEquals( "Inccorect status code [" + statusCode + "] on bad request with 'params' query param", 400, statusCode);
+        
+        KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
+
+        String val = UUID.randomUUID().toString();
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put( "x", val );
+        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
+        long procInstId = procInst.getId();
+        
+        request = requestCreator.createRequest("/query/runtime/process");
+        request.query("piid", procInstId);
+        
+        JaxbQueryProcessInstanceResult queryResult = get(request, JaxbQueryProcessInstanceResult.class);
+        assertNotNull("Null query result", queryResult);
+        List<JaxbQueryProcessInstanceInfo> procInstInfoList = queryResult.getProcessInstanceInfoList();
+        assertTrue("Empty query info list", procInstInfoList != null && ! procInstInfoList.isEmpty() );
+        assertEquals( "Only queried for 1 process instance", 1, procInstInfoList.size() );
+        JaxbQueryProcessInstanceInfo procInstInfo = procInstInfoList.get(0);
+        assertEquals("Incorrect process id", SCRIPT_TASK_VAR_PROCESS_ID, procInstInfo.getProcessInstance().getProcessId());
+        for( JaxbVariableInfo varInfo : procInstInfo.getVariables() ) { 
+           System.out.println( varInfo.getName()
+                   + "/" + varInfo.getModificationDate() 
+                   + "/" + varInfo.getValue() );
+        }
     }
 }

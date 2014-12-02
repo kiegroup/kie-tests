@@ -1,6 +1,6 @@
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -52,6 +52,8 @@ public class RepositoryDeploymentUtil {
     
     public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password, int sleepSecs) { 
         requestCreator = new RequestCreator(deploymentUrl, user, password, MediaType.APPLICATION_JSON_TYPE);
+        this.sleepSecs = sleepSecs;
+        assertTrue( "Sleep/timeout period is too short: " + this.sleepSecs, this.sleepSecs > 2 );
     }
     
     public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user) { 
@@ -261,7 +263,7 @@ public class RepositoryDeploymentUtil {
     }
    
     // With java 8, this would be SOOOO much shorter and easier.. :/ 
-    private void waitForDeploymentToFinish(int sleepSecs, boolean deploy, JaxbDeploymentUnit ...deployUnits ) { 
+    public void waitForDeploymentToFinish(int sleepSecs, boolean deploy, JaxbDeploymentUnit ...deployUnits ) { 
         Map<String, JaxbDeploymentStatus> requestStatusMap = new HashMap<String, JaxbDeploymentStatus>();
       
         int totalTries = 10;
@@ -316,7 +318,7 @@ public class RepositoryDeploymentUtil {
     }
     
     private KieRemoteHttpRequest createRequest(String resourcePath, String body) {
-        return createRequest(resourcePath).body(body).timeout(sleepSecs);
+        return createRequest(resourcePath).body(body).timeout(sleepSecs*1000);
     }
   
     private static final int GET = 0;
