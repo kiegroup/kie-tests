@@ -34,7 +34,6 @@ import java.net.URL;
 import javax.jws.WebService;
 import javax.xml.namespace.QName;
 
-import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -44,8 +43,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
+import org.kie.remote.jaxb.gen.StartProcessCommand;
+import org.kie.remote.services.ws.command.generated.CommandServiceClient;
 import org.kie.remote.services.ws.command.generated.CommandWebService;
-import org.kie.remote.services.ws.command.generated.CommandWebServiceClient;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
@@ -71,41 +71,46 @@ public class JbossEapWebServicesIntegrationTest {
 
     private static final String WSDL_PATH = "ws/CommandService?wsdl";
 
-    private CommandWebServiceClient client;
-
     private static QName getServiceQName() {
         WebService wsAnno = CommandWebService.class.getAnnotation(WebService.class);
         String namespace = wsAnno.targetNamespace();
-        String name = wsAnno.name();
+        String name = "CommandService";
         return new QName(namespace, name);
     }
 
     
     @Test
     public void testCommandWebService() throws Exception {
+        CommandServiceClient client;
         try {
-            client = new CommandWebServiceClient(new URL(deploymentUrl, WSDL_PATH), getServiceQName());
+            client = new CommandServiceClient(new URL(deploymentUrl, WSDL_PATH), getServiceQName());
         } catch (MalformedURLException murle) {
             String msg = "Unable to create service client: " + murle.getMessage();
             logger.error(msg, murle);
             fail(msg);
+            throw murle;
         }
-
+        
         if( ! checkDeployFlagFile() ) { 
             restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
         }
         
         logger.info("[Client] Webservice request.");
         // Get a response from the WebService
-        StartProcessCommand cmd = new StartProcessCommand(SCRIPT_TASK_PROCESS_ID);
+        StartProcessCommand cmd = new StartProcessCommand();
+        cmd.setProcessId(SCRIPT_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, cmd);
-        final JaxbCommandsResponse response = client.getCommandServicePort().execute(req);
+        CommandWebService commandWebService = client.getCommandServicePort();
+        final JaxbCommandsResponse response = commandWebService.execute(req);
         assertNotNull( "Null webservice response", response );
         assertFalse( "Empty webservice response", response.getResponses().isEmpty() );
 
         JaxbCommandResponse<?> cmdResp = response.getResponses().get(0);
         assertNotNull( "Null command response", cmdResp );
-        assertTrue( "Incorrect cmd response type", cmdResp instanceof JaxbProcessInstanceResponse );
+        if( ! (cmdResp instanceof JaxbProcessInstanceResponse) ) { 
+            System.out.println( "!!: " + cmdResp.getClass().getSimpleName() );
+            assertTrue( "Incorrect cmd response type", cmdResp instanceof JaxbProcessInstanceResponse );
+        }
         
         logger.info("[WebService] response: {} [{}]", 
                 ((JaxbProcessInstanceResponse) cmdResp).getId(),
