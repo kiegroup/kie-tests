@@ -182,16 +182,14 @@ public abstract class AbstractRestMethods {
                     throw new IllegalStateException( "Unknown operation: " + op );
                 }
             } catch( Exception e ) { 
-                e.printStackTrace(); 
+                logger.error( "Rest operation failed: " + e.getMessage(), e);
+                fail( "Unable to do REST operation: " + e.getMessage() + " [see log]");
             }
 
             if( response != null ) { 
                 int respStatus = response.getStatus();
-                if( respStatus >= 300 && response.getMediaType().toString().startsWith(MediaType.TEXT_HTML) ) { 
-                    String bodyContent = getHtmlBodyContent(response);
-                    logger.error("]] Request failed:\n" + bodyContent);
-                    fail( "Request failed with status [" + respStatus + "], see log." );
-                } else if( result == null && returnType != null ) { 
+                MediaType respMediaType = response.getMediaType();
+                if( result == null && returnType != null ) { 
                     assertEquals( "Incorrect response code: " + respStatus, status, respStatus );
                     try { 
                         response.bufferEntity();
@@ -211,6 +209,21 @@ public abstract class AbstractRestMethods {
                             fail( "Unable to unmarshall response content [" + target.getUri().toString() + "] : " + e.getMessage() );
                         }
                     }
+                } else if( respStatus >= 300 ) { 
+                    if( respMediaType != null && respMediaType.toString().startsWith(MediaType.TEXT_HTML) ) { 
+                        String bodyContent = getHtmlBodyContent(response);
+                        logger.error("]] Request failed:\n" + bodyContent);
+                        fail( "Request failed with status [" + respStatus + "], see log." );
+                    } else if( response.hasEntity() ) { 
+                        String respContent = response.readEntity(String.class);
+                        if( respContent.contains("<body") ) { 
+                            respContent = getHtmlBodyContent(respContent);
+                        }
+                            logger.error("]] Request failed:\n" + respContent);
+                            fail( "Request failed with status [" + respStatus + "], see log." );
+                    } else { 
+                        fail( "Request failed with status [" + respStatus + "]." );
+                    }
                 }
             }
         } finally { 
@@ -222,15 +235,18 @@ public abstract class AbstractRestMethods {
     }
 
     private String getHtmlBodyContent(Response response) { 
-        String bodyContent = response.readEntity(String.class);
-        boolean htmlParsed = false;
+        String respContent = response.readEntity(String.class);
+        return getHtmlBodyContent(respContent);
+    }
+
+    private String getHtmlBodyContent(String respContent) { 
         try { 
-            Document doc = Jsoup.parse(bodyContent);
-            bodyContent = doc.body().text();
+            Document doc = Jsoup.parse(respContent);
+            respContent = doc.body().text();
         } catch( Exception e2 ) { 
-            logger.error("]] Unable to unmarshal response: type " + response.getMediaType());
+            logger.error("]] Unable to unmarshal response with HTML content" );
         } 
-        return bodyContent;
+        return respContent;
     }
     
     /**

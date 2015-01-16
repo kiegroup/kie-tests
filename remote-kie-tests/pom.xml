@@ -35,7 +35,7 @@
     <version.org.jboss.arquillian.container.tomcat>1.0.0.CR6</version.org.jboss.arquillian.container.tomcat>
     
     <!-- jboss as  -->
-    <jboss.server.name>jboss-eap-6.3</jboss.server.name>
+    <jboss.server.name>jboss-eap-6.4</jboss.server.name>
     
     <!-- jetty -->    
     <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>

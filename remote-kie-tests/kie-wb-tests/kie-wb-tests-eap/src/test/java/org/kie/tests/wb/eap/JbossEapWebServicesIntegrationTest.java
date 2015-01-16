@@ -17,18 +17,9 @@
  */
 package org.kie.tests.wb.eap;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods.checkDeployFlagFile;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.jws.WebService;
@@ -39,15 +30,8 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.remote.client.jaxb.JaxbCommandsRequest;
-import org.kie.remote.client.jaxb.JaxbCommandsResponse;
-import org.kie.remote.jaxb.gen.StartProcessCommand;
-import org.kie.remote.services.ws.command.generated.CommandServiceClient;
 import org.kie.remote.services.ws.command.generated.CommandWebService;
-import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +62,8 @@ public class JbossEapWebServicesIntegrationTest {
         return new QName(namespace, name);
     }
 
-    
+   
+    /**
     @Test
     public void testCommandWebService() throws Exception {
         CommandServiceClient client;
@@ -117,5 +102,6 @@ public class JbossEapWebServicesIntegrationTest {
                 ((JaxbProcessInstanceResponse) cmdResp).getProcessId()
                 );
     }
+    */
 
 }

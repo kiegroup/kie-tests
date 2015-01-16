@@ -238,6 +238,7 @@
         <skip.integration.tests>false</skip.integration.tests>
         <override.version.org.jboss.as>7.4.0.Final-redhat-19</override.version.org.jboss.as>
         <version.org.jboss.as.dist>7.4.0.Final-redhat-19</version.org.jboss.as.dist>
+        <jboss.server.name>jboss-eap-6.4</jboss.server.name>
       </properties>
 
       <dependencyManagement>

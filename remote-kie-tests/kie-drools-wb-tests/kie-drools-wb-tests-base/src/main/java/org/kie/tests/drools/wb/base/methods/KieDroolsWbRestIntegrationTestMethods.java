@@ -259,18 +259,22 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
     }
     
     private JobResult waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus) throws Exception {
-        assertTrue( "Initial status of request should be ACCEPTED or APROVED: " + jobStatus, jobStatus.equals(JobStatus.ACCEPTED)
-                || jobStatus.equals(JobStatus.APPROVED) );
+        return waitForJobToHaveStatus(deploymentUrl, jobId, jobStatus, JobStatus.SUCCESS);
+    }
+    
+    private JobResult waitForJobToHaveStatus(URL deploymentUrl, String jobId, JobStatus jobStatus, JobStatus expectedStatus ) throws Exception {
+        assertTrue( "Initial status of request should be ACCEPTED or APROVED: " + jobStatus, 
+                jobStatus.equals(JobStatus.ACCEPTED) || jobStatus.equals(JobStatus.APPROVED) );
         int wait = 0;
         JobResult jobResult = null;
         while( ! jobStatus.equals(JobStatus.SUCCESS) && wait < maxTries ) {
             jobResult = get("jobs/" + jobId, JobResult.class);
             assertEquals( jobResult.getJobId(), jobId );
             jobStatus = jobResult.getStatus();
-            if( jobStatus.equals(JobStatus.FAIL) ) { 
-                fail( "Request failed." );
-            } else if( jobStatus.equals(JobStatus.SUCCESS) ) { 
+            if( jobStatus.equals(expectedStatus) ) { 
                 break;
+            } else if( jobStatus.equals(JobStatus.FAIL) ) { 
+                fail( "Request failed." );
             }
             ++wait;
             Thread.sleep(3*1000);
@@ -311,7 +315,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             // rest/jobs/{jobId}
             waitForJobToComplete(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus());
         }
-       
+        
         // rest/organizaionalunits GET
         orgUnits = get("organizationalunits", Collection.class, OrganizationalUnit.class);
         assertEquals( "Exepcted an OU to be added.", origUnitsSize + 1, orgUnits.size());
@@ -326,6 +330,21 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         assertNotNull("Could not find creatd OU", foundOu);
         assertEquals("OU owner", orgUnit.getOwner(), foundOu.getOwner() );
         assertArrayEquals("OU owner", orgUnit.getRepositories().toArray(), foundOu.getRepositories().toArray());
+        
+        // rest/organizaionalunits POST (BZ-1175477: duplicate POST (same OU name) should fail
+        orgUnit = new OrganizationalUnit();
+        {
+            orgUnit.setDescription("Duplicate Test OU");
+            orgUnit.setName(foundOu.getName());
+            orgUnit.setOwner(this.getClass().getSimpleName());
+            String [] repoArr = { "uf-playground" };
+            orgUnit.setRepositories(Arrays.asList(repoArr));
+
+            CreateOrganizationalUnitRequest createOURequest = post("organizationalunits", 202, orgUnit, CreateOrganizationalUnitRequest.class, 500);
+
+            // rest/jobs/{jobId}
+            waitForJobToHaveStatus(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus(), JobStatus.DENIED);
+        } 
         
         // rest/repositories POST
         RepositoryRequest newRepo = new RepositoryRequest();

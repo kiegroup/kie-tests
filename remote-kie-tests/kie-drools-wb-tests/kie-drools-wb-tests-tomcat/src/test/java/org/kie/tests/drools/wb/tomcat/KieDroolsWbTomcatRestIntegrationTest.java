@@ -41,7 +41,8 @@ public class KieDroolsWbTomcatRestIntegrationTest extends AbstractKieDroolsWbInt
         WebArchive war = zipWar.as(WebArchive.class);
 
         String [][] jarsToReplace = { 
-                { "org.kie.workbench.services", "kie-wb-common-services-api" }
+                { "org.guvnor", "guvnor-rest-backend" },
+                { "org.guvnor", "guvnor-rest-client" }
         };
         
         // Replace kie-services-remote jar with the one we just generated
