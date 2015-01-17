@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.kie.tests.drools.wb.base.methods.TestConstants.PASSWORD;
 import static org.kie.tests.drools.wb.base.methods.TestConstants.USER;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +46,36 @@ public class KieDroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrati
 
     private final int maxTries = 10;
     private final Random random = new Random();
-  
+
+    public void rollUpTest(URL deploymentUrl) throws Exception { 
+        String repoName = "jbpm-playground";
+       
+        // rest/repositories GET
+        ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
+        
+        // BZ-1175899 rest/repositories/{repoName}/projects/
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
+        ClientRequest restRequest  = createRequest(requestFactory, urlString);
+        ProjectRequest project = new ProjectRequest();
+        project.setDescription("test project");
+        String projectName = "MyNewProject";
+        String description = " My description of the project";
+        String groupId = "org.jboss";
+        String version = " 1.0";
+        project.setName(projectName);
+        project.setDescription(description);
+        project.setGroupId(groupId);
+        project.setVersion(version);
+        logger.debug("]] " + convertObjectToJsonString(project));
+        addToRequestBody(restRequest, project);
+        ClientResponse responseObj = checkTimeResponse(restRequest.post());
+        CreateProjectRequest createProjectRequest = (CreateProjectRequest) responseObj.getEntity(CreateProjectRequest.class);
+        logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
+        
+        // rest/jobs/{jobId} GET
+        waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory); 
+    }
+    
     /**
      * Tests the following REST urls: 
      * 
@@ -200,34 +230,75 @@ public class KieDroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrati
      */
     @Test
     public void mavenOperations(URL deploymentUrl) throws Exception { 
-        // rest/repositories GET
         ClientRequestFactory requestFactory = createBasicAuthRequestFactory(deploymentUrl, USER, PASSWORD);
-        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
+
+        String repoName = "jbpm-playground";
+        
+        // BZ-1175899 rest/repositories/{repoName}/projects/
+        String urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
         ClientRequest restRequest = createRequest(requestFactory, urlString);
-        ClientResponse<?> responseObj = checkResponse(restRequest.get());
-        Collection<Map<String, String>> repoResponses = responseObj.getEntity(Collection.class);
-        assertTrue( repoResponses.size() > 0 );
-        String repoName = repoResponses.iterator().next().get("name");
-       
-        // rest/repositories/{repoName}/projects POST
-        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
-        restRequest = createRequest(requestFactory, urlString);
         ProjectRequest project = new ProjectRequest();
-        project.setDescription("test project");
-        String projectName = UUID.randomUUID().toString();
-        String groupId = UUID.randomUUID().toString();
-        String version = random.nextInt(1000) + ".0";
+        String projectName = "MyNewProject";
+        String description = " My description of the project";
         project.setName(projectName);
-        project.setGroupId(groupId);
-        project.setVersion(version);
+        project.setDescription(description);
+        logger.debug("]] " + convertObjectToJsonString(project));
         addToRequestBody(restRequest, project);
-        responseObj = checkTimeResponse(restRequest.post());
+        ClientResponse<?> responseObj = checkTimeResponse(restRequest.post());
         CreateProjectRequest createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
         logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
         
         // rest/jobs/{jobId} GET
         waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
+        
+        // rest/repositories GET
+        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        responseObj = checkResponse(restRequest.get());
+        Collection<Map<String, String>> repoResponses = responseObj.getEntity(Collection.class);
+        assertTrue( repoResponses.size() > 0 );
+        repoName = repoResponses.iterator().next().get("name");
+       
+        // rest/repositories/{repoName}/projects POST
+        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        project = new ProjectRequest();
+        project.setDescription("test project");
+        projectName = UUID.randomUUID().toString();
+        groupId = UUID.randomUUID().toString();
+        version = random.nextInt(1000) + ".0";
+        project.setName(projectName);
+        project.setGroupId(groupId);
+        project.setVersion(version);
+        addToRequestBody(restRequest, project);
+        responseObj = checkTimeResponse(restRequest.post());
+        createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
+        logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
+        
+        // rest/jobs/{jobId} GET
+        waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
 
+        // BZ-1175899 rest/repositories/{repoName}/projects/
+        urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + "rest/repositories/" + repoName + "/projects").toExternalForm();
+        restRequest = createRequest(requestFactory, urlString);
+        project = new ProjectRequest();
+        projectName = "MyNewProject";
+        description = " My description of the project";
+        groupId = "org.jboss";
+        version = " 1.0";
+        project.setName(projectName);
+        project.setDescription(description);
+        project.setGroupId(groupId);
+        project.setVersion(version);
+        logger.debug("]] " + convertObjectToJsonString(project));
+        addToRequestBody(restRequest, project);
+        responseObj = checkTimeResponse(restRequest.post());
+        createProjectRequest = responseObj.getEntity(CreateProjectRequest.class);
+        logger.debug("]] " + convertObjectToJsonString(createProjectRequest));
+        
+        // rest/jobs/{jobId} GET
+        waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus(), requestFactory);
+        
         // rest/repositories/{repoName}/projects/{project}/maven/compile POST
         String mavenOperBase = "rest/repositories/" + repoName + "/projects/" + projectName + "/maven/";
         urlString = new URL(deploymentUrl,  deploymentUrl.getPath() + mavenOperBase + "compile").toExternalForm();
@@ -242,6 +313,8 @@ public class KieDroolsWbRestIntegrationTestMethods extends DroolsWbRestIntegrati
         // TODO implement DELETE
         // rest/repositories/{repoName}/projects DELETE
         /** delete projects, verify that list of projects is now one less */
+
+        
     }
     
     private JobResult waitForJobToComplete(URL deploymentUrl, String jobId, JobStatus jobStatus, ClientRequestFactory requestFactory) throws Exception {
