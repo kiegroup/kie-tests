@@ -16,7 +16,7 @@ import org.kie.tests.drools.wb.base.AbstractKieDroolsWbIntegrationTest;
 @RunWith(Arquillian.class)
 public class KieDroolsWbRestEapIntegrationTest extends AbstractKieDroolsWbIntegrationTest {
 
-    private static final String classifier = "eap6_3";
+    private static final String classifier = "eap6_4";
     
     protected static WebArchive createTestWar() {
         // Import kie-wb war

@@ -36,7 +36,7 @@
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-drools-wb-distribution-wars</artifactId>
-      <classifier>eap6_3</classifier>
+      <classifier>${classifier.eap.artifact}</classifier>
       <type>war</type>
       <scope>test</scope>
     </dependency>
@@ -148,9 +148,6 @@
       <id>integration-tests</id>
       <properties>
         <skip.integration.tests>false</skip.integration.tests>
-        <override.version.org.jboss.as>7.5.0.Final-redhat-17</override.version.org.jboss.as>
-        <version.org.jboss.as.dist>7.5.0.Final-redhat-17</version.org.jboss.as.dist>
-        <jboss.server.name>jboss-eap-6.4</jboss.server.name>
       </properties>
       <build>
         <plugins>
@@ -189,7 +186,7 @@
                     <artifactItem>
                       <groupId>org.kie</groupId>
                       <artifactId>kie-drools-wb-distribution-wars</artifactId>
-                      <classifier>eap-6_3</classifier>
+                      <classifier>${classifier.eap.artifact}</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
                     </artifactItem>

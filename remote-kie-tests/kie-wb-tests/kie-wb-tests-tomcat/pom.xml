@@ -30,13 +30,6 @@
       <scope>test</scope>
     </dependency>
    
-    <!--  webservices --> 
-    <dependency>
-      <groupId>org.kie.remote.ws</groupId>
-      <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
-      <scope>test</scope>
-    </dependency>
-    
     <!--  war -->
     <dependency>
       <groupId>org.kie</groupId>

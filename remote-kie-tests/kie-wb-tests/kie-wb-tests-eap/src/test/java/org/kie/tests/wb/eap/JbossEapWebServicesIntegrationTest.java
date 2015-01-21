@@ -17,12 +17,15 @@
  */
 package org.kie.tests.wb.eap;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
 
-import javax.jws.WebService;
 import javax.xml.namespace.QName;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -30,8 +33,17 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.remote.client.jaxb.JaxbCommandsRequest;
+import org.kie.remote.client.jaxb.JaxbCommandsResponse;
+import org.kie.remote.jaxb.gen.StartProcessCommand;
+import org.kie.remote.services.ws.command.CommandWebServiceImpl;
+import org.kie.remote.services.ws.command.generated.CommandServiceBasicAuthClient;
 import org.kie.remote.services.ws.command.generated.CommandWebService;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
+import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,37 +67,25 @@ public class JbossEapWebServicesIntegrationTest {
 
     private static final String WSDL_PATH = "ws/CommandService?wsdl";
 
-    private static QName getServiceQName() {
-        WebService wsAnno = CommandWebService.class.getAnnotation(WebService.class);
-        String namespace = wsAnno.targetNamespace();
-        String name = "CommandService";
-        return new QName(namespace, name);
+    protected static URL[] wsdlURL = new URL[2];
+    protected static QName [] serviceName= new QName[2];
+    protected static QName[] portName = new QName[2];
+    
+    static {
+        serviceName[0] = new QName(CommandWebServiceImpl.NAMESPACE, "CommandServiceBasicAuth");
+        portName[0] = new QName(CommandWebServiceImpl.NAMESPACE, "CommandServiceBasicAuthPort");
     }
-
-   
-    /**
+    
     @Test
     public void testCommandWebService() throws Exception {
-        CommandServiceClient client;
-        try {
-            client = new CommandServiceClient(new URL(deploymentUrl, WSDL_PATH), getServiceQName());
-        } catch (MalformedURLException murle) {
-            String msg = "Unable to create service client: " + murle.getMessage();
-            logger.error(msg, murle);
-            fail(msg);
-            throw murle;
-        }
-        
-        if( ! checkDeployFlagFile() ) { 
-            restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        }
+        CommandServiceBasicAuthClient client = createClient(); 
         
         logger.info("[Client] Webservice request.");
         // Get a response from the WebService
         StartProcessCommand cmd = new StartProcessCommand();
         cmd.setProcessId(SCRIPT_TASK_PROCESS_ID);
         JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, cmd);
-        CommandWebService commandWebService = client.getCommandServicePort();
+        CommandWebService commandWebService = client.getCommandServiceBasicAuthPort();
         final JaxbCommandsResponse response = commandWebService.execute(req);
         assertNotNull( "Null webservice response", response );
         assertFalse( "Empty webservice response", response.getResponses().isEmpty() );
@@ -102,6 +102,19 @@ public class JbossEapWebServicesIntegrationTest {
                 ((JaxbProcessInstanceResponse) cmdResp).getProcessId()
                 );
     }
-    */
 
+    private CommandServiceBasicAuthClient createClient() throws Exception {
+        final String user = "mary";
+        final String pwd = "mary123@";
+ 
+        CommandServiceBasicAuthClient client =
+        RemoteRuntimeEngineFactory.newCommandWebServiceClientBuilder()
+            .addUserName(user)
+            .addServerUrl(deploymentUrl)
+            .addPassword(pwd)
+            .buildBasicAuthClient();
+        
+        return client;
+    }
+    
 }
