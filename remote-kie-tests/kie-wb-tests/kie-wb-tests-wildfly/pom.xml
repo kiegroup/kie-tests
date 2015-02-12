@@ -13,8 +13,6 @@
 
   <name>KIE Workbench Integration Tests :: Wildfly 8</name>
 
-  <!--  IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
-
   <!-- 
   == test setup ==
   generate-test-resources: unpack wildfly
@@ -31,39 +29,66 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.kie.remote</groupId>
-      <artifactId>kie-remote-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.kie.tests.remote</groupId>
       <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-services</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- war -->
+    <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-wb-distribution-wars</artifactId>
       <classifier>wildfly8</classifier>
-      <scope>test</scope>
       <type>war</type>
+      <scope>test</scope>
     </dependency>
 
-    <!-- jms -->
+    <!-- arquillian -->
     <dependency>
-      <groupId>org.hornetq</groupId>
-      <artifactId>hornetq-core-client</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>jboss-logmanager</artifactId>
-          <groupId>org.jboss.logmanager</groupId>
-        </exclusion>
-      </exclusions>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.hornetq</groupId>
-      <artifactId>hornetq-jms-client</artifactId>
+      <groupId>org.jboss.shrinkwrap</groupId>
+      <artifactId>shrinkwrap-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- arquillian wildfly -->
+    <dependency>
+      <groupId>org.wildfly</groupId>
+      <artifactId>wildfly-arquillian-container-managed</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- wildfly -->
+    <dependency>
+      <groupId>org.jboss.xnio</groupId>
+      <artifactId>xnio-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- rest -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>jaxrs-api</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -91,24 +116,29 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- arquillian -->
+    <!-- webservice test -->
     <dependency>
-      <groupId>org.jboss.arquillian.junit</groupId>
-      <artifactId>arquillian-junit-container</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.shrinkwrap</groupId>
-      <artifactId>shrinkwrap-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.wildfly</groupId>
-      <artifactId>wildfly-arquillian-container-managed</artifactId>
+      <groupId>org.jboss.spec.javax.servlet</groupId>
+      <artifactId>jboss-servlet-api_3.0_spec</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jboss.xnio</groupId>
+        <artifactId>xnio-api</artifactId>
+        <version>3.2.2.Final</version>
+      </dependency>
+      <dependency>
+       <groupId>org.jboss.xnio</groupId>
+       <artifactId>xnio-nio</artifactId>
+       <version>3.2.2.Final</version>
+     </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
   <build>
     <testResources>
       <testResource>
@@ -123,6 +153,22 @@
 
     <!-- running tests -->
     <plugins>
+            <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+            <fork>true</fork>
+            <meminitial>256m</meminitial>
+            <maxmem>1024m</maxmem>
+            <showDeprecation>false</showDeprecation>
+            <showWarnings>false</showWarnings>
+            <compilerArguments>
+              <source>1.7</source>
+              <target>1.7</target>
+            </compilerArguments>
+          </configuration>
+        </plugin>
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <configuration>
@@ -130,7 +176,7 @@
             <fileset>
               <directory>${basedir}</directory>
               <includes>
-                <include>repository/</include>
+                  <include>repositories/</include>
                 <include>.niogit/</include>
                 <include>.index/</include>
               </includes>
@@ -235,7 +281,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/${jboss.server.name}/standalone/configuration</outputDirectory>
+              <outputDirectory>${project.build.directory}/${wildfly.server.name}/standalone/configuration</outputDirectory>
               <resources>
                 <resource>
                   <directory>src/test/resources-wildfly-8/config</directory>

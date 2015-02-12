@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -71,6 +72,7 @@ import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.FileUtils;
+import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.junit.Assume;
@@ -147,6 +149,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private int timeoutInMillisecs;
     private static final int DEFAULT_TIMEOUT = 10;
 
+    static { 
+        System.setProperty("org.kie.xml.encode", "true");
+    }
+    
     private KieWbRestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeoutInSeconds, RuntimeStrategy strategy) {
         if( mediaType == null ) {
             mediaType = MediaType.APPLICATION_XML_TYPE;
@@ -317,7 +323,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
      */
     public void urlsDeployModuleForOtherTests( URL deploymentUrl, String user, String password, boolean check ) throws Exception {
         if( check ) {
-            Assume.assumeFalse(checkDeployFlagFile());
+//            Assume.assumeFalse(checkDeployFlagFile());
         }
 
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, timeoutInMillisecs/1000);
@@ -881,7 +887,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
         String varId = "myobject";
-        String varVal = "10";
+        String varVal = UUID.randomUUID().toString();
 
         // proc log
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest("history/variable/" + varId + "/instances");
@@ -1412,4 +1418,44 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
                    + "/" + varInfo.getValue() );
         }
     }
+   
+    public void remoteApiFunnyCharacters( URL deploymentUrl, String user, String password ) throws Exception  { 
+        // verify that property is set on client side
+        Field field = JaxbUnknownAdapter.class.getDeclaredField("ENCODE_STRINGS");
+        field.setAccessible(true);
+        Object fieldObj = field.get(null);
+        assertTrue( "ENCODE_STRINGS fiels is a " + fieldObj.getClass().getName(), fieldObj instanceof Boolean );
+        Boolean encodeStringsBoolean = (Boolean) fieldObj;
+        assertTrue( "ENCODE_STRINGS is '" + encodeStringsBoolean, encodeStringsBoolean );
+        
+        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
+
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        KieSession ksession = runtimeEngine.getKieSession();
+       
+        String [] vals = { 
+            "a long string containing spaces and other characters +ěš@#$%^*()_{}\\/.,",
+            "Ampersand in the string &.",
+            "\"quoted string\""
+        };
+        long [] procInstIds = new long[vals.length];
+        for( int i = 0; i < vals.length; ++i ) { 
+            procInstIds[i] = startScriptTaskVarProcess(ksession, vals[i]);
+        }
+       
+        for( int i = 0; i < vals.length; ++i ) { 
+            List<? extends VariableInstanceLog> varLogs = runtimeEngine.getAuditService().findVariableInstances(procInstIds[i]);
+            for( VariableInstanceLog log : varLogs ) { 
+               System.out.println( log.getVariableInstanceId() + ":"  + log.getVariableId() + ":["  + log.getValue() + "]" ); 
+            }
+        }
+    }
+    
+    private static long startScriptTaskVarProcess(KieSession ksession, String val) { 
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put( "x", val );
+        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
+        return procInst.getId();
+    }
+    
 }

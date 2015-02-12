@@ -13,6 +13,8 @@
   <logger name="org.kie.tests" level="debug"/>
   <logger name="org.kie.services.client" level="debug" />
   
+  <logger name="org.drools" level="debug"/>
+  
   <root level="info">
     <appender-ref ref="consoleAppender" />
   </root>

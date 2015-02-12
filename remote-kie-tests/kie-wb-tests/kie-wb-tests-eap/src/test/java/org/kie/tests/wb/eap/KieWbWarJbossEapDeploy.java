@@ -40,18 +40,10 @@ public class KieWbWarJbossEapDeploy {
         if( replace ) {
             String[][] jarsToReplace = {
             // kie-remote
-            { "org.kie.remote", "kie-remote-services" } };
+            { "org.kie.remote", "kie-remote-services" },
+            { "org.drools", "drools-core" }
+            };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
-
-//            deleteJars(war, jarsToDelete);
-            // ADD
-            boolean add = false;
-            if( add ) {
-                String[][] jarsToAdd = {
-                // web services
-                { "javax.xml.ws", "jaxws-api" } };
-                addNewJars(war, jarsToAdd);
-            }
 
             boolean webXmlReplace = false;
             if( webXmlReplace ) {

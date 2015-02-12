@@ -12,6 +12,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +52,15 @@ public abstract class AbstractIssueIntegrationTest {
         
         // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
         
-        // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
-        //restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
-        restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        //restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.remoteApiFunnyCharacters(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+        // deploy
+        // restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+//        KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
+//        wsTests.startSimpleProcess(deploymentUrl);
     }
     
 }

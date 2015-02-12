@@ -17,9 +17,6 @@
  */
 package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
@@ -31,13 +28,12 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class TomcatRemoteApiIssueIntegrationTest {
+public class TomcatRemoteApiIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
@@ -51,24 +47,9 @@ public class TomcatRemoteApiIssueIntegrationTest {
     
     @ArquillianResource
     URL deploymentUrl;
-    
-    @Test
-    public void issueTest() throws Exception { 
-        printTestName();
-        
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML_TYPE)
-                .setTimeoutInSecs(5)
-                .build();
-       
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        
-        // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
-       
-        // testing memory
-        // restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, false);
-        // restTests.urlsCreateMemoryLeakOnTomcat(deploymentUrl, MARY_USER, MARY_PASSWORD, 5000);
+
+    @Override
+    public MediaType getMediaType() { 
+        return MediaType.APPLICATION_JSON_TYPE;
     }
 }

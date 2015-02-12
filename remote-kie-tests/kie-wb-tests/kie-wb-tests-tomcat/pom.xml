@@ -113,6 +113,11 @@
     
     <!-- libs necessary for kie-wb -->
     <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-tomcat-integration</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.codehaus.btm</groupId>
       <artifactId>btm</artifactId>
       <scope>test</scope>
@@ -203,6 +208,12 @@
             </goals>
             <configuration>
               <artifactItems>
+                <artifactItem>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-tomcat-integration</artifactId>
+                  <type>jar</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
                 <artifactItem>
                   <groupId>org.codehaus.btm</groupId>
                   <artifactId>btm</artifactId>

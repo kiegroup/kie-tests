@@ -32,7 +32,7 @@ public class KieWbWarTomcatDeploy {
         String [] jarsToDelete = { "cxf-bundle-jaxrs-2.7.11.jar" };
         deleteJars(war, jarsToDelete);
         
-        boolean replaceWebXml = true;
+        boolean replaceWebXml = false;
         if( replaceWebXml ) { 
           war.delete("WEB-INF/web.xml");
           war.addAsWebResource("war/web.xml");

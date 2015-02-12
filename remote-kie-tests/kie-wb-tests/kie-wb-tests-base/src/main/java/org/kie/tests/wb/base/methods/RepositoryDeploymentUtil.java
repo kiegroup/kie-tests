@@ -64,9 +64,10 @@ public class RepositoryDeploymentUtil {
             // environment created by the steps below
         }
 
-        JobRequest createRepoJob = createRepository(repositoryName, repoUrl);
-        JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user, repositoryName);
-        waitForJobsToFinish(sleepSecs, createRepoJob, createOrgUnitJob);
+        JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user);
+        waitForJobsToFinish(sleepSecs, createOrgUnitJob);
+        JobRequest createRepoJob = createRepository(repositoryName, orgUnit, repoUrl);
+        waitForJobsToFinish(sleepSecs, createRepoJob);
         
         deploy(deploymentId);
     }
@@ -105,12 +106,13 @@ public class RepositoryDeploymentUtil {
      * @param cloneRepoUrl The location of the repository
      * @return A {@link JobRequest} instance returned by the request with the initial status of the request
      */
-    private JobRequest createRepository(String repositoryName, String cloneRepoUrl) {
+    private JobRequest createRepository(String repositoryName, String orgUnit, String cloneRepoUrl) {
         logger.info("Cloning repo '{}' from URL '{}'", repositoryName, cloneRepoUrl);
         RepositoryRequest repoRequest = new RepositoryRequest();
         repoRequest.setName(repositoryName);
         repoRequest.setRequestType("clone");
         repoRequest.setGitURL(cloneRepoUrl);
+        repoRequest.setOrganizationlUnitName(orgUnit);
         String input = serializeToJsonString(repoRequest);
         KieRemoteHttpRequest request = createRequest("repositories/", input);
         return post( request, 202, CreateOrCloneRepositoryRequest.class);

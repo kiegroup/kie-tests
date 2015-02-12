@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class KieWbRemoteApiIssueIntegrationTest {
     private URL deploymentUrl;
     {
         // Modify this string to match your kie-wb/BPMS installation
-        String urlString = "http://localhost:8080/business-central/";
+        String urlString = "http://localhost:7001/kie-wb-6.2.0-SNAPSHOT-weblogic12/";
         try { 
             deploymentUrl = new URL(urlString);
         } catch( Exception e ) { 
@@ -78,21 +79,30 @@ public class KieWbRemoteApiIssueIntegrationTest {
          }
     }
 
-    private final static int SETUP = 0;
-    
     protected void printTestName() { 
         String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
         System.out.println( "-=> " + testName );
     }
     
     @Test
-    @InSequence(SETUP)
-    public void undeployRedeployTest() throws Exception {
-        Assume.assumeTrue(doDeploy());
-        
+    public void issueTest() throws Exception { 
         printTestName();
-        restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        Thread.sleep(5000);
+        
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                .setMediaType(getMediaType())
+                .build();
+        
+        // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+//        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        //restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+        // deploy
+        // restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
+        KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
+        wsTests.startSimpleProcess(deploymentUrl);
     }
 
 }

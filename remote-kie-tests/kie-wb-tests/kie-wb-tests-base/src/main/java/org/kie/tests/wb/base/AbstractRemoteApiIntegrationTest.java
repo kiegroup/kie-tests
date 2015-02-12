@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     protected static final Logger logger = LoggerFactory.getLogger(AbstractRemoteApiIntegrationTest.class);
     
     private final KieWbRestIntegrationTestMethods restTests;
+    private final KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
     private final KieWbJmsIntegrationTestMethods jmsTests;
 
     @ArquillianResource
@@ -96,6 +98,14 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Thread.sleep(5000);
     }
 
+    
+    @Test
+    @InSequence(REST_ERROR)
+    public void webserviceTest() throws Exception {
+        printTestName();
+        wsTests.startSimpleProcess(deploymentUrl);
+    }
+    
     @Test
     @InSequence(REST_FAILING)
     public void testRestUrlStartHumanTaskProcess() throws Exception {

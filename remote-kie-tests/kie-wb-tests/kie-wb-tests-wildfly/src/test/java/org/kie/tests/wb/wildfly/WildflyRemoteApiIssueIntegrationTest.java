@@ -26,12 +26,11 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
+import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class WildflyRemoteApiIssueIntegrationTest extends AbstractIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-wildfly")
     public static Archive<?> createWar() {
@@ -44,26 +43,7 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
 
     @Override
     public MediaType getMediaType() {
-        return MediaType.APPLICATION_JSON_TYPE;
-    }
-
-    @Override
-    public boolean jmsQueuesAvailable() {
-        return true;
-    }
-
-    @Override
-    public boolean doRestTests() {
-        return true;
-    }
-
-    @Override
-    public RuntimeStrategy getStrategy() {
-        return RuntimeStrategy.SINGLETON;
+        return MediaType.APPLICATION_XML_TYPE;
     }
     
-    @Override
-    public int getTimeoutInSecs() {
-        return 7*1000;
-    }
 }

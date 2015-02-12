@@ -76,12 +76,21 @@
     <filter-name>HTTP Basic Auth Filter</filter-name>
     <url-pattern>/rest/*</url-pattern>
     <url-pattern>/maven2/*</url-pattern>
+    <url-pattern>/ws/*</url-pattern>
   </filter-mapping>
 
   <!-- drools-wb servlets -->
   <servlet>
     <servlet-name>DTableXLSFileServlet</servlet-name>
     <servlet-class>org.drools.workbench.screens.dtablexls.backend.server.DecisionTableXLSFileServlet</servlet-class>
+    <init-param>
+      <param-name>includes-path</param-name>
+      <param-value>git://**,default://**</param-value>
+    </init-param>
+    <init-param>
+      <param-name>excludes-path</param-name>
+      <param-value>file://**</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>DTableXLSFileServlet</servlet-name>
@@ -91,6 +100,14 @@
   <servlet>
     <servlet-name>ArchiveServlet</servlet-name>
     <servlet-class>org.guvnor.common.services.backend.archive.ArchiveServlet</servlet-class>
+    <init-param>
+      <param-name>includes-path</param-name>
+      <param-value>git://**,default://**</param-value>
+    </init-param>
+    <init-param>
+      <param-name>excludes-path</param-name>
+      <param-value>file://**</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>ArchiveServlet</servlet-name>
@@ -100,6 +117,14 @@
   <servlet>
     <servlet-name>ScoreCardFileServlet</servlet-name>
     <servlet-class>org.drools.workbench.screens.scorecardxls.backend.server.ScoreCardXLSFileServlet</servlet-class>
+    <init-param>
+      <param-name>includes-path</param-name>
+      <param-value>git://**,default://**</param-value>
+    </init-param>
+    <init-param>
+      <param-name>excludes-path</param-name>
+      <param-value>file://**</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>ScoreCardFileServlet</servlet-name>
@@ -109,6 +134,14 @@
   <servlet>
     <servlet-name>UberfireFileUploadServlet</servlet-name>
     <servlet-class>org.uberfire.server.FileUploadServlet</servlet-class>
+    <init-param>
+      <param-name>includes-path</param-name>
+      <param-value>git://**,default://**</param-value>
+    </init-param>
+    <init-param>
+      <param-name>excludes-path</param-name>
+      <param-value>file://**</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>UberfireFileUploadServlet</servlet-name>
@@ -118,6 +151,14 @@
   <servlet>
     <servlet-name>UberfireFileDownloadServlet</servlet-name>
     <servlet-class>org.uberfire.server.FileDownloadServlet</servlet-class>
+    <init-param>
+      <param-name>includes-path</param-name>
+      <param-value>git://**,default://**</param-value>
+    </init-param>
+    <init-param>
+      <param-name>excludes-path</param-name>
+      <param-value>file://**</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>UberfireFileDownloadServlet</servlet-name>
@@ -184,14 +225,6 @@ profile in pom.xml to use that. -->
   <filter-mapping>
     <filter-name>Redirect Filter</filter-name>
     <url-pattern>/org.jbpm.designer.jBPMDesigner/*</url-pattern>
-  </filter-mapping>
-  <filter>
-    <filter-name>Pluggable Filter</filter-name>
-    <filter-class>org.jbpm.designer.web.filter.impl.PluggableFilter</filter-class>
-  </filter>
-  <filter-mapping>
-    <filter-name>Pluggable Filter</filter-name>
-    <url-pattern>/*</url-pattern>
   </filter-mapping>
   <servlet>
     <display-name>Resource List</display-name>
@@ -485,6 +518,22 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
 
   <security-constraint>
     <web-resource-collection>
+      <web-resource-name>download</web-resource-name>
+      <url-pattern>/org.kie.workbench.KIEWebapp/archive</url-pattern>
+      <url-pattern>/org.kie.workbench.KIEWebapp/defaulteditor/upload/*</url-pattern>
+      <url-pattern>/org.kie.workbench.KIEWebapp/defaulteditor/download/*</url-pattern>
+      <url-pattern>/org.kie.workbench.KIEWebapp/dtablexls/file</url-pattern>
+      <url-pattern>/org.kie.workbench.KIEWebapp/scorecardxls/file</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+      <role-name>analyst</role-name>
+      <role-name>developer</role-name>
+    </auth-constraint>
+  </security-constraint>
+
+  <security-constraint>
+    <web-resource-collection>
       <web-resource-name>console</web-resource-name>
       <url-pattern>/kie-wb.html</url-pattern>
       <url-pattern>*.erraiBus</url-pattern>
@@ -607,6 +656,18 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
   <filter-mapping>
     <filter-name>Dynamic JAXBContext Filter</filter-name>
     <url-pattern>/rest/*</url-pattern>
+    <url-pattern>/ws/*</url-pattern>
   </filter-mapping>
+
+  <!-- web services -->
+  <servlet>
+    <servlet-name>CommandWebService</servlet-name>
+    <servlet-class>org.kie.remote.services.ws.command.CommandWebServiceImpl</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>CommandWebService</servlet-name>
+    <url-pattern>/ws/CommandService</url-pattern>
+  </servlet-mapping>
 
 </web-app>
