@@ -10,10 +10,9 @@ import java.net.URL;
 
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
-import org.kie.remote.jaxb.gen.JaxbStringObjectPair;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
-import org.kie.remote.services.ws.command.generated.CommandServiceBasicAuthClient;
+import org.kie.remote.jaxb.gen.util.JaxbStringObjectPair;
 import org.kie.remote.services.ws.command.generated.CommandWebService;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
