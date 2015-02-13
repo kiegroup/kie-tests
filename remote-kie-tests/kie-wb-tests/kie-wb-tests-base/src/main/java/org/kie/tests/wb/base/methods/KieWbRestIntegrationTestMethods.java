@@ -75,8 +75,6 @@ import org.apache.commons.io.FileUtils;
 import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
-import org.jbpm.services.task.commands.GetContentCommand;
-import org.junit.Assume;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -100,6 +98,7 @@ import org.kie.remote.common.rest.KieRemoteHttpRequest;
 import org.kie.remote.common.rest.KieRemoteHttpResponse;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
+import org.kie.remote.jaxb.gen.GetContentCommand;
 import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
 import org.kie.remote.jaxb.gen.GetTaskCommand;
 import org.kie.remote.jaxb.gen.GetTaskContentCommand;
@@ -813,7 +812,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2, cmd3);
         Task task = (Task) responses.get(0).getResult();
         checkReturnedTask(task, taskId);
-        Map<String, Object> content = (Map<String, Object>) responses.get(1).getResult();
+        Map<String, Object> contentMap = (Map<String, Object>) responses.get(1).getResult();
+        Content content = (Content) responses.get(2).getResult();
 
         // Get it via the URL
         this.mediaType = origType;
