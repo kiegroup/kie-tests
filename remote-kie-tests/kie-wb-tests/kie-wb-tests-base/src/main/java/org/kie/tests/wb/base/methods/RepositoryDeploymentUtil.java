@@ -341,55 +341,58 @@ public class RepositoryDeploymentUtil {
     
     private <T extends Object> T process(KieRemoteHttpRequest request, int method, int status, Class<T> returnType) { 
         KieRemoteHttpResponse response = null;
-        try {
-            switch (method) {
-            case GET:
-                logger.info("]] [GET] " + request.getUri().toString());
-                response = request.get().response();
-                break;
-            case POST:
-                logger.info("]] [POST] " + request.getUri().toString());
-                response = request.post().response();
-                break;
-            case DELETE:
-                logger.info("]] [DELETE] " + request.getUri().toString());
-                response = request.delete().response();
-                break;
-            default:
-                throw new AssertionError();
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-        if( status != response.code() ) { 
-           throw new IllegalStateException("code: " + response.code());
-        }
-        String responseBody = response.body();
-        try {
-            String contentType = response.contentType();
-            if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
-                try {
-                    checkResponse(response, responseBody);
-                } catch (Exception ex) { 
-                    // TODO add throws to all the operations
-                    ex.printStackTrace();
-                    fail(  "Unable to do REST operation: " + ex.getMessage() ); 
+        try { 
+            try {
+                switch (method) {
+                case GET:
+                    logger.info("]] [GET] " + request.getUri().toString());
+                    response = request.get().response();
+                    break;
+                case POST:
+                    logger.info("]] [POST] " + request.getUri().toString());
+                    response = request.post().response();
+                    break;
+                case DELETE:
+                    logger.info("]] [DELETE] " + request.getUri().toString());
+                    response = request.delete().response();
+                    break;
+                default:
+                    throw new AssertionError();
                 }
-                T res = new ObjectMapper().readValue(responseBody, returnType);
-                return res;
-            } else if( contentType.startsWith(MediaType.TEXT_HTML) ) {
-                // now that we know that the result is wrong, try to identify the reason
-                Document doc = Jsoup.parse(responseBody);
-                String errorBody = doc.body().text();
-                logger.error("Failed cloning repository. Full response body on DEBUG.");
-                logger.debug("Repository cloning response body:\n {}", errorBody);
-                throw new IllegalStateException("Failed cloning repository.");
-            } else { 
-                throw new IllegalStateException("Unexpected content-type: " + contentType);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            } 
+
+            if( status != response.code() ) { 
+                throw new IllegalStateException("code: " + response.code());
             }
-        } catch (Exception ex) {
-            logger.error("Bad entity: {}", responseBody );
-            throw new IllegalStateException(ex);
+            String responseBody = response.body();
+            try {
+                String contentType = response.contentType();
+                if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
+                    try {
+                        checkResponse(response, responseBody);
+                    } catch (Exception ex) { 
+                        // TODO add throws to all the operations
+                        ex.printStackTrace();
+                        fail(  "Unable to do REST operation: " + ex.getMessage() ); 
+                    }
+                    T res = new ObjectMapper().readValue(responseBody, returnType);
+                    return res;
+                } else if( contentType.startsWith(MediaType.TEXT_HTML) ) {
+                    // now that we know that the result is wrong, try to identify the reason
+                    Document doc = Jsoup.parse(responseBody);
+                    String errorBody = doc.body().text();
+                    logger.error("Failed cloning repository. Full response body on DEBUG.");
+                    logger.debug("Repository cloning response body:\n {}", errorBody);
+                    throw new IllegalStateException("Failed cloning repository.");
+                } else { 
+                    throw new IllegalStateException("Unexpected content-type: " + contentType);
+                }
+            } catch (Exception ex) {
+                logger.error("Bad entity: {}", responseBody );
+                throw new IllegalStateException(ex);
+            } 
         } finally {
             request.disconnect();
         }

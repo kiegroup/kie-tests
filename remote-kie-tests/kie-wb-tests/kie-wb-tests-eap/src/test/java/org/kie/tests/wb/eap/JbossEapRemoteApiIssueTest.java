@@ -30,7 +30,7 @@ import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapIssueIntegrationTest extends AbstractIssueIntegrationTest {
+public class JbossEapRemoteApiIssueTest extends AbstractIssueIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {

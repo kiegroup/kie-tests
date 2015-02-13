@@ -101,6 +101,7 @@ import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
 import org.kie.remote.jaxb.gen.GetTaskCommand;
+import org.kie.remote.jaxb.gen.GetTaskContentCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
@@ -534,7 +535,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         this.mediaType = origType;
     }
 
-    private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Command<?> command )
+    private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Command<?>... command ) 
+        throws Exception {
+        List<JaxbCommandResponse<?>> responses = executeCommands(appUrl, user, password, deploymentId, command) ;
+        return responses.get(0);
+    }
+    
+    private List<JaxbCommandResponse<?>> executeCommands( URL appUrl, String user, String password, String deploymentId, Command<?>... command )
             throws Exception {
         MediaType originalMediaType = this.mediaType;
         this.mediaType = MediaType.APPLICATION_XML_TYPE;
@@ -542,7 +549,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         RequestCreator requestCreator = new RequestCreator(appUrl, user, password, mediaType);
         KieRemoteHttpRequest httpRequest = requestCreator.createRequest("execute");
 
-        JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(command);
+        JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(command[0]);
+        if( command.length > 1 ) { 
+            for( int i = 1; i < command.length; ++i ) { 
+                commandMessage.getCommands().add(command[i]);
+            }
+        }
+        commandMessage.setDeploymentId(deploymentId);
         assertNotNull("Commands are null!", commandMessage.getCommands());
         assertTrue("Commands are empty!", commandMessage.getCommands().size() > 0);
 
@@ -552,7 +565,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         JaxbCommandsResponse cmdsResp = post(httpRequest, 200, JaxbCommandsResponse.class);
 
         this.mediaType = originalMediaType;
-        return cmdsResp.getResponses().get(0);
+        return cmdsResp.getResponses();
     }
 
     public void urlsHistoryLogs( URL deploymentUrl, String user, String password ) throws Exception {
@@ -788,13 +801,16 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         List<Long> tasks = taskService.getTasksByProcessInstanceId(procInstId);
         assertEquals("Incorrect number of tasks for started process: ", 1, tasks.size());
         long taskId = tasks.get(0);
-
+        
         // Get it via the command
         GetTaskCommand cmd = new GetTaskCommand();
         cmd.setTaskId(taskId);
-        JaxbCommandResponse<?> response = executeCommand(deploymentUrl, user, password, deploymentId, cmd);
-        Task task = (Task) response.getResult();
+        GetTaskContentCommand cmd2 = new GetTaskContentCommand();
+        cmd2.setTaskId(taskId);
+        List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2);
+        Task task = (Task) responses.get(0).getResult();
         checkReturnedTask(task, taskId);
+        Content content = (Content) responses.get(1).getResult();
 
         // Get it via the URL
         this.mediaType = origType;
@@ -1457,5 +1473,5 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
         return procInst.getId();
     }
-    
+   
 }

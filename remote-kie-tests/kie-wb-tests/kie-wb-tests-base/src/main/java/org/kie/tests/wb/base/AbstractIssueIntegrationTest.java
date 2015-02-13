@@ -54,7 +54,7 @@ public abstract class AbstractIssueIntegrationTest {
         
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
         //restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        restTests.remoteApiFunnyCharacters(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
         
         // deploy
         // restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD);

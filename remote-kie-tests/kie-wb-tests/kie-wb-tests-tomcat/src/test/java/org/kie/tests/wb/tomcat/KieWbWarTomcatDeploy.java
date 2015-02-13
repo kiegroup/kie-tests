@@ -14,24 +14,24 @@ public class KieWbWarTomcatDeploy {
     static WebArchive createTestWar() {
         return createTestWar(true);
     }
+
+    private static final String classifier = "tomcat7";
     
     static WebArchive createTestWar(boolean replace) {
         // Import kie-wb war
-        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "tomcat7", PROJECT_VERSION);
+        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
 
         if( replace ) { 
             String [][] jarsToReplace = {
+                    { "org.guvnor", "guvnor-rest-backend" },
                     { "org.kie.remote", "kie-remote-services" },
                     { "org.kie.remote", "kie-remote-common" }
             };
             replaceJars(war, PROJECT_VERSION, jarsToReplace);
         }
       
-        String [] jarsToDelete = { "cxf-bundle-jaxrs-2.7.11.jar" };
-        deleteJars(war, jarsToDelete);
-        
         boolean replaceWebXml = false;
         if( replaceWebXml ) { 
           war.delete("WEB-INF/web.xml");
