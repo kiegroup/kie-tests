@@ -75,6 +75,7 @@ import org.apache.commons.io.FileUtils;
 import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.jbpm.services.task.commands.GetContentCommand;
 import org.junit.Assume;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
@@ -807,7 +808,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         cmd.setTaskId(taskId);
         GetTaskContentCommand cmd2 = new GetTaskContentCommand();
         cmd2.setTaskId(taskId);
-        List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2);
+        GetContentCommand cmd3 = new GetContentCommand();
+        cmd2.setTaskId(taskId);
+        List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2, cmd3);
         Task task = (Task) responses.get(0).getResult();
         checkReturnedTask(task, taskId);
         Map<String, Object> content = (Map<String, Object>) responses.get(1).getResult();
