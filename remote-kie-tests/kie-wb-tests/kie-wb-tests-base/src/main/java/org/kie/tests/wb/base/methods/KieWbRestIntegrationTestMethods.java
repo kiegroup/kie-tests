@@ -810,7 +810,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2);
         Task task = (Task) responses.get(0).getResult();
         checkReturnedTask(task, taskId);
-        Content content = (Content) responses.get(1).getResult();
+        Map<String, Object> content = (Map<String, Object>) responses.get(1).getResult();
 
         // Get it via the URL
         this.mediaType = origType;
