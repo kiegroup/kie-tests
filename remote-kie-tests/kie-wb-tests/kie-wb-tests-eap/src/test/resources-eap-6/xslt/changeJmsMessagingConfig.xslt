@@ -2,7 +2,7 @@
 <!-- XSLT file to add the security domains to the standalone.xml used during 
 	the integration tests. -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:as="urn:jboss:domain:1.6" 
+	xmlns:as="urn:jboss:domain:1.7" 
 	xmlns:msg="urn:jboss:domain:messaging:1.4" 
     exclude-result-prefixes="as msg"
 	version="1.0">

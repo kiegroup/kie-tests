@@ -23,7 +23,7 @@ public abstract class AbstractIssueIntegrationTest {
     @ArquillianResource
     URL deploymentUrl;
    
-    public abstract MediaType getMediaType();
+    public abstract String getContentType();
    
     public AbstractIssueIntegrationTest() { 
     
@@ -47,7 +47,7 @@ public abstract class AbstractIssueIntegrationTest {
         
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(getMediaType())
+                .setMediaType(getContentType())
                 .build();
         
         // restTests.remoteApiDeploymentRedeployClassPathTest(deploymentUrl, MARY_USER, MARY_PASSWORD);

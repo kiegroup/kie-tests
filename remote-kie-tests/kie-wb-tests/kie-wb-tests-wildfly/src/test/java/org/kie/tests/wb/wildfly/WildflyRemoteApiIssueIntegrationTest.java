@@ -42,8 +42,8 @@ public class WildflyRemoteApiIssueIntegrationTest extends AbstractIssueIntegrati
     }
 
     @Override
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_XML_TYPE;
+    public String getContentType() {
+        return MediaType.APPLICATION_XML;
     }
     
 }

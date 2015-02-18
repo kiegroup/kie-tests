@@ -14,6 +14,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -36,13 +37,14 @@ import org.guvnor.rest.client.RemoveRepositoryFromOrganizationalUnitRequest;
 import org.guvnor.rest.client.RepositoryRequest;
 import org.guvnor.rest.client.RepositoryResponse;
 import org.junit.Test;
+import org.kie.remote.tests.base.RestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * These are various tests for the drools-wb-rest module
  */
-public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
+public class KieDroolsWbRestIntegrationTestMethods {
 
     private static Logger logger = LoggerFactory.getLogger(KieDroolsWbRestIntegrationTestMethods.class);
 
@@ -50,25 +52,53 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
     private static final Random random = new Random();
  
     private URL deploymentUrl;
-    
-    @Override
-    public MediaType getMediaType() { 
-        return MediaType.APPLICATION_JSON_TYPE;
-    }
-
-    @Override
-    public URL getDeploymentUrl() { 
-        return deploymentUrl;
-    }
-  
-    public KieDroolsWbRestIntegrationTestMethods() {
-        setupClient(MARY_USER, MARY_PASSWORD, 1);
-    }
+    private String contentType = MediaType.APPLICATION_JSON;
+    private String user = MARY_USER; 
+    private String password = MARY_PASSWORD; 
     
     private void setDeploymentUrl(URL deploymentUrl) { 
         this.deploymentUrl = deploymentUrl;
     }
 
+    // Helper methods -------------------------------------------------------------------------------------------------------------
+   
+    
+    private <T> T post(String relativeUrl, String user, String password, int status, Class<T>... returnType) {
+        return RestUtil.post(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnType);
+    }
+    
+    private <T> T postTimeout(String relativeUrl, int status, double timeoutInSecs, Class<T>... returnTypes) {
+        return RestUtil.postEntity(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password, timeoutInSecs,
+                returnTypes);
+    }
+    
+    private <T> T postTimeout(String relativeUrl, int status, double timeoutInSecs, Object entity, Class<T>... returnTypes) {
+        return RestUtil.postEntity(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password, timeoutInSecs,
+                entity, returnTypes);
+    }
+    
+    private <T> T post(String relativeUrl, int status, Object entity, Class<T>... returnTypes) {
+        return RestUtil.postEntity(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                entity, returnTypes);
+    }
+    
+    private <T> T get(String relativeUrl, int status, Class... returnTypes) {
+        return RestUtil.get(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnTypes);
+    }
+    
+    private <T> T delete(String relativeUrl, int status, Class... returnTypes) {
+        return RestUtil.delete(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnTypes);
+    }
+    
     // Test methods ---------------------------------------------------------------------------------------------------------------
     
     /**
@@ -118,13 +148,13 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         String repoName = UUID.randomUUID().toString();
        
         {
-        // rest/repositories POST
-        RepositoryRequest newRepo = new RepositoryRequest();
-        newRepo.setName(repoName);
-        newRepo.setDescription("repo for testing rest services");
-        newRepo.setRequestType("new");
-       
-            CreateOrCloneRepositoryRequest createJobRequest = post("repositories", 202, newRepo, CreateOrCloneRepositoryRequest.class, 1000);
+            // rest/repositories POST
+            RepositoryRequest newRepo = new RepositoryRequest();
+            newRepo.setName(repoName);
+            newRepo.setDescription("repo for testing rest services");
+            newRepo.setRequestType("new");
+
+            CreateOrCloneRepositoryRequest createJobRequest = postTimeout("repositories", 202, 1, newRepo, CreateOrCloneRepositoryRequest.class);
             assertNotNull( "create repo job request", createJobRequest);
             JobStatus requestStatus = createJobRequest.getStatus();
             assertTrue( "job request status: " + requestStatus, JobStatus.ACCEPTED.equals(requestStatus) || JobStatus.APPROVED.equals(requestStatus) );
@@ -141,7 +171,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             String testProjectName = UUID.randomUUID().toString();
             project.setName(testProjectName);
 
-            CreateProjectRequest createProjectRequest = post("repositories/" + repoName + "/projects", 202, project, CreateProjectRequest.class, 500);
+            CreateProjectRequest createProjectRequest = postTimeout("repositories/" + repoName + "/projects", 202, 0.5, project, CreateProjectRequest.class);
 
             // rest/jobs/{jobId} GET
             waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus());
@@ -157,14 +187,14 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             newProject.setGroupId(testProjectGroupid);
             String testVersion = "" + random.nextInt(100) + ".0";
             newProject.setVersion(testVersion);
-            CreateProjectRequest createProjectRequest = post("repositories/" + repoName + "/projects", 202, newProject, CreateProjectRequest.class, 500); 
+            CreateProjectRequest createProjectRequest = postTimeout("repositories/" + repoName + "/projects", 202, 0.5, newProject, CreateProjectRequest.class);
 
             // rest/jobs/{jobId} GET
             waitForJobToComplete(deploymentUrl, createProjectRequest.getJobId(), createProjectRequest.getStatus());
         }
         
         // rest/repositories/{repoName}/projects GET
-        Collection<ProjectResponse> projectResponses = get( "repositories/" + repoName + "/projects", Collection.class, ProjectResponse.class);
+        Collection<ProjectResponse> projectResponses = get("repositories/" + repoName + "/projects", 200, Collection.class, ProjectResponse.class);
         
         assertNotNull( "Null project request list", projectResponses );
         assertFalse( "Empty project request list", projectResponses.isEmpty() );
@@ -191,7 +221,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         }
 
         // rest/repositories/{repoName}/projects GET
-        projectResponses = get( "repositories/" + repoName + "/projects", Collection.class, ProjectResponse.class);
+        projectResponses = get( "repositories/" + repoName + "/projects", 200, Collection.class, ProjectResponse.class);
         
         
         assertNotNull( "Null project request list", projectResponses );
@@ -222,7 +252,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         setDeploymentUrl(deploymentUrl);
         
         // rest/repositories GET
-        Collection<RepositoryResponse> repoResponses = get("repositories", Collection.class, RepositoryResponse.class);
+        Collection<RepositoryResponse> repoResponses = get("repositories", 200, Collection.class, RepositoryResponse.class);
         assertFalse( "Empty repository responses list", repoResponses.isEmpty() );
         String repoName = repoResponses.iterator().next().getName();
        
@@ -237,7 +267,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             project.setGroupId(groupId);
             project.setVersion(version);
             
-            CreateProjectRequest createProjectRequest = post("repositories/" + repoName + "/projects", 202, project, CreateProjectRequest.class, 500);
+            CreateProjectRequest createProjectRequest = postTimeout("repositories/" + repoName + "/projects", 202, 0.5, project, CreateProjectRequest.class);
             assertNotNull( "Empty response object", createProjectRequest );
 
             // rest/jobs/{jobId} GET
@@ -246,11 +276,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
 
         {
             // rest/repositories/{repoName}/projects POST
-            CompileProjectRequest compileRequest = post(
-                    "repositories/" + repoName + "/projects/" + projectName + "/maven/compile", 
-                    202, 
-                    CompileProjectRequest.class, 
-                    500);
+            CompileProjectRequest compileRequest = postTimeout("repositories/" + repoName + "/projects/" + projectName + "/maven/compile", 202, 0.5, CompileProjectRequest.class);
             assertNotNull( "Empty response object", compileRequest );
 
             // rest/jobs/{jobId} GET
@@ -268,7 +294,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         int wait = 0;
         JobResult jobResult = null;
         while( ! jobStatus.equals(JobStatus.SUCCESS) && wait < maxTries ) {
-            jobResult = get("jobs/" + jobId, JobResult.class);
+            jobResult = get("jobs/" + jobId, 200, JobResult.class);
             assertEquals( jobResult.getJobId(), jobId );
             jobStatus = jobResult.getStatus();
             if( jobStatus.equals(expectedStatus) ) { 
@@ -298,7 +324,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         setDeploymentUrl(deploymentUrl);
         
         // rest/organizaionalunits GET
-        Collection<OrganizationalUnit> orgUnits = get("organizationalunits", Collection.class, OrganizationalUnit.class);
+        Collection<OrganizationalUnit> orgUnits = get("organizationalunits", 200, Collection.class, OrganizationalUnit.class);
         int origUnitsSize = orgUnits.size();
         
         // rest/organizaionalunits POST
@@ -310,14 +336,14 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             String [] repoArr = { "uf-playground" };
             orgUnit.setRepositories(Arrays.asList(repoArr));
 
-            CreateOrganizationalUnitRequest createOURequest = post("organizationalunits", 202, orgUnit, CreateOrganizationalUnitRequest.class, 500);
+            CreateOrganizationalUnitRequest createOURequest = postTimeout("organizationalunits", 202, 0.5, orgUnit, CreateOrganizationalUnitRequest.class);
 
             // rest/jobs/{jobId}
             waitForJobToComplete(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus());
         }
         
         // rest/organizaionalunits GET
-        orgUnits = get("organizationalunits", Collection.class, OrganizationalUnit.class);
+        orgUnits = get("organizationalunits", 200, Collection.class, OrganizationalUnit.class);
         assertEquals( "Exepcted an OU to be added.", origUnitsSize + 1, orgUnits.size());
       
         OrganizationalUnit foundOu = null;
@@ -340,7 +366,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             String [] repoArr = { "uf-playground" };
             orgUnit.setRepositories(Arrays.asList(repoArr));
 
-            CreateOrganizationalUnitRequest createOURequest = post("organizationalunits", 202, orgUnit, CreateOrganizationalUnitRequest.class, 500);
+            CreateOrganizationalUnitRequest createOURequest = postTimeout("organizationalunits", 202, 0.5, orgUnit, CreateOrganizationalUnitRequest.class);
 
             // rest/jobs/{jobId}
             waitForJobToHaveStatus(deploymentUrl, createOURequest.getJobId(), createOURequest.getStatus(), JobStatus.DENIED);
@@ -354,7 +380,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             newRepo.setDescription("repo for testing rest services");
             newRepo.setRequestType("new");
 
-            CreateOrCloneRepositoryRequest createRepoRequest = post("repositories", 202, newRepo, CreateOrCloneRepositoryRequest.class, 500);
+            CreateOrCloneRepositoryRequest createRepoRequest = postTimeout("repositories", 202, 0.5, newRepo, CreateOrCloneRepositoryRequest.class);
             assertNotNull( "create repo job request", createRepoRequest);
             JobStatus requestStatus = createRepoRequest.getStatus();
             assertTrue( "job request status: " + requestStatus, JobStatus.ACCEPTED.equals(requestStatus) || JobStatus.APPROVED.equals(requestStatus) );
@@ -365,11 +391,10 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
       
         {
             // rest/organizationalunits/{ou}/repositories/{repoName} POST
-            AddRepositoryToOrganizationalUnitRequest addRepoToOuRequest = post(
+            AddRepositoryToOrganizationalUnitRequest addRepoToOuRequest = postTimeout(
                     "organizationalunits/" + orgUnit.getName() + "/repositories/" + newRepo.getName(),
-                    202, 
-                    AddRepositoryToOrganizationalUnitRequest.class, 
-                    500);
+                    202, 0.5,
+                    AddRepositoryToOrganizationalUnitRequest.class);
             assertNotNull( "add repo to ou job request", addRepoToOuRequest);
             JobStatus requestStatus = addRepoToOuRequest.getStatus();
             assertTrue( "job request status: " + requestStatus, JobStatus.ACCEPTED.equals(requestStatus) || JobStatus.APPROVED.equals(requestStatus) );
@@ -379,7 +404,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         }
        
         // rest/organizationalunits/{ou} GET
-        OrganizationalUnit orgUnitRequest = get( "organizationalunits/" + orgUnit.getName(), OrganizationalUnit.class);
+        OrganizationalUnit orgUnitRequest = get( "organizationalunits/" + orgUnit.getName(), 200, OrganizationalUnit.class);
         assertNotNull( "organizational unit request", orgUnitRequest);
         
         assertTrue( "repository has not been added to organizational unit", orgUnitRequest.getRepositories().contains(newRepo.getName()));
@@ -388,9 +413,8 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
             // rest/organizationalunits/{ou}/repositories/{repoName} DELETE
             RemoveRepositoryFromOrganizationalUnitRequest remRepoFromOuRquest = delete(
                     "organizationalunits/" + orgUnit.getName() + "/repositories/" + newRepo.getName(),
-                    202, 
-                    RemoveRepositoryFromOrganizationalUnitRequest.class, 
-                    500);
+                    202,
+                    RemoveRepositoryFromOrganizationalUnitRequest.class);
             assertNotNull( "add repo to ou job request", remRepoFromOuRquest);
             JobStatus requestStatus = remRepoFromOuRquest.getStatus();
             assertTrue( "job request status: " + requestStatus, JobStatus.ACCEPTED.equals(requestStatus) || JobStatus.APPROVED.equals(requestStatus) );
@@ -400,7 +424,7 @@ public class KieDroolsWbRestIntegrationTestMethods extends AbstractRestMethods {
         }
         
         // rest/organizationalunits/{ou} GET
-        orgUnitRequest = get( "organizationalunits/" + orgUnit.getName(), OrganizationalUnit.class);
+        orgUnitRequest = get( "organizationalunits/" + orgUnit.getName(), 200, OrganizationalUnit.class);
         assertNotNull( "organizational unit request", orgUnitRequest);
         
         assertFalse( "repository should have been deleted from organizational unit", orgUnitRequest.getRepositories().contains(newRepo.getName()));

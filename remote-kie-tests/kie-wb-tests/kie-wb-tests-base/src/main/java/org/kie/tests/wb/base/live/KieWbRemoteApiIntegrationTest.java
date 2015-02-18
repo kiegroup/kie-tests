@@ -44,8 +44,8 @@ public class KieWbRemoteApiIntegrationTest {
        return false; 
     }
     
-    public MediaType getMediaType() { 
-       return MediaType.APPLICATION_XML_TYPE; 
+    public String getContentType() { 
+       return MediaType.APPLICATION_XML; 
     }
     
     public boolean jmsQueuesAvailable() { 
@@ -67,7 +67,7 @@ public class KieWbRemoteApiIntegrationTest {
     public KieWbRemoteApiIntegrationTest() { 
          restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                  .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                 .setMediaType(getMediaType())
+                 .setMediaType(getContentType())
                  .setStrategy(getStrategy())
                  .setTimeoutInSecs(getTimeoutInSecs())
                  .build();

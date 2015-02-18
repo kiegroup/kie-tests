@@ -35,7 +35,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     URL deploymentUrl;
    
     public abstract boolean doDeploy();
-    public abstract MediaType getMediaType();
+    public abstract String getContentType();
     public abstract boolean jmsQueuesAvailable();
     public abstract boolean doRestTests();
     public abstract RuntimeStrategy getStrategy();
@@ -44,7 +44,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public AbstractRemoteApiIntegrationTest() { 
          restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                  .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                 .setMediaType(getMediaType())
+                 .setMediaType(getContentType())
                  .setStrategy(getStrategy())
                  .setTimeoutInSecs(getTimeoutInSecs())
                  .build();

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.kie.remote.tests.base.RestUtil.postEntity;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
@@ -94,8 +95,6 @@ import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
-import org.kie.remote.common.rest.KieRemoteHttpRequest;
-import org.kie.remote.common.rest.KieRemoteHttpResponse;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetContentCommand;
@@ -106,12 +105,11 @@ import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
-import org.kie.remote.tests.base.AbstractKieRemoteRestMethods;
+import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
-import org.kie.services.client.serialization.SerializationException;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.audit.AbstractJaxbHistoryObject;
@@ -124,18 +122,19 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinitionList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.services.client.serialization.jaxb.impl.process.JaxbWorkItemResponse;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
-import org.kie.services.shared.ServicesVersion;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethods {
+@SuppressWarnings("unchecked")
+public class KieWbRestIntegrationTestMethods {
 
     private static Logger logger = LoggerFactory.getLogger(KieWbRestIntegrationTestMethods.class);
 
@@ -146,7 +145,11 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     private final KModuleDeploymentUnit deploymentUnit;
     private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
 
-    private MediaType mediaType;
+    private String contentType;
+    private String user;
+    private String password;
+    private URL deploymentUrl;
+    
     private int timeoutInMillisecs;
     private static final int DEFAULT_TIMEOUT = 10;
 
@@ -154,11 +157,11 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         System.setProperty("org.kie.xml.encode", "true");
     }
     
-    private KieWbRestIntegrationTestMethods(String deploymentId, MediaType mediaType, int timeoutInSeconds, RuntimeStrategy strategy) {
+    private KieWbRestIntegrationTestMethods(String deploymentId, String mediaType, int timeoutInSeconds, RuntimeStrategy strategy) {
         if( mediaType == null ) {
-            mediaType = MediaType.APPLICATION_XML_TYPE;
-        } else if( !MediaType.APPLICATION_JSON_TYPE.equals(mediaType) && !MediaType.APPLICATION_XML_TYPE.equals(mediaType) ) {
-            throw new IllegalStateException("Unknown media type: '" + mediaType.getType() + "/" + mediaType.getSubtype() + "'");
+            mediaType = MediaType.APPLICATION_XML;
+        } else if( !MediaType.APPLICATION_JSON.equals(mediaType) && !MediaType.APPLICATION_XML.equals(mediaType) ) {
+            throw new IllegalStateException("Unknown content type: '" + mediaType);
         }
         if( strategy != null ) {
             this.strategy = strategy;
@@ -167,7 +170,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         this.deploymentId = deploymentId;
         this.deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         assertEquals("Deployment unit information", deploymentId, deploymentUnit.getIdentifier());
-        this.mediaType = mediaType;
+        this.contentType = mediaType;
         this.timeoutInMillisecs = timeoutInSeconds*1000;
     }
 
@@ -178,9 +181,8 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     public static class Builder {
 
         private String deploymentId = null;
-        private KModuleDeploymentUnit deploymentUnit = null;
         private RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
-        private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
+        private String mediaType = MediaType.APPLICATION_XML;
         private int timeout = DEFAULT_TIMEOUT;
 
         private Builder() {
@@ -197,7 +199,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             return this;
         }
 
-        public Builder setMediaType( MediaType mediaType ) {
+        public Builder setMediaType( String mediaType ) {
             this.mediaType = mediaType;
             return this;
         }
@@ -215,13 +217,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         }
     }
 
-    private JaxbSerializationProvider jaxbSerializationProvider;
-    {
-        Class<?> [] classes = { MyType.class };
-        jaxbSerializationProvider = ClientJaxbSerializationProvider.newInstance(Arrays.asList(classes));
-    }
-    private JsonSerializationProvider jsonSerializationProvider = new JsonSerializationProvider();
-
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
     private long restCallDurationLimit = 2;
@@ -230,44 +225,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
      * Helper methods
      */
 
-    @Override
-    public String getContentType() {
-        return mediaType.toString();
-    }
-
-    @Override
-    public <T> T deserializeXml( String xmlStr, Class<T> entityClass ) {
-        return (T) jaxbSerializationProvider.deserialize(xmlStr);
-    }
-
-    @Override
-    public <T> T deserializeJson( String jsonStr, Class<T> entityClass ) {
-        T result = null;
-        try {
-            result = jsonSerializationProvider.deserialize(jsonStr, entityClass);
-        } catch( Exception e ) {
-            logger.error("Unable to deserialize {} instance:\n{}", entityClass.getSimpleName(), jsonStr, e);
-            fail("Unable to deserialize JSON string, see log.");
-        }
-        return result;
-    }
-
-    @Override
-    protected String serializeToXml( Object entity ) {
-        return jaxbSerializationProvider.serialize(entity);
-    }
-
-    @Override
-    protected String serializeToJson( Object entity ) {
-        return jsonSerializationProvider.serialize(entity);
-    }
-
     private RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password ) {
-        return getRemoteRuntimeEngine(deploymentUrl, user, password, null);
-    }
-
-    private RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password,
-            Class... extraClasses ) {
         // @formatter:off
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addDeploymentId(deploymentId)
@@ -275,13 +233,50 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
                 .addUserName(user)
                 .addPassword(password);
         // @formatter:on
-        if( extraClasses != null && extraClasses.length > 0 ) {
-            builder.addExtraJaxbClasses(extraClasses);
-        }
-
         return builder.build();
     }
 
+    private void setRestInfo(URL deploymentUrl, String user, String password) {
+       setRestInfo(deploymentUrl, user, password, contentType); 
+    }
+
+    private void setRestInfo(URL deploymentUrl, String user, String password, String contentType) {
+        this.deploymentUrl = deploymentUrl;
+        this.user = user;
+        this.password = password;
+        this.contentType = contentType;
+    }
+    
+    private <T> T post(String relativeUrl, int status, Class<T>... returnType) {
+        return post(relativeUrl, user, password, status, returnType);
+    }
+   
+    private <T> T post(String relativeUrl, String user, String password, int status, Class<T>... returnType) {
+        return RestUtil.post(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnType);
+    }
+    
+    private <T> T post(String relativeUrl, int status, Object entity, Class<T> returnType) {
+        return RestUtil.postEntity(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                entity, returnType);
+    }
+    
+    private <T> T get(String relativeUrl, int status, Class<T> returnType) {
+        return RestUtil.get(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnType);
+    }
+    
+    
+    private <T> T get(String relativeUrl, int status, Map<String, String> queryParams, Class<T> returnType) {
+        return RestUtil.getQuery(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                queryParams,
+                returnType);
+    }
+    
     /**
      * Test methods
      */
@@ -333,7 +328,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         String repositoryName = "tests";
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
-        String orgUnit = "integration tests user";
+        String orgUnit = UUID.randomUUID().toString();
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit, user);
 
         int sleep = 5;
@@ -350,38 +345,37 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
      * @throws Exception
      */
     public void urlsStartHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-        RequestCreator queryRequestCreator = new RequestCreator(deploymentUrl, JOHN_USER, JOHN_PASSWORD, mediaType);
-
+        setRestInfo(deploymentUrl, user, password, contentType);
+        
         // Start process
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + HUMAN_TASK_PROCESS_ID + "/start");
-        KieRemoteHttpResponse response = httpRequest.accept(getContentType()).post().response();
-        JaxbProcessInstanceResponse processInstance = deserialize(response, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse processInstance = post( 
+                "runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start", 
+                200, 
+                JaxbProcessInstanceResponse.class);
+                
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        httpRequest = queryRequestCreator.createRequest("task/query?processInstanceId=" + procInstId);
-        response = httpRequest.accept(getContentType()).get().response();
-        JaxbTaskSummaryListResponse taskSumlistResponse = deserialize(response, JaxbTaskSummaryListResponse.class);
+        JaxbTaskSummaryListResponse taskSumlistResponse = RestUtil.get(deploymentUrl, 
+                "rest/task/query?processInstanceId=" + procInstId, contentType,
+                200, JOHN_USER, JOHN_PASSWORD, 
+                JaxbTaskSummaryListResponse.class);
 
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
         assertNotNull("Null actual owner", taskSum.getActualOwner());
 
         // get task info
-        httpRequest = requestCreator.createRequest("task/" + taskId);
-        org.kie.remote.jaxb.gen.Task task = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
+        org.kie.remote.jaxb.gen.Task task = get("task/" + taskId, 200, org.kie.remote.jaxb.gen.Task.class);
+        
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
 
         // start task
-        httpRequest = requestCreator.createRequest("task/" + taskId + "/start");
-        JaxbGenericResponse resp = post(httpRequest, 200, JaxbGenericResponse.class);
+        JaxbGenericResponse resp = post("task/" + taskId + "/start", 200, JaxbGenericResponse.class);
         assertNotNull("Response from task start is null.", resp);
 
         // get task info
-        httpRequest = requestCreator.createRequest("task/" + taskId);
-        org.kie.remote.jaxb.gen.Task jaxbTask = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
+        org.kie.remote.jaxb.gen.Task jaxbTask = get("task/" + taskId, 200, org.kie.remote.jaxb.gen.Task.class);
         assertNotNull("Task response is null.", jaxbTask);
         assertEquals("Task id is incorrect: ", taskId, jaxbTask.getId().longValue());
     }
@@ -395,59 +389,41 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
      * @throws Exception
      */
     public void urlsCommandsStartProcess( URL deploymentUrl, String user, String password ) throws Exception {
-        MediaType originalType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
-
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
+        String originalType = this.contentType;
+        setRestInfo(deploymentUrl, user, password, MediaType.APPLICATION_XML);
 
         // Start process
-        String executeOp = "execute";
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest(executeOp);
+        JaxbCommandsRequest req = null;
         {
             StartProcessCommand cmd = new StartProcessCommand();
             cmd.setProcessId(HUMAN_TASK_PROCESS_ID);
-            JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, cmd);
-            commandMessage.setVersion(ServicesVersion.VERSION);
-            addToRequestBody(httpRequest, commandMessage);
+            req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-
-        logger.debug(">> [startProcess] " + httpRequest.getUri());
-        JaxbCommandsResponse cmdsResp = post(httpRequest, 200, JaxbCommandsResponse.class);
-        assertFalse("Exception received!", cmdsResp.getResponses().get(0) instanceof JaxbExceptionResponse);
-        long procInstId = ((ProcessInstance) cmdsResp.getResponses().get(0)).getId();
+        JaxbCommandsResponse cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        assertFalse("Exception received!", cmdResponse.getResponses().get(0) instanceof JaxbExceptionResponse);
+        long procInstId = ((ProcessInstance) cmdResponse.getResponses().get(0)).getId();
 
         // query tasks
-        httpRequest = requestCreator.createRequest(executeOp);
         {
             GetTasksByProcessInstanceIdCommand cmd = new GetTasksByProcessInstanceIdCommand();
             cmd.setProcessInstanceId(procInstId);
-            JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, cmd);
-            commandMessage.setVersion(ServicesVersion.VERSION);
-            addToRequestBody(httpRequest, commandMessage);
+            req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-
-        logger.debug(">> [getTasksByProcessInstanceId] " + httpRequest.getUri());
-        JaxbCommandsResponse cmdResponse = post(httpRequest, 200, JaxbCommandsResponse.class);
+        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
         List<?> list = (List<?>) cmdResponse.getResponses().get(0).getResult();
         long taskId = (Long) list.get(0);
 
         // start task
-        logger.debug(">> [startTask] " + httpRequest.getUri());
-        httpRequest = requestCreator.createRequest(executeOp);
         {
             StartTaskCommand cmd = new StartTaskCommand();
             cmd.setTaskId(taskId);
             cmd.setUserId(taskUserId);
-            JaxbCommandsRequest commandMessage = new JaxbCommandsRequest();
-            commandMessage.getCommands().add(cmd);
-            commandMessage.setVersion(ServicesVersion.VERSION);
-            addToRequestBody(httpRequest, commandMessage);
+            req = new JaxbCommandsRequest(deploymentId, cmd);
         }
+        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        assertTrue( "Expected empty response", cmdResponse.getResponses() == null || cmdResponse.getResponses().isEmpty() );
 
-        // Get response
-        post(httpRequest, 200);
-
-        httpRequest = requestCreator.createRequest("execute");
+        // complete task
         Map<String, Object> results = new HashMap<String, Object>();
         results.put("myType", new MyType("serialization", 3224950));
         {
@@ -456,18 +432,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
             cmd.setUserId(taskUserId);
             JaxbStringObjectPairArray arrayMap = ConversionUtil.convertMapToJaxbStringObjectPairArray(results);
             cmd.setData(arrayMap);
-            JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(deploymentId, cmd);
-            commandMessage.setVersion(ServicesVersion.VERSION);
-            addToRequestBody(httpRequest, commandMessage);
+            req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-
-        // Get response
-        logger.debug(">> [completeTask] " + httpRequest.getUri());
-        JaxbCommandsResponse jaxbResp = post(httpRequest, 200, JaxbCommandsResponse.class);
-        assertNotNull("Response is null", jaxbResp);
+        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        assertNotNull("Response is null", cmdResponse);
 
         // TODO: check that above has completed?
-        this.mediaType = originalType;
+        this.contentType = originalType;
     }
 
     /**
@@ -514,8 +485,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsCommandsTaskCommands( URL deploymentUrl, String user, String password ) throws Exception {
-        MediaType origType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
+        setRestInfo(deploymentUrl, user, password);
 
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = runtimeEngine.getKieSession();
@@ -531,8 +501,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
 
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("userId", taskUserId);
-
-        this.mediaType = origType;
     }
 
     private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Command<?>... command ) 
@@ -543,46 +511,36 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     
     private List<JaxbCommandResponse<?>> executeCommands( URL appUrl, String user, String password, String deploymentId, Command<?>... command )
             throws Exception {
-        MediaType originalMediaType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
-
-        RequestCreator requestCreator = new RequestCreator(appUrl, user, password, mediaType);
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("execute");
-
-        JaxbCommandsRequest commandMessage = new JaxbCommandsRequest(command[0]);
+        JaxbCommandsRequest req = new JaxbCommandsRequest(command[0]);
         if( command.length > 1 ) { 
             for( int i = 1; i < command.length; ++i ) { 
-                commandMessage.getCommands().add(command[i]);
+                req.getCommands().add(command[i]);
             }
         }
-        commandMessage.setDeploymentId(deploymentId);
-        assertNotNull("Commands are null!", commandMessage.getCommands());
-        assertTrue("Commands are empty!", commandMessage.getCommands().size() > 0);
+        req.setDeploymentId(deploymentId);
+        assertNotNull("Commands are null!", req.getCommands());
+        assertTrue("Commands are empty!", req.getCommands().size() > 0);
 
-        addToRequestBody(httpRequest, commandMessage);
+        JaxbCommandsResponse cmdsResp = postEntity(appUrl,
+                "rest/execute", MediaType.APPLICATION_XML,
+                200, user, password,
+                req, JaxbCommandsResponse.class);
+        assertNotNull("Null commands response", cmdsResp);
 
-        logger.debug(">> [" + command.getClass().getSimpleName() + "] " + httpRequest.getUri());
-        JaxbCommandsResponse cmdsResp = post(httpRequest, 200, JaxbCommandsResponse.class);
-
-        this.mediaType = originalMediaType;
         return cmdsResp.getResponses();
     }
 
     public void urlsHistoryLogs( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
         // Start process
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal");
-        logger.debug(">> " + httpRequest.getUri());
-        JaxbProcessInstanceResponse processInstance = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse processInstance = post(
+                "runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal", 
+                200, 
+                JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // instances/
         {
-            httpRequest = requestCreator.createRequest("history/instances");
-            logger.debug(">> [runtime] " + httpRequest.getUri());
-            JaxbHistoryLogList historyResult = get(httpRequest, JaxbHistoryLogList.class);
+            JaxbHistoryLogList historyResult = get("rest/history/instances", 200, JaxbHistoryLogList.class);
             List<Object> historyLogList = historyResult.getResult();
 
             for( Object event : historyLogList ) {
@@ -610,27 +568,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         // instance/{procInstId}/node/{nodeId}
 
         // instance/{procInstId}/variable/{variable}
-        httpRequest = requestCreator.createRequest("history/instance/" + procInstId + "/variable/x");
-        logger.debug(">> [runtime]" + httpRequest.getUri());
-        JaxbHistoryLogList historyLogList = get(httpRequest, JaxbHistoryLogList.class);
-        List<AbstractJaxbHistoryObject> historyVarLogList = historyLogList.getHistoryLogList();
-
-        httpRequest = requestCreator.createRequest("history/instance/" + procInstId + "/variable/x");
-        logger.debug(">> [runtime]" + httpRequest.getUri());
-        JaxbHistoryLogList runtimeLogList = get(httpRequest, JaxbHistoryLogList.class);
-        List<AbstractJaxbHistoryObject> runtimeVarLogList = runtimeLogList.getHistoryLogList();
-        assertTrue("Incorrect number of variable logs: " + runtimeVarLogList.size(), 4 <= runtimeVarLogList.size());
-
-        assertEquals("history list size", historyVarLogList.size(), runtimeVarLogList.size());
-
-        for( int i = 0; i < runtimeVarLogList.size(); ++i ) {
-            JaxbVariableInstanceLog varLog = (JaxbVariableInstanceLog) runtimeVarLogList.get(i);
-            JaxbVariableInstanceLog historyVarLog = (JaxbVariableInstanceLog) historyVarLogList.get(i);
-            assertEquals(historyVarLog.getValue(), varLog.getValue());
-            assertEquals("Incorrect variable id", "x", varLog.getVariableId());
-            assertEquals("Incorrect process id", SCRIPT_TASK_VAR_PROCESS_ID, varLog.getProcessId());
-            assertEquals("Incorrect process instance id", procInstId, varLog.getProcessInstanceId().longValue());
-        }
+        JaxbHistoryLogList jaxbHistoryLogList = get("rest/history/instance/" + procInstId + "/variable/x", 200, JaxbHistoryLogList.class);
+        List<AbstractJaxbHistoryObject> historyVarLogList = jaxbHistoryLogList.getHistoryLogList();
+        assertTrue("Incorrect number of variable logs: " + historyVarLogList.size(), 4 <= historyVarLogList.size());
 
         // process/{procDefId}
 
@@ -645,78 +585,61 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsJsonJaxbStartProcess( URL deploymentUrl, String user, String password ) throws Exception {
-        MediaType origType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
+        String startProcessOper = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start";
 
         // XML
-        String startProcessOper = "runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start";
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest(startProcessOper);
-
-        String body = post(httpRequest, 200);
-        assertTrue("Doesn't start like a JAXB string!", body.startsWith("<"));
+        RestUtil.post(deploymentUrl, 
+                startProcessOper, MediaType.APPLICATION_XML,
+                200, user, password,
+                JaxbProcessInstanceResponse.class);
 
         // JSON
-        this.mediaType = MediaType.APPLICATION_JSON_TYPE;
-        requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-        httpRequest = requestCreator.createRequest(startProcessOper);
-        logger.debug(">> " + httpRequest.getUri());
-        String result = post(httpRequest, 200, this.mediaType.toString());
-        if( !result.startsWith("{") ) {
-            logger.error("Should be JSON:\n" + result);
-            fail("Doesn't start like a JSON string!");
-        }
+        RestUtil.post(deploymentUrl, 
+                startProcessOper, MediaType.APPLICATION_JSON,
+                200, user, password,
+                JaxbProcessInstanceResponse.class);
 
-        this.mediaType = origType;
+        
     }
    
-    private String post(KieRemoteHttpRequest httpRequest, int status, String contentType) { 
-        logger.debug( "> [POST] " + httpRequest.getUri().toString() );
-        httpRequest.accept(contentType).post();
-        checkResponse(httpRequest, status);
-        String result = httpRequest.response().body();
-        httpRequest.disconnect();
-        return result;
-    }
-
     public void urlsHumanTaskWithVariableChangeFormParameters( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
         // Start process
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + HUMAN_TASK_VAR_PROCESS_ID + "/start");
-        httpRequest.form("map_userName", "John");
-        JaxbProcessInstanceResponse processInstance = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        String startProcessUrl ="runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
+
+        Map<String, String> formParams = new HashMap<String, String>(1);
+        formParams.put("map_userName", "John");
+        JaxbProcessInstanceResponse processInstance = RestUtil.postForm(deploymentUrl,
+                startProcessUrl, contentType,
+                 200, user, password,
+                 formParams,
+                 JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
         // query tasks for associated task Id
-        httpRequest = requestCreator.createRequest("task/query");
-        httpRequest.query("processInstanceId", String.valueOf(procInstId));
-        JaxbTaskSummaryListResponse taskSumlistResponse = get(httpRequest, JaxbTaskSummaryListResponse.class);
+        Map<String, String> queryparams = new HashMap<String, String>();
+        queryparams.put("processInstanceId", String.valueOf(procInstId));
+        JaxbTaskSummaryListResponse taskSumlistResponse = get( "rest/task/query", 200, queryparams, JaxbTaskSummaryListResponse.class);
 
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
 
         // start task
-        httpRequest = requestCreator.createRequest("task/" + taskId + "/start");
-        JaxbGenericResponse resp = post(httpRequest, 200, JaxbGenericResponse.class);
+        JaxbGenericResponse resp = post("task/" + taskId + "/start", 200, JaxbGenericResponse.class);
         assertNotNull("Response from task start operation is null.", resp);
 
         // check task status
-        httpRequest = requestCreator.createRequest("task/" + taskId);
-        org.kie.remote.jaxb.gen.Task task = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
+        org.kie.remote.jaxb.gen.Task task = get("task/" + taskId, 200, org.kie.remote.jaxb.gen.Task.class);
         assertNotNull("Response from task start operation is null.", resp);
         logger.debug("Task {}: status [{}] / owner [{}]", taskId, task.getTaskData().getStatus().toString(), task.getTaskData()
                 .getActualOwner());
 
         // complete task
         String georgeVal = "George";
-        httpRequest = requestCreator.createRequest("task/" + taskId + "/complete");
-        httpRequest.form("map_outUserName", georgeVal);
-        resp = post(httpRequest, 200, JaxbGenericResponse.class);
-
-        httpRequest = requestCreator.createRequest("history/instance/" + procInstId + "/variable/userName");
-        JaxbHistoryLogList histResp = get(httpRequest, JaxbHistoryLogList.class);
+        formParams.clear();
+        formParams.put("map_outUserName", georgeVal);
+        resp = post("task/" + taskId + "/complete", 200, JaxbGenericResponse.class); 
+        
+        JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable/userName", 200, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for( AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList ) {
@@ -753,8 +676,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         KieSession ksession = engine.getKieSession();
 
         // start process
-        ProcessInstance procInst = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-        
+        ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+       
+        // verify that there are proces instances
         Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
         assertNotNull("Null process instance list!", processInstances);
     }
@@ -780,8 +704,6 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void remoteApiGetTaskInstance( URL deploymentUrl, String user, String password ) throws Exception {
-        MediaType origType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_XML_TYPE;
 
         // Remote API setup
         RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
@@ -813,13 +735,12 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         Task task = (Task) responses.get(0).getResult();
         checkReturnedTask(task, taskId);
         Map<String, Object> contentMap = (Map<String, Object>) responses.get(1).getResult();
+        assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
         Content content = (Content) responses.get(2).getResult();
+        assertFalse( "Empty content map from Content", content.getContentMap() == null || content.getContentMap().isEmpty() );
 
         // Get it via the URL
-        this.mediaType = origType;
-        KieRemoteHttpRequest httpRequest = new RequestCreator(deploymentUrl, user, password, mediaType).createRequest("task/"
-                + taskId);
-        org.kie.remote.jaxb.gen.Task jaxbTask = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
+        org.kie.remote.jaxb.gen.Task jaxbTask = get("task/" + taskId, 200, org.kie.remote.jaxb.gen.Task.class);
         checkReturnedTask(jaxbTask, taskId);
 
         // Get it via the remote API
@@ -842,14 +763,13 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsStartScriptProcess( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         // Remote API setup
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + SCRIPT_TASK_PROCESS_ID + "/start");
+        String startProcessUrl = "runtime/" + deploymentId + "/process/" + SCRIPT_TASK_PROCESS_ID + "/start";
 
         // Start process
-        JaxbProcessInstanceResponse jaxbProcInstResp = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse jaxbProcInstResp = post(startProcessUrl, 200, JaxbProcessInstanceResponse.class);
         ProcessInstance procInst = jaxbProcInstResp.getResult();
 
         int procStatus = procInst.getState();
@@ -857,29 +777,26 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsGetTaskAndTaskContent( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         // Remote API setup
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + TASK_CONTENT_PROCESS_ID + "/start");
+        String startProcessUrl = "runtime/" + deploymentId + "/process/" + TASK_CONTENT_PROCESS_ID + "/start";
 
         // Start process
-        JaxbProcessInstanceResponse jaxbProcInstResp = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse jaxbProcInstResp = post(startProcessUrl, 200, JaxbProcessInstanceResponse.class);
         ProcessInstance procInst = jaxbProcInstResp.getResult();
 
         int procStatus = procInst.getState();
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_ACTIVE, procStatus);
 
         // Get taskId
-        httpRequest = requestCreator.createRequest("task/query?processInstanceId=" + procInst.getId());
-        JaxbTaskSummaryListResponse taskSumList = get(httpRequest, JaxbTaskSummaryListResponse.class);
+        JaxbTaskSummaryListResponse taskSumList = get("task/query?processInstanceId=" + procInst.getId(), 200, JaxbTaskSummaryListResponse.class);
         assertFalse("No tasks found!", taskSumList.getResult().isEmpty());
         TaskSummary taskSum = taskSumList.getResult().get(0);
         long taskId = taskSum.getId();
 
         // get task content
-        httpRequest = requestCreator.createRequest("task/" + taskId + "/content");
-        Content content = get(httpRequest, Content.class);
+        Content content = get("task/" + taskId + "/content", 200, Content.class);
         assertNotNull("No content retrieved!", content.getContentMap());
         String groupId = null;
         for( Entry<String, Object> entry : content.getContentMap().entrySet() ) { 
@@ -891,35 +808,33 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         assertEquals("reviewer", groupId);
 
         // get (JSON) task
-        MediaType origType = this.mediaType;
-        this.mediaType = MediaType.APPLICATION_JSON_TYPE;
-        httpRequest = new RequestCreator(deploymentUrl, user, password, mediaType).createRequest("task/" + taskId);
-        org.kie.remote.jaxb.gen.Task jsonTask = get(httpRequest, org.kie.remote.jaxb.gen.Task.class);
+        org.kie.remote.jaxb.gen.Task jsonTask = RestUtil.get(deploymentUrl,
+                "task/" + taskId, MediaType.APPLICATION_JSON,
+                200, user, password,
+                org.kie.remote.jaxb.gen.Task.class);
 
         assertNotNull("No task retrieved!", jsonTask);
         assertEquals("task id", taskId, jsonTask.getId().intValue());
-        this.mediaType = origType;
     }
 
     public void urlsVariableHistory( URL deploymentUrl, String user, String password ) throws Exception {
         // Remote API setup
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
         String varId = "myobject";
         String varVal = UUID.randomUUID().toString();
 
         // proc log
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("history/variable/" + varId + "/instances");
-        JaxbHistoryLogList jhll = get(httpRequest, JaxbHistoryLogList.class);
+        JaxbHistoryLogList jhll = get("history/variable/" + varId + "/instances", 200, JaxbHistoryLogList.class);
         int initHistSize = jhll.getResult().size();
 
-        httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=" + varVal);
-        JaxbProcessInstanceResponse procInstResp = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        // start process
+        JaxbProcessInstanceResponse procInstResp = post(
+                "runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=" + varVal,
+                200, 
+                JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();
 
         // var log
-        httpRequest = requestCreator.createRequest("history/variable/" + varId);
-        jhll = get(httpRequest, JaxbHistoryLogList.class);
+        jhll = get("history/variable/" + varId, 200, JaxbHistoryLogList.class);
         List<VariableInstanceLog> viLogs = new ArrayList<VariableInstanceLog>();
         if( jhll != null ) {
             List<Object> history = jhll.getResult();
@@ -940,8 +855,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         assertEquals("Variable value", vil.getValue(), varVal);
 
         // proc log
-        httpRequest = requestCreator.createRequest("history/variable/" + varId + "/instances");
-        jhll = get(httpRequest, JaxbHistoryLogList.class);
+        jhll = get("history/variable/" + varId + "/instances", 200, JaxbHistoryLogList.class);
 
         assertNotNull("Empty ProcesInstanceLog list", jhll);
         List<ProcessInstanceLog> piLogs = new ArrayList<ProcessInstanceLog>();
@@ -958,18 +872,16 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsGetDeployments( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         // test with normal RequestCreator
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/");
-        JaxbDeploymentUnitList depList = get(httpRequest, JaxbDeploymentUnitList.class);
+        JaxbDeploymentUnitList depList = get("deployment/", 200, JaxbDeploymentUnitList.class);
         assertNotNull("Null answer!", depList);
         assertNotNull("Null deployment list!", depList.getDeploymentUnitList());
         assertTrue("Empty deployment list!", depList.getDeploymentUnitList().size() > 0);
 
         String deploymentId = depList.getDeploymentUnitList().get(0).getIdentifier();
-        httpRequest = requestCreator.createRequest("deployment/" + deploymentId);
-        JaxbDeploymentUnit dep = get(httpRequest, JaxbDeploymentUnit.class);
+        JaxbDeploymentUnit dep = get("deployment/" + deploymentId, 200, JaxbDeploymentUnit.class);
         assertNotNull("Null answer!", dep);
         assertNotNull("Null deployment list!", dep);
         assertEquals("Empty status!", JaxbDeploymentStatus.DEPLOYED, dep.getStatus());
@@ -1015,10 +927,9 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsGetRealProcessVariable( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         // Setup
         RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-        logger.info("deployment url: " + deploymentUrl.toExternalForm());
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
         // Start process
         MyType param = new MyType("variable", 29);
@@ -1045,32 +956,16 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         assertNotNull("Null process instance variable!", procInstVar);
         assertEquals("De/serialization of Kjar type did not work.", param.toString(), procInstVar);
 
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/instance/"
-                + procInstId);
-        JaxbProcessInstanceResponse jaxbProcInstResp = get(httpRequest, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse jaxbProcInstResp = get(
+                "runtime/" + deploymentId + "/process/instance/" + procInstId,
+                200, JaxbProcessInstanceResponse.class);
         ProcessInstance procInst = jaxbProcInstResp.getResult();
         assertNotNull(procInst);
         assertEquals("Unequal process instance id.", procInstId, procInst.getId());
 
-        httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/"
-                + varName);
-        String xmlOrJsonStr = httpRequest.get().response().body();
-        
-        MyType retrievedVar;
-        try {
-            if( mediaType.equals(MediaType.APPLICATION_XML_TYPE) ) {
-                ((ClientJaxbSerializationProvider) jaxbSerializationProvider).addJaxbClasses(MyType.class);
-                retrievedVar  = (MyType) jaxbSerializationProvider.deserialize(xmlOrJsonStr);
-            } else if( mediaType.equals(MediaType.APPLICATION_JSON_TYPE) ) {
-                jsonSerializationProvider.setDeserializeOutputClass(MyType.class);
-                retrievedVar = (MyType) jsonSerializationProvider.deserialize(xmlOrJsonStr);
-            } else {
-                throw new IllegalStateException("Unknown media type: " + mediaType.getType() + "/" + mediaType.getSubtype());
-            }
-        } catch( SerializationException se ) {
-            logger.error("Could not deserialize string:\n{}", xmlOrJsonStr);
-            throw se;
-        }
+        MyType retrievedVar = get(
+                "runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/",
+                200, MyType.class);
 
         assertNotNull("Expected filled variable.", retrievedVar);
         assertEquals("Data integer doesn't match: ", retrievedVar.getData(), param.getData());
@@ -1089,81 +984,67 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsGroupAssignmentTest( URL deploymentUrl ) throws Exception {
-        RequestCreator maryRequestCreator = new RequestCreator(deploymentUrl, MARY_USER, MARY_PASSWORD, mediaType);
-        RequestCreator johnRequestCreator = new RequestCreator(deploymentUrl, JOHN_USER, JOHN_PASSWORD, mediaType);
-
-        KieRemoteHttpRequest httpRequest = maryRequestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + GROUP_ASSSIGNMENT_PROCESS_ID + "/start");
-        JaxbProcessInstanceResponse procInstResp = post(httpRequest, 200, JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse procInstResp = RestUtil.post(deploymentUrl, 
+                "runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start", contentType,
+                200, MARY_USER, MARY_PASSWORD, 
+                JaxbProcessInstanceResponse.class);
         assertEquals(ProcessInstance.STATE_ACTIVE, procInstResp.getState());
         long procInstId = procInstResp.getId();
 
         // assert the task
-        TaskSummary taskSummary = getTaskSummary(maryRequestCreator, procInstId, Status.Ready);
+        TaskSummary taskSummary = getTaskSummary(MARY_USER, MARY_PASSWORD, procInstId, Status.Ready);
         long taskId = taskSummary.getId();
         assertNull(taskSummary.getActualOwner());
         assertNull(taskSummary.getPotentialOwners());
         assertEquals("Task 1", taskSummary.getName());
 
         // complete 'Task 1' as mary
-        httpRequest = maryRequestCreator.createRequest("task/" + taskId + "/claim");
-        post(httpRequest, 200);
-
-        httpRequest = maryRequestCreator.createRequest("task/" + taskId + "/start");
-        post(httpRequest, 200);
-        httpRequest = maryRequestCreator.createRequest("task/" + taskId + "/complete");
-        post(httpRequest, 200);
+        post("task/" + taskId + "/claim", MARY_USER, MARY_PASSWORD, 200);
+        post("task/" + taskId + "/start", MARY_USER, MARY_PASSWORD, 200);
+        post("task/" + taskId + "/complete", MARY_USER, MARY_PASSWORD, 200);
 
         // now make sure that the next task has been assigned to the
         // correct person. it should be mary.
-        taskSummary = getTaskSummary(maryRequestCreator, procInstId, Status.Reserved);
+        taskSummary = getTaskSummary(MARY_USER, MARY_PASSWORD, procInstId, Status.Reserved);
         assertEquals("Task 2", taskSummary.getName());
         assertEquals(MARY_USER, taskSummary.getActualOwner().getId());
         taskId = taskSummary.getId();
 
         // complete 'Task 2' as john
-        httpRequest = maryRequestCreator.createRequest("task/" + taskId + "/release");
-        post(httpRequest, 200);
-        httpRequest = johnRequestCreator.createRequest("task/" + taskId + "/start");
-        post(httpRequest, 200);
-        httpRequest = johnRequestCreator.createRequest("task/" + taskId + "/complete");
-        post(httpRequest, 200);
+        post("task/" + taskId + "/release", MARY_USER, MARY_PASSWORD, 200);
+        post("task/" + taskId + "/start", JOHN_USER, JOHN_PASSWORD, 200);
+        post("task/" + taskId + "/complete", JOHN_USER, JOHN_PASSWORD, 200);
 
         // now make sure that the next task has been assigned to the
         // correct person. it should be john.
-        taskSummary = getTaskSummary(johnRequestCreator, procInstId, Status.Reserved);
+        taskSummary = getTaskSummary(JOHN_USER, JOHN_PASSWORD, procInstId, Status.Reserved);
         assertEquals("Task 3", taskSummary.getName());
         assertEquals(JOHN_USER, taskSummary.getActualOwner().getId());
         taskId = taskSummary.getId();
 
         // complete 'Task 3' as john
-        httpRequest = johnRequestCreator.createRequest("task/" + taskId + "/start");
-        post(httpRequest, 200);
-        httpRequest = johnRequestCreator.createRequest("task/" + taskId + "/complete");
-        post(httpRequest, 200);
+        post("task/" + taskId + "/start", JOHN_USER, JOHN_PASSWORD, 200);
+        post("task/" + taskId + "/complete", JOHN_USER, JOHN_PASSWORD, 200);
 
         // assert process finished
-        httpRequest = maryRequestCreator.createRequest("history/instance/" + procInstId);
-        JaxbProcessInstanceLog jaxbProcInstLog = get(httpRequest, JaxbProcessInstanceLog.class);
+        JaxbProcessInstanceLog jaxbProcInstLog = get("history/instance/" + procInstId, 200, JaxbProcessInstanceLog.class);
         ProcessInstanceLog procInstLog = jaxbProcInstLog.getResult();
         assertEquals("Process instance has not completed!", ProcessInstance.STATE_COMPLETED, procInstLog.getStatus().intValue());
     }
 
-    private TaskSummary getTaskSummary( RequestCreator requestCreator, long processInstanceId, Status status ) throws Exception {
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("task/query?processInstanceId=" + processInstanceId
-                + "&status=" + status.toString());
-        JaxbTaskSummaryListResponse taskSumListResp = get(httpRequest, JaxbTaskSummaryListResponse.class);
+    private TaskSummary getTaskSummary( String user, String password, long processInstanceId, Status status ) throws Exception {
+        JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl, 
+                "task/query?processInstanceId=" + processInstanceId + "&status=" + status.toString(), contentType,
+                200, user, password,
+                JaxbTaskSummaryListResponse.class);
         List<TaskSummary> taskSumList = taskSumListResp.getResult();
         assertEquals(1, taskSumList.size());
         return taskSumList.get(0);
     }
 
     public void urlsWorkItemTest( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
 
-        // Start process
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/workitem/200");
-        get(httpRequest);
+        JaxbWorkItemResponse workItemResp = get("runtime/" + deploymentId + "/workitem/200", 200, JaxbWorkItemResponse.class);
     }
 
     public void remoteApiHumanTaskGroupVarAssignTest( URL deploymentUrl ) {
@@ -1235,45 +1116,35 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsCreateMemoryLeakOnTomcat( URL deploymentUrl, String user, String password, long timeout ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         long origCallDurationLimit = this.restCallDurationLimit;
         this.restCallDurationLimit = timeout;
 
         // Remote API setup
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
         try {
             for( int i = 0; i < 20; ++i ) {
                 logger.info(i + " process started.");
-                startProcessWithUserDefinedClass(requestCreator);
+                startProcessWithUserDefinedClass();
             }
         } finally {
             this.restCallDurationLimit = origCallDurationLimit;
         }
     }
 
-    private void startProcessWithUserDefinedClass( RequestCreator requestCreator ) throws Exception {
+    private void startProcessWithUserDefinedClass() throws Exception {
         String varId = "myobject";
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("runtime/" + deploymentId + "/process/"
-                + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10");
-        long after, before = System.currentTimeMillis();
-        httpRequest.post();
-        checkResponse(httpRequest, 200);
-        after = System.currentTimeMillis();
-        long duration = (after - before);
-        assertTrue("Call took longer than " + restCallDurationLimit + " seconds: " + duration + "ms",
-                duration < restCallDurationLimit * 1000);
-
-        JaxbProcessInstanceResponse procInstResp = deserialize(httpRequest.response(), JaxbProcessInstanceResponse.class);
+        JaxbProcessInstanceResponse procInstResp = post(
+                "runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10", 
+                200, 
+                JaxbProcessInstanceResponse.class);
         long procInstId = procInstResp.getResult().getId();
-        ;
+        
         assertTrue("Process instance should be larger than 0: " + procInstId, procInstId > 0);
     }
 
     public void urlsGetProcessDefinitionInfo( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
         // Start process
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("deployment/processes/");
-        JaxbProcessDefinitionList jaxbProcDefList = get(httpRequest, JaxbProcessDefinitionList.class);
+        JaxbProcessDefinitionList jaxbProcDefList = get("deployment/processes/", 200, JaxbProcessDefinitionList.class);
 
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
         for( JaxbProcessDefinition jaxbProcDef : procDefList ) {
@@ -1370,10 +1241,7 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
 
     public void urlsDeploymentProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
-        KieRemoteHttpRequest httpRequest = requestCreator.createRequest("/deployment/processes");
-        JaxbProcessDefinitionList jaxbProcDefList = get(httpRequest, JaxbProcessDefinitionList.class);
+        JaxbProcessDefinitionList jaxbProcDefList = get("/deployment/processes", 200, JaxbProcessDefinitionList.class);
 
         assertTrue("Null response!", jaxbProcDefList != null);
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
@@ -1404,14 +1272,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
     }
     
     public void urlsProcessQueryOperationsTest( URL deploymentUrl, String user, String password ) throws Exception  { 
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
-        KieRemoteHttpRequest request = requestCreator.createRequest("/query/runtime/task");
-        request.query("params", null);
+        Map<String, String> queryParams = new HashMap<String, String>(1);
+        queryParams.put("params", null);
         
-        KieRemoteHttpResponse response = request.get().response();
-        int statusCode = response.code();
-        assertEquals( "Inccorect status code [" + statusCode + "] on bad request with 'params' query param", 400, statusCode);
+        RestUtil.getQuery(deploymentUrl, "/query/runtime/task", contentType, 400, user, password, queryParams);
         
         KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
 
@@ -1421,10 +1285,11 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
         long procInstId = procInst.getId();
         
-        request = requestCreator.createRequest("/query/runtime/process");
-        request.query("piid", procInstId);
+        queryParams.clear();
+        queryParams.put("piid", "" + procInstId);
         
-        JaxbQueryProcessInstanceResult queryResult = get(request, JaxbQueryProcessInstanceResult.class);
+        JaxbQueryProcessInstanceResult queryResult = get("/query/runtime/process", 200, queryParams, JaxbQueryProcessInstanceResult.class);
+        
         assertNotNull("Null query result", queryResult);
         List<JaxbQueryProcessInstanceInfo> procInstInfoList = queryResult.getProcessInstanceInfoList();
         assertTrue("Empty query info list", procInstInfoList != null && ! procInstInfoList.isEmpty() );
@@ -1443,12 +1308,10 @@ public class KieWbRestIntegrationTestMethods extends AbstractKieRemoteRestMethod
         Field field = JaxbUnknownAdapter.class.getDeclaredField("ENCODE_STRINGS");
         field.setAccessible(true);
         Object fieldObj = field.get(null);
-        assertTrue( "ENCODE_STRINGS fiels is a " + fieldObj.getClass().getName(), fieldObj instanceof Boolean );
+        assertTrue( "ENCODE_STRINGS field is a " + fieldObj.getClass().getName(), fieldObj instanceof Boolean );
         Boolean encodeStringsBoolean = (Boolean) fieldObj;
         assertTrue( "ENCODE_STRINGS is '" + encodeStringsBoolean, encodeStringsBoolean );
         
-        RequestCreator requestCreator = new RequestCreator(deploymentUrl, user, password, mediaType);
-
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = runtimeEngine.getKieSession();
        

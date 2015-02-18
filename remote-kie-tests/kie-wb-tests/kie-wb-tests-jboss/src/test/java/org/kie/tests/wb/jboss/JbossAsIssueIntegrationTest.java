@@ -44,8 +44,8 @@ public class JbossAsIssueIntegrationTest extends AbstractIssueIntegrationTest {
     URL deploymentUrl;
     
     @Override
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_JSON_TYPE;
+    public String getContentType() {
+        return MediaType.APPLICATION_JSON;
     }
 
 }

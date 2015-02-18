@@ -36,12 +36,7 @@
     
     <!-- jetty -->    
     <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>
-   
-    <!-- resteasy --> 
-    <version.org.jboss.resteasy>3.0.9.Final</version.org.jboss.resteasy>
-    <version.org.apache.httpcomponents>4.2.6</version.org.apache.httpcomponents>
-    <version.org.apache.httpcomponents.core>4.2.5</version.org.apache.httpcomponents.core>
-  
+ 
      <!-- eap artifacts -->
      <classifier.eap.artifact>eap6_4</classifier.eap.artifact>
   </properties>
@@ -162,13 +157,6 @@
         <version>${version.org.jboss.as.dist}</version>
         <type>zip</type>
       </dependency>
-      <!-- 
-      <dependency>
-        <groupId>org.jboss.as</groupId>
-        <artifactId>jboss-as-arquillian-container-managed</artifactId>
-        <version>${override.version.org.jboss.as}</version>
-      </dependency>
-       -->
       
       <!-- jetty -->
      <dependency>
@@ -186,42 +174,19 @@
         <scope>test</scope>
       </dependency>
      
-      <!-- resteasy --> 
-        <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>jaxrs-api</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jaxrs</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-client</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>     
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jaxb-provider</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jackson-provider</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-      </dependency>
+      <!-- httpcomponents -->
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>${version.org.apache.httpcomponents}</version>
+        <artifactId>fluent-hc</artifactId>
+        <version>${version.org.apache.httpcomponents.httpclient}</version>
       </dependency>
+
       <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${version.org.apache.httpcomponents.core}</version>
-      </dependency>
+        <groupId>io.fastjson</groupId>
+        <artifactId>boon</artifactId>
+        <version>0.31</version>
+        <scope>test</scope>
+      </dependency>      
       
       <!-- Other -->
       <dependency>
