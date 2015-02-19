@@ -1,6 +1,11 @@
 #!/bin/sh -xe
 
-keytool=/usr/lib/jvm/java-1.6.0-sun-1.6.0.45.x86_64/jre/bin/keytool
+cacerts=/etc/ssl/certs/java/cacerts
+
+# keytool=/usr/lib/jvm/java-1.6.0-sun-1.6.0.45.x86_64/jre/bin/keytool
+# keytool=/usr/bin/keytool
+keytool=/usr/lib/jvm/java-6-jdk/bin/keytool 
+
 serverKeyPass=SERVER_KEYSTORE_PASSWORD
 serverTrustPass=SERVER_TRUSTSTORE_PASSWORD
 clientKeyPass=CLIENT_KEYSTORE_PASSWORD
@@ -50,5 +55,8 @@ testDir=../../../../target/test-classes/ssl
 rm -rf $testDir
 mkdir $testDir
 cp -r * $testDir
+
+# import server certificate to system keystore
+sudo $keytool -import -file $serverCertificate -alias $serverAlias -keystore $cacerts
 
 rm -f $clientCertificate $serverCertificate
