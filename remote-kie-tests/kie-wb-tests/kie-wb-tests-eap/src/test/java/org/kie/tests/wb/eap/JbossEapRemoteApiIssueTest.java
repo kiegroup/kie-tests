@@ -1,5 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source
+t  * JBoss, Home of Professional Open Source
  * 
  * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
