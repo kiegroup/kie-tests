@@ -34,8 +34,6 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
-import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,7 @@ public class JbossEapRemoteApiIssueTest {
         return createTestWar();
     }
  
-    private static final Logger logger = LoggerFactory.getLogger(AbstractIssueIntegrationTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
     
     @ArquillianResource
     URL deploymentUrl;
@@ -77,12 +75,7 @@ public class JbossEapRemoteApiIssueTest {
                 .build();
         
         // deploy
-//        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
-        
-        // KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
-        // wsTests.startSimpleProcess(deploymentUrl);
-       
-        KieWbJmsIntegrationTestMethods jmsTests = new KieWbJmsIntegrationTestMethods(KJAR_DEPLOYMENT_ID, true);
-        jmsTests.commandsSimpleStartProcess(MARY_USER, MARY_PASSWORD);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

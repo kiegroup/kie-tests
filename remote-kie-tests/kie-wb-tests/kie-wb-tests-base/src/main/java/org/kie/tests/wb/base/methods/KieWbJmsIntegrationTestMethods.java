@@ -225,6 +225,12 @@ public class KieWbJmsIntegrationTestMethods {
 
     // Tests ----------------------------------------------------------------------------------------------------------------------
 
+    public void sendEmptyRequest(String user, String password) throws Exception {
+        JaxbCommandsRequest req = new JaxbCommandsRequest();
+        req.setDeploymentId(deploymentId);
+        sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+    }
+    
     public void commandsSimpleStartProcess(String user, String password) throws Exception {
         // send cmd: start process
         StartProcessCommand cmd = new StartProcessCommand();

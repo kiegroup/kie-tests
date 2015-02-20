@@ -68,6 +68,14 @@ public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
     
     @Override
     public String serialize( Object entity ) {
+        JAXBContext jaxbContext;
+        Class [] types = { entity.getClass() };
+        try { 
+            jaxbContext = JAXBContext.newInstance(types);
+        } catch( JAXBException jaxbe ) { 
+            throw new IllegalStateException("Unable to create JAXBContext", jaxbe);
+        } 
+        
         Marshaller marshaller = null;
         try {
             marshaller = jaxbContext.createMarshaller();

@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,15 +63,15 @@ public class RepositoryDeploymentUtil {
     }
     
     public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnitName, String user) { 
-        try {
-            deleteRepository(repositoryName);
-        } catch (Exception ex) {
-            // just ignore, we only need to have working
-            // environment created by the steps below
+        if( repositoryExists(repositoryName) ) {
+            JobRequest delRepoJob = deleteRepository(repositoryName);
+            waitForJobsToFinish(sleepSecs, delRepoJob);
         }
-        
-        JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnitName, user);
-        waitForJobsToFinish(sleepSecs, createOrgUnitJob);
+       
+        if( ! organizationalUnitExists(orgUnitName) ) { 
+            JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnitName, user);
+            waitForJobsToFinish(sleepSecs, createOrgUnitJob);
+        }
         
         JobRequest createRepoJob = createRepository(repositoryName, orgUnitName, repoUrl);
         waitForJobsToFinish(sleepSecs, createRepoJob);
@@ -89,7 +90,23 @@ public class RepositoryDeploymentUtil {
     }
     
     // submethods ------------------------------------------------------------------------------------------------------------
+  
+    /**
+     * Delete the repository with the given repository name
+     * @param repositoryName
+     * @return A {@link JobRequest} instance returned by the request with the initial status of the request
+     */
+    private boolean repositoryExists(String repositoryName) { 
+        Collection<RepositoryResponse> repos = get("repositories/", 200, Collection.class, RepositoryResponse.class);
+        for( RepositoryResponse repo : repos ) { 
+            if( repo.getName().equals(repositoryName) ) { 
+                return true;
+            }
+        }
+        return false;
+    }
    
+    
     /**
      * Delete the repository with the given repository name
      * @param repositoryName
@@ -98,7 +115,7 @@ public class RepositoryDeploymentUtil {
     private JobRequest deleteRepository(String repositoryName) { 
         logger.info("Deleting repository '{}'", repositoryName);
         RemoveRepositoryRequest entity = delete("repositories/" + repositoryName, 202, RemoveRepositoryRequest.class);
-        if (entity.getStatus() == JobStatus.ACCEPTED || entity.getStatus() == JobStatus.SUCCESS) {
+        if (entity.getStatus().equals(JobStatus.ACCEPTED) || entity.getStatus().equals(JobStatus.SUCCESS) || entity.getStatus().equals(JobStatus.APPROVED)) {
             return entity;
         } else {
             throw new IllegalStateException("Delete request failed with status " +  entity.getStatus() );
@@ -153,6 +170,24 @@ public class RepositoryDeploymentUtil {
            assertTrue( errMsg, errMsg.contains("code: 404"));
         }
         return orgUnit;
+    }
+   
+    
+    /**
+     * Create an organizational unit in order to manage the repository
+     * @param name The name of the organizational unit
+     * @param owner The owner of the organizational unit
+     * @param repositories The list of repositories that the org unit should own
+     * @return A {@link JobRequest} instance returned by the request with the initial status of the request
+     */
+    private boolean organizationalUnitExists(String orgUnitName) { 
+        Collection<OrganizationalUnit> orgUnits = get("organizationalunits/", 200, Collection.class, OrganizationalUnit.class);
+        for( OrganizationalUnit orgUnit : orgUnits ) { 
+           if( orgUnit.getName().equals(orgUnitName) ) { 
+               return true;
+           }
+        }
+        return false;
     }
     
     /**
@@ -258,6 +293,10 @@ public class RepositoryDeploymentUtil {
            for( JobRequest request : requests ) { 
                String jobId = request.getJobId();
                JobStatus jobStatus  = requestStatusMap.get(jobId);
+               if( jobStatus == null ) { 
+                   JobResult jobResult = get( "jobs/" + jobId, 200, JobResult.class); 
+                   jobStatus = jobResult.getStatus();
+               }
                if( JobStatus.SUCCESS.equals(jobStatus) ) { 
                   done.add(request);
                   continue;
@@ -293,6 +332,10 @@ public class RepositoryDeploymentUtil {
             for( JaxbDeploymentUnit deployUnit : deployUnits ) { 
                 String deployId = deployUnit.getIdentifier();
                 JaxbDeploymentStatus jobStatus  = requestStatusMap.get(deployId);
+                if( jobStatus == null ) { 
+                    JaxbDeploymentUnit requestedDeployUnit = get("deployment/" + deployId, 200, JaxbDeploymentUnit.class);
+                    jobStatus = requestedDeployUnit.getStatus();
+                }
                 if( deploy ) { 
                     if( JaxbDeploymentStatus.DEPLOYED.equals(jobStatus) ) { 
                         done.add(deployUnit);
@@ -326,10 +369,10 @@ public class RepositoryDeploymentUtil {
     
     // Helper methods -------------------------------------------------------------------------------------------------------------
    
-    private <T extends Object> T get(String relativeUrl, int status, Class<T> returnType) {
+    private <T extends Object> T get(String relativeUrl, int status, Class... returnTypes) {
         return RestUtil.get(deploymentUrl, "rest/" + relativeUrl, contentType,
                 status, user, password,
-                returnType);
+                returnTypes);
     }
 
     private <T extends Object> T post(String relativeUrl, int status, Class<T> returnType) {

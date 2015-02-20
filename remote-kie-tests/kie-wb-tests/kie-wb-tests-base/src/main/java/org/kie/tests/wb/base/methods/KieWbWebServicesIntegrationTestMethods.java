@@ -11,12 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jbpm.services.task.utils.ContentMarshallerHelper;
 import org.kie.api.command.Command;
+import org.kie.api.task.model.Content;
+import org.kie.api.task.model.Task;
 import org.kie.internal.jaxb.StringKeyObjectValueMap;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
-import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetContentCommand;
+import org.kie.remote.jaxb.gen.GetTaskCommand;
 import org.kie.remote.jaxb.gen.GetTaskContentCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
@@ -63,28 +66,37 @@ public class KieWbWebServicesIntegrationTestMethods {
         assertFalse( "Empty task id list", taskIds.isEmpty());
         long taskId = taskIds.get(0);
        
-        // get content
-        // - 1. this return a Map<String, Object>
+        // get task and task content
+        GetTaskCommand gtc = new GetTaskCommand();
+        gtc.setTaskId(taskId);
         GetTaskContentCommand gtcc = new GetTaskContentCommand();
         gtcc.setTaskId(taskId);
-        // - 2. this return a org.kie.remote.jaxb.gen.Content, which has a getContentMap() method
-        GetContentCommand gcc = new GetContentCommand();
-        gcc.setTaskId(taskId);
         
-        // Get a response from the WebService
-        JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, gtcc);
-        // - add the GetContentCommand as 2nd command (response is then also the 2nd response)
-        req.getCommands().add(gcc);
+        // webservice
+        JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, gtc);
+        req.getCommands().add(gtcc);
         JaxbCommandsResponse response = commandWebService.execute(req);
+        
+        // task and content response
+        Task task = (Task) response.getResponses().get(0).getResult();
+        Map<String, Object> contentMap = (Map<String, Object>) response.getResponses().get(1).getResult();
 
-        // - 1. Map response
-        Map<String, Object> contentMap = (Map<String, Object>) response.getResponses().get(0).getResult();
-        assertFalse( "Empty (content) map", contentMap == null || contentMap.isEmpty() );
-        // - 2. Content response
-        Content content = (Content) response.getResponses().get(1).getResult();
-        StringKeyObjectValueMap otherContentMap = content.getContentMap();
-        for( Entry<String, Object> entry : otherContentMap.entrySet() ) { 
-           logger.info(entry.getKey() + " -> "  +  entry.getValue()); 
+        // get content
+        GetContentCommand gcc = new GetContentCommand();
+        gcc.setContentId(task.getTaskData().getDocumentContentId());
+       
+        // webservice
+        req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, gcc);
+        response = commandWebService.execute(req);
+        
+        // content response
+        Content content = (Content) response.getResponses().get(0).getResult();
+        Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
+        if( contentMapObj != null ) { 
+            contentMap = (Map<String, Object>) contentMapObj;
+            for( Entry<String, Object> entry : contentMap.entrySet() ) { 
+                logger.info(entry.getKey() + " -> "  +  entry.getValue()); 
+            }
         }
         
     }

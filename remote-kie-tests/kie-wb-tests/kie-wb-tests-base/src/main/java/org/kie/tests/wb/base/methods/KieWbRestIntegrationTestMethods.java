@@ -76,6 +76,7 @@ import org.apache.commons.io.FileUtils;
 import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
+import org.jbpm.services.task.utils.ContentMarshallerHelper;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -704,7 +705,8 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void remoteApiGetTaskInstance( URL deploymentUrl, String user, String password ) throws Exception {
-
+        setRestInfo(deploymentUrl, user, password);
+        
         // Remote API setup
         RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
 
@@ -724,28 +726,28 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Incorrect number of tasks for started process: ", 1, tasks.size());
         long taskId = tasks.get(0);
         
-        // Get it via the command
-        GetTaskCommand cmd = new GetTaskCommand();
-        cmd.setTaskId(taskId);
-        GetTaskContentCommand cmd2 = new GetTaskContentCommand();
-        cmd2.setTaskId(taskId);
-        GetContentCommand cmd3 = new GetContentCommand();
-        cmd2.setTaskId(taskId);
-        List<JaxbCommandResponse<?>> responses = executeCommands(deploymentUrl, user, password, deploymentId, cmd, cmd2, cmd3);
-        Task task = (Task) responses.get(0).getResult();
+        // Get it via the remote api
+        Task task = taskService.getTaskById(taskId);
         checkReturnedTask(task, taskId);
-        Map<String, Object> contentMap = (Map<String, Object>) responses.get(1).getResult();
+       
+        // check content
+        Map<String, Object> contentMap = taskService.getTaskContent(taskId);
         assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
-        Content content = (Content) responses.get(2).getResult();
-        assertFalse( "Empty content map from Content", content.getContentMap() == null || content.getContentMap().isEmpty() );
+        
+        org.kie.api.task.model.Content content = taskService.getContentById(task.getTaskData().getDocumentContentId());
+        if( content != null && content.getContent() != null ) {
+            Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
+            contentMap = (Map<String, Object>) contentMapObj;
+            assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
+            
+        } else  {
+            assertNotNull("No task content found" , content);
+        }
+        
 
         // Get it via the URL
         org.kie.remote.jaxb.gen.Task jaxbTask = get("task/" + taskId, 200, org.kie.remote.jaxb.gen.Task.class);
         checkReturnedTask(jaxbTask, taskId);
-
-        // Get it via the remote API
-        task = engine.getTaskService().getTaskById(taskId);
-        checkReturnedTask(task, taskId);
     }
 
     private void checkReturnedTask( Task task, long taskId ) {
