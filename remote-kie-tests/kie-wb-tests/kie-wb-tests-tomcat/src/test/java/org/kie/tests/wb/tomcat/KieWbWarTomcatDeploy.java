@@ -11,27 +11,19 @@ public class KieWbWarTomcatDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarTomcatDeploy.class);
 
-    static WebArchive createTestWar() {
-        return createTestWar(true);
-    }
-
     private static final String classifier = "tomcat7";
     
-    static WebArchive createTestWar(boolean replace) {
+    static WebArchive createTestWar() {
         // Import kie-wb war
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
-        war.addAsWebInfResource("war/logging.properties", "classes/logging.properties");
+        String [][] jarsToReplace = {
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" }
+        };
+        replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
-        if( replace ) { 
-            String [][] jarsToReplace = {
-                    { "org.guvnor", "guvnor-rest-backend" },
-                    { "org.kie.remote", "kie-remote-services" },
-                    { "org.kie.remote", "kie-remote-common" }
-            };
-            replaceJars(war, PROJECT_VERSION, jarsToReplace);
-        }
-      
         boolean replaceWebXml = false;
         if( replaceWebXml ) { 
           war.delete("WEB-INF/web.xml");

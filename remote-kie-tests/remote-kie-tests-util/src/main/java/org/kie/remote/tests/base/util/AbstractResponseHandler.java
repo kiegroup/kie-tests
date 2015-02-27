@@ -1,7 +1,6 @@
 package org.kie.remote.tests.base.util;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +9,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+
+import javax.xml.bind.JAXBContext;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -31,17 +32,25 @@ public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T>
     public AbstractResponseHandler(ContentType type, int status, Class<T>... returnTypes) {
         this.myContentType = type;
         this.status = status;
-        this.returnType = returnTypes[0];
-        if( returnTypes.length == 2 ) { 
-            this.parameterType = (Class<P>) returnTypes[1];
+        if( returnTypes != null && returnTypes.length > 0 ) { 
+            this.returnType = returnTypes[0];
+            if( returnTypes.length == 2 ) { 
+                this.parameterType = (Class<P>) returnTypes[1];
+            }
+        } else { 
+            this.returnType = null;
         }
     }
    
     public AbstractResponseHandler(ContentType type, Class<T>... returnTypes) {
         this.myContentType = type;
-        this.returnType = returnTypes[0];
-        if( returnTypes.length == 2 ) { 
-            this.parameterType = (Class<P>) returnTypes[1];
+        if( returnTypes != null && returnTypes.length > 0 ) { 
+            this.returnType = returnTypes[0];
+            if( returnTypes.length == 2 ) { 
+                this.parameterType = (Class<P>) returnTypes[1];
+            }
+        } else { 
+            this.returnType = null;
         }
     }
     
@@ -58,9 +67,9 @@ public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T>
         InputStream contentStream = entity.getContent();
         Reader reader;
         if( charset != null ) { 
-            reader = new InputStreamReader(entity.getContent(), charset);
+            reader = new InputStreamReader(contentStream, charset);
         } else { 
-            reader = new InputStreamReader(entity.getContent());
+            reader = new InputStreamReader(contentStream);
         }
         reader = new BufferedReader(reader);
       
@@ -80,12 +89,26 @@ public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T>
                 }  else { 
                     assertEquals("Response status [content type: " + contentType.toString() + "]", status, responseStatus);
                 }
+            } else if( contentType.toString().contains("text/plain") ) { 
+                    StringWriter writer = new StringWriter();
+                    char[] buffer = new char[1024];
+                    for (int n; (n = reader.read(buffer)) != -1; ) {
+                        writer.write(buffer, 0, n);
+                    }
+                    String errorBody = writer.toString();
+                    // now that we know that the result is wrong, try to identify the reason
+                    fail( responseStatus + ": " + errorBody + " [expected " + status + "]" );
             } else { 
                 assertEquals("Response status", status, responseStatus);
             }
         } 
-            
-        return deserialize(reader);
+           
+        if( returnType != null ) { 
+            return deserialize(reader);
+        } else { 
+            return null;
+        }
+                    
     }
 
     protected abstract T deserialize(Reader reader);

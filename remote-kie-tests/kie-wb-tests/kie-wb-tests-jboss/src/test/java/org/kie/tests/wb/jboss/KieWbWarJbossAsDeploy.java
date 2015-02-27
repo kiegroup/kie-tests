@@ -17,14 +17,11 @@ public class KieWbWarJbossAsDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "jboss-as7", PROJECT_VERSION);
        
         String [][] jarsToReplace = {
-                { "org.jbpm", "jbpm-kie-services" }, 
                 { "org.kie.remote", "kie-remote-services" }, 
-                { "org.kie.remote", "kie-remote-jaxb" }
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
-        
-        // Add data service resource for tests
-        war.addPackage("org/kie/tests/wb/base/services/data");
         
         return war;
     }

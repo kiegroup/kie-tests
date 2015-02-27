@@ -20,24 +20,13 @@ public class KieWbWarWildflyDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = { 
-                { "org.kie.remote", "kie-remote-services" }
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" },
                 };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
-
-        // ADD
-        boolean add = false;
-        if( add ) {
-            String[][] jarsToAdd = {
-            // web services
-            { "javax.xml.ws", "jaxws-api" } };
-            addNewJars(war, jarsToAdd);
-        }
 
         return war;
     }
 
-    private static void replaceWebXmlForWebServices( WebArchive war ) {
-        war.delete("WEB-INF/web.xml");
-        war.addAsWebInfResource("WEB-INF/web.xml", "web.xml");
-    }
 }

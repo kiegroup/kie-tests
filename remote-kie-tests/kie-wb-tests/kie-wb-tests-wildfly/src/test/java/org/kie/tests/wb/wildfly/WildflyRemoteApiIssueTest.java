@@ -1,5 +1,5 @@
 /*
-t  * JBoss, Home of Professional Open Source
+ * JBoss, Home of Professional Open Source
  * 
  * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
@@ -15,12 +15,12 @@ t  * JBoss, Home of Professional Open Source
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.eap;
+package org.kie.tests.wb.wildfly;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
+import static org.kie.tests.wb.wildfly.KieWbWarWildflyDeploy.createTestWar;
 
 import java.net.URL;
 
@@ -40,14 +40,14 @@ import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiIssueTest {
+public class WildflyRemoteApiIssueTest {
 
-    @Deployment(testable = false, name = "kie-wb-eap")
+    @Deployment(testable = false, name = "kie-wb-wildfly")
     public static Archive<?> createWar() {
         return createTestWar();
     }
  
-    private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(WildflyRemoteApiIssueTest.class);
     
     @ArquillianResource
     URL deploymentUrl;
@@ -78,4 +78,5 @@ public class JbossEapRemoteApiIssueTest {
         restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
         restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
+    
 }

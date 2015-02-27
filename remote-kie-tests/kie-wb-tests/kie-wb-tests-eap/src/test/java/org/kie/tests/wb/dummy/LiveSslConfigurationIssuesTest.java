@@ -34,6 +34,7 @@ import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 
+@Ignore
 public class LiveSslConfigurationIssuesTest {
 
     private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";

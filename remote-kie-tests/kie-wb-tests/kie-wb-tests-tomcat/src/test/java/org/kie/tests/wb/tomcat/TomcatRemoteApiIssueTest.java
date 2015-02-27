@@ -17,6 +17,9 @@
  */
 package org.kie.tests.wb.tomcat;
 
+import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
@@ -28,16 +31,33 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
+import org.junit.AfterClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.AbstractIssueIntegrationTest;
+import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class TomcatRemoteApiIssueIntegrationTest extends AbstractIssueIntegrationTest {
+public class TomcatRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-tomcat")
     public static Archive<?> createWar() {
         return createTestWar();
+    }
+ 
+    private static final Logger logger = LoggerFactory.getLogger(TomcatRemoteApiIssueTest.class);
+    
+    @ArquillianResource
+    URL deploymentUrl;
+   
+    
+    @AfterClass
+    public static void waitForTxOnServer() throws InterruptedException {
+        long sleep = 1000;
+        logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
+        Thread.sleep(sleep);
     }
 
     protected void printTestName() { 
@@ -45,11 +65,17 @@ public class TomcatRemoteApiIssueIntegrationTest extends AbstractIssueIntegratio
         System.out.println( "-=> " + testName );
     }
     
-    @ArquillianResource
-    URL deploymentUrl;
-
-    @Override
-    public String getContentType() { 
-        return MediaType.APPLICATION_JSON;
+    @Test
+    public void issueTest() throws Exception { 
+        printTestName();
+        
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                .setMediaType(MediaType.APPLICATION_XML)
+                .build();
+       
+        // deploy
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

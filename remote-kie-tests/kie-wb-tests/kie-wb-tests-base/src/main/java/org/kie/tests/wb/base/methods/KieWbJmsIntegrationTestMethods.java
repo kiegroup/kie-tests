@@ -121,11 +121,23 @@ public class KieWbJmsIntegrationTestMethods {
        this(deploymentId, true, useSSL);
     }
     
+    public KieWbJmsIntegrationTestMethods(String deploymentId, boolean useSSL, Properties initialContextProps) {
+       this(deploymentId, true, useSSL, initialContextProps);
+    }
+    
     public KieWbJmsIntegrationTestMethods(String deploymentId, boolean remote, boolean useSSL) {
+       this(deploymentId, remote, useSSL, null); 
+    }
+    
+    public KieWbJmsIntegrationTestMethods(String deploymentId, boolean remote, boolean useSSL, Properties initialContextProps) {
         this.deploymentId = deploymentId;
         this.useSsl = useSSL;
         if( remote ) { 
-            this.remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
+            if( initialContextProps == null ) { 
+                this.remoteInitialContext = getJbossRemoteInitialContext(MARY_USER, MARY_PASSWORD);
+            } else { 
+                this.remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD, initialContextProps);
+            }
         } else { 
             this.remoteInitialContext = null;
         }
@@ -138,13 +150,16 @@ public class KieWbJmsIntegrationTestMethods {
      * 
      * @return a remote {@link InitialContext} instance
      */
-    private static InitialContext getRemoteInitialContext(String user, String password) {
+    private static InitialContext getJbossRemoteInitialContext(String user, String password) {
         Properties initialProps = new Properties();
         initialProps.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         initialProps.setProperty(InitialContext.PROVIDER_URL, "remote://localhost:4447");
         initialProps.setProperty(InitialContext.SECURITY_PRINCIPAL, user);
         initialProps.setProperty(InitialContext.SECURITY_CREDENTIALS, password);
+        return getRemoteInitialContext(user, password, initialProps);
+    }
 
+    public static InitialContext getRemoteInitialContext(String user, String password, Properties initialProps) {
         for (Object keyObj : initialProps.keySet()) {
             String key = (String) keyObj;
             System.setProperty(key, (String) initialProps.get(key));
@@ -331,9 +346,22 @@ public class KieWbJmsIntegrationTestMethods {
     }
 
     public void remoteApiHumanTaskProcess(String user, String password) throws Exception {
+        String queueName = KSESSION_QUEUE_NAME;
+        Queue sessionQueue = (Queue) remoteInitialContext.lookup(queueName);
+        queueName = TASK_QUEUE_NAME;
+        Queue taskQueue = (Queue) remoteInitialContext.lookup(queueName);
+        queueName = RESPONSE_QUEUE_NAME;
+        Queue responseQueue = (Queue) remoteInitialContext.lookup(queueName);
+
+        String connFactoryName = CONNECTION_FACTORY_NAME;
+        ConnectionFactory connFact = (ConnectionFactory) remoteInitialContext.lookup(connFactoryName);
+        
         RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
-                .addRemoteInitialContext(remoteInitialContext)
+                .addConnectionFactory(connFact)
+                .addKieSessionQueue(sessionQueue)
+                .addTaskServiceQueue(taskQueue)
+                .addResponseQueue(responseQueue)
                 .addUserName(user)
                 .addPassword(password)
                 .addHostName("localhost")

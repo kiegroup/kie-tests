@@ -134,7 +134,7 @@ public class RepositoryDeploymentUtil {
         repoRequest.setName(repositoryName);
         repoRequest.setRequestType("clone");
         repoRequest.setGitURL(cloneRepoUrl);
-        repoRequest.setOrganizationlUnitName(orgUnit);
+        repoRequest.setOrganizationalUnitName(orgUnit);
         
         return post( "repositories", repoRequest, 202, CreateOrCloneRepositoryRequest.class);
     }

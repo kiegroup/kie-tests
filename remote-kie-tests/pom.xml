@@ -31,8 +31,8 @@
     <override.version.org.eclipse.aether>0.9.0.M2</override.version.org.eclipse.aether>
     
     <!-- tomcat 7.0.32 + arq-tomcat 1.0.0.CR6 is the magic combination that works.. :/ -->
-    <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
-    <version.org.jboss.arquillian.container.tomcat>1.0.0.CR6</version.org.jboss.arquillian.container.tomcat>
+    <version.org.apache.tomcat>7.0.55</version.org.apache.tomcat>
+    <version.org.jboss.arquillian.container.tomcat>1.0.0.CR7</version.org.jboss.arquillian.container.tomcat>
     
     <!-- jetty -->    
     <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>
@@ -215,8 +215,8 @@
       <id>integration-tests</id>
       <properties>
         <!--  eap -->
-        <override.version.org.jboss.as>7.5.0.Final-redhat-17</override.version.org.jboss.as>
-        <version.org.jboss.as.dist>7.5.0.Final-redhat-17</version.org.jboss.as.dist>
+        <override.version.org.jboss.as>7.5.0.Final-redhat-19</override.version.org.jboss.as>
+        <version.org.jboss.as.dist>7.5.0.Final-redhat-19</version.org.jboss.as.dist>
         <jboss.server.name>jboss-eap-6.4</jboss.server.name> 
       </properties>
     </profile>

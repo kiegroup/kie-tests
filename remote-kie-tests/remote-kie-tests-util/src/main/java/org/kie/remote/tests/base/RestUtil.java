@@ -30,9 +30,11 @@ import java.util.Map.Entry;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.JAXBContext;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
@@ -178,6 +180,53 @@ public class RestUtil {
         return null;
     }
 
+    public static <T> T postEntity( URL deploymentUrl, String relativeUrl, 
+            int status, String user, String password, 
+            Class [] classes,
+            Object entity, Class<T>... responseTypes ) {
+
+        String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
+
+        String mediaType = MediaType.APPLICATION_XML;
+        ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
+        XmlResponseHandler xrh = (XmlResponseHandler) rh;
+
+        xrh.addExtraJaxbClasses(classes);
+        String entityStr = xrh.serialize(entity);
+        
+        HttpEntity bodyEntity = null;
+        try {
+            bodyEntity = new StringEntity(entityStr);
+        } catch( UnsupportedEncodingException uee ) {
+            failAndLog("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
+        }
+
+        // @formatter:off
+        Request request = Request.Post(uriStr)
+                .body(bodyEntity)
+                .addHeader(HttpHeaders.CONTENT_TYPE, mediaType.toString())
+                .addHeader(HttpHeaders.ACCEPT, mediaType.toString())
+                .addHeader(HttpHeaders.AUTHORIZATION, basicAuthenticationHeader(user, password));
+        // @formatter:on
+
+        Response resp = null;
+        try {
+            logOp("POST", entity, uriStr);
+            resp = request.execute();
+        } catch( Exception e ) {
+            failAndLog("[GET] " + uriStr, e);
+        }
+
+        try {
+            return resp.handleResponse(rh);
+        } catch( Exception e ) {
+            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+        }
+
+        // never happens
+        return null;
+    }
+    
     public static <T> T postEntity( URL deploymentUrl, String relativeUrl, String mediaType, int status, String user,
             String password, Object entity, Class<T>... responseTypes ) {
         String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
@@ -341,26 +390,31 @@ public class RestUtil {
 
         String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
 
-        ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
+
+        // form content
+        Form formContent = Form.form();
+        for( Entry<String, String> entry : formParams.entrySet() ) { 
+           formContent.add(entry.getKey(), entry.getValue());
+        }
 
         // @formatter:off
         Request request = Request.Post(uriStr)
                 .addHeader(HttpHeaders.CONTENT_TYPE, mediaType.toString())
                 .addHeader(HttpHeaders.ACCEPT, mediaType.toString())
-                .addHeader(HttpHeaders.AUTHORIZATION, basicAuthenticationHeader(user, password));
+                .addHeader(HttpHeaders.AUTHORIZATION, basicAuthenticationHeader(user, password))
+                .bodyForm(formContent.build());
         // @formatter:on
 
         Response resp = null;
         long before = 0, after = 0;
         try {
             logOp("POST", uriStr);
-            before = System.currentTimeMillis();
             resp = request.execute();
-            after = System.currentTimeMillis();
         } catch( Exception e ) {
             failAndLog("[GET] " + uriStr, e);
         }
 
+        ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {

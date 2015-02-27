@@ -50,7 +50,7 @@ public class JsonResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
         try {
             return om.writeValueAsString(entity);
         } catch( Exception e ) {
-            failAndLog(returnType.getSimpleName() + " instance serialization failed", e); 
+            failAndLog(entity.getClass().getSimpleName() + " instance serialization failed", e); 
         } 
         
         // never happens

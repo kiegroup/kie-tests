@@ -12,17 +12,13 @@ public class KieWbWarJbossEapDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
 
-    static WebArchive createTestWar( boolean replace ) {
-        return createTestWar(null, replace);
-    }
-
     static WebArchive createTestWar() {
-        return createTestWar(null, true);
+        return createTestWar(null);
     }
 
     private static final String classifier = "eap6_4";
 
-    static WebArchive createTestWar( String database, boolean replace ) {
+    static WebArchive createTestWar( String database ) {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         // Replace persistence.xml with postgres version
@@ -37,19 +33,17 @@ public class KieWbWarJbossEapDeploy {
             }
         }
 
-        if( replace ) {
-            String[][] jarsToReplace = {
-            // kie-remote
-            { "org.kie.remote", "kie-remote-services" },
-            { "org.kie.remote", "kie-remote-jaxb" },
-            { "org.jbpm", "jbpm-human-task-core" }
-            };
-            replaceJars(war, PROJECT_VERSION, jarsToReplace);
+        String[][] jarsToReplace = {
+                // kie-remote
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" }
+        };
+        replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
-            boolean webXmlReplace = false;
-            if( webXmlReplace ) {
-                replaceWebXmlForWebServices(war);
-            }
+        boolean webXmlReplace = false;
+        if( webXmlReplace ) {
+            replaceWebXmlForWebServices(war);
         }
 
         return war;

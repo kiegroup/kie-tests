@@ -410,7 +410,9 @@ public class KieWbRestIntegrationTestMethods {
             cmd.setProcessInstanceId(procInstId);
             req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        cmdResponse = RestUtil.postEntity(deploymentUrl, "rest/execute", contentType,
+                200, user, password, 
+                req, JaxbCommandsResponse.class);
         List<?> list = (List<?>) cmdResponse.getResponses().get(0).getResult();
         long taskId = (Long) list.get(0);
 
@@ -421,7 +423,9 @@ public class KieWbRestIntegrationTestMethods {
             cmd.setUserId(taskUserId);
             req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        cmdResponse = RestUtil.postEntity(deploymentUrl, "rest/execute", contentType,
+                200, user, password, 
+                req, JaxbCommandsResponse.class);
         assertTrue( "Expected empty response", cmdResponse.getResponses() == null || cmdResponse.getResponses().isEmpty() );
 
         // complete task
@@ -435,7 +439,10 @@ public class KieWbRestIntegrationTestMethods {
             cmd.setData(arrayMap);
             req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-        cmdResponse = post("execute", 200, req, JaxbCommandsResponse.class);
+        cmdResponse = RestUtil.postEntity(deploymentUrl, "rest/execute", contentType,
+                200, user, password, 
+                req, JaxbCommandsResponse.class);
+        
         assertNotNull("Response is null", cmdResponse);
 
         // TODO: check that above has completed?
@@ -454,13 +461,21 @@ public class KieWbRestIntegrationTestMethods {
         // create REST request
         RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = engine.getKieSession();
+        TaskService depIdTaskService = engine.getTaskService();
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         assertNotNull("Null ProcessInstance!", processInstance);
         long procInstId = processInstance.getId();
 
         logger.debug("Started process instance: " + processInstance + " " + procInstId);
 
-        TaskService taskService = engine.getTaskService();
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password);
+        TaskService taskService = builder.build().getTaskService();
+        // @formatter:on
+        
         List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
         long taskId = findTaskId(procInstId, tasks);
 
@@ -468,11 +483,11 @@ public class KieWbRestIntegrationTestMethods {
         Task task = taskService.getTaskById(taskId);
         logger.debug("Got task " + taskId + ": " + task);
         taskService.start(taskId, taskUserId);
-        taskService.complete(taskId, taskUserId, null);
+        depIdTaskService.complete(taskId, taskUserId, null);
 
         logger.debug("Now expecting failure");
         try {
-            taskService.complete(taskId, taskUserId, null);
+            depIdTaskService.complete(taskId, taskUserId, null);
             fail("Should not be able to complete task " + taskId + " a second time.");
         } catch( Throwable t ) {
             logger.info("The above exception was an expected part of the test.");
@@ -532,6 +547,8 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void urlsHistoryLogs( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Start process
         JaxbProcessInstanceResponse processInstance = post(
                 "runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal", 
@@ -541,7 +558,7 @@ public class KieWbRestIntegrationTestMethods {
 
         // instances/
         {
-            JaxbHistoryLogList historyResult = get("rest/history/instances", 200, JaxbHistoryLogList.class);
+            JaxbHistoryLogList historyResult = get("history/instances", 200, JaxbHistoryLogList.class);
             List<Object> historyLogList = historyResult.getResult();
 
             for( Object event : historyLogList ) {
@@ -569,7 +586,7 @@ public class KieWbRestIntegrationTestMethods {
         // instance/{procInstId}/node/{nodeId}
 
         // instance/{procInstId}/variable/{variable}
-        JaxbHistoryLogList jaxbHistoryLogList = get("rest/history/instance/" + procInstId + "/variable/x", 200, JaxbHistoryLogList.class);
+        JaxbHistoryLogList jaxbHistoryLogList = get("history/instance/" + procInstId + "/variable/x", 200, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> historyVarLogList = jaxbHistoryLogList.getHistoryLogList();
         assertTrue("Incorrect number of variable logs: " + historyVarLogList.size(), 4 <= historyVarLogList.size());
 
@@ -604,8 +621,10 @@ public class KieWbRestIntegrationTestMethods {
     }
    
     public void urlsHumanTaskWithVariableChangeFormParameters( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Start process
-        String startProcessUrl ="runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
+        String startProcessUrl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
 
         Map<String, String> formParams = new HashMap<String, String>(1);
         formParams.put("map_userName", "John");
@@ -619,7 +638,7 @@ public class KieWbRestIntegrationTestMethods {
         // query tasks for associated task Id
         Map<String, String> queryparams = new HashMap<String, String>();
         queryparams.put("processInstanceId", String.valueOf(procInstId));
-        JaxbTaskSummaryListResponse taskSumlistResponse = get( "rest/task/query", 200, queryparams, JaxbTaskSummaryListResponse.class);
+        JaxbTaskSummaryListResponse taskSumlistResponse = get( "task/query", 200, queryparams, JaxbTaskSummaryListResponse.class);
 
         TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
@@ -820,6 +839,8 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void urlsVariableHistory( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Remote API setup
         String varId = "myobject";
         String varVal = UUID.randomUUID().toString();
@@ -966,7 +987,7 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Unequal process instance id.", procInstId, procInst.getId());
 
         MyType retrievedVar = get(
-                "runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/",
+                "runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName,
                 200, MyType.class);
 
         assertNotNull("Expected filled variable.", retrievedVar);
@@ -986,8 +1007,10 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void urlsGroupAssignmentTest( URL deploymentUrl ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         JaxbProcessInstanceResponse procInstResp = RestUtil.post(deploymentUrl, 
-                "runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start", contentType,
+                "rest/runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start", contentType,
                 200, MARY_USER, MARY_PASSWORD, 
                 JaxbProcessInstanceResponse.class);
         assertEquals(ProcessInstance.STATE_ACTIVE, procInstResp.getState());
@@ -1029,14 +1052,16 @@ public class KieWbRestIntegrationTestMethods {
         post("task/" + taskId + "/complete", JOHN_USER, JOHN_PASSWORD, 200);
 
         // assert process finished
-        JaxbProcessInstanceLog jaxbProcInstLog = get("history/instance/" + procInstId, 200, JaxbProcessInstanceLog.class);
+        JaxbProcessInstanceLog jaxbProcInstLog = RestUtil.get(deploymentUrl, "rest/history/instance/" + procInstId, contentType,
+                200, MARY_USER, MARY_PASSWORD,
+                JaxbProcessInstanceLog.class);
         ProcessInstanceLog procInstLog = jaxbProcInstLog.getResult();
         assertEquals("Process instance has not completed!", ProcessInstance.STATE_COMPLETED, procInstLog.getStatus().intValue());
     }
 
     private TaskSummary getTaskSummary( String user, String password, long processInstanceId, Status status ) throws Exception {
         JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl, 
-                "task/query?processInstanceId=" + processInstanceId + "&status=" + status.toString(), contentType,
+                "rest/task/query?processInstanceId=" + processInstanceId + "&status=" + status.toString(), contentType,
                 200, user, password,
                 JaxbTaskSummaryListResponse.class);
         List<TaskSummary> taskSumList = taskSumListResp.getResult();
@@ -1134,6 +1159,8 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     private void startProcessWithUserDefinedClass() throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         String varId = "myobject";
         JaxbProcessInstanceResponse procInstResp = post(
                 "runtime/" + deploymentId + "/process/" + OBJECT_VARIABLE_PROCESS_ID + "/start?map_" + varId + "=10", 
@@ -1145,6 +1172,8 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void urlsGetProcessDefinitionInfo( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Start process
         JaxbProcessDefinitionList jaxbProcDefList = get("deployment/processes/", 200, JaxbProcessDefinitionList.class);
 

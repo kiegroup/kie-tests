@@ -25,7 +25,7 @@
   <properties>
     <version.org.jboss>7.1.1.Final</version.org.jboss>
     <version.org.jboss.as.dist>7.1.1.Final</version.org.jboss.as.dist>
-    <jboss.as.server.name>jboss-as-7.1.1.Final</jboss.as.server.name>
+    <jboss.as.server.name>jboss-as-${version.org.jboss}</jboss.as.server.name>
   </properties>
 
   <dependencies>

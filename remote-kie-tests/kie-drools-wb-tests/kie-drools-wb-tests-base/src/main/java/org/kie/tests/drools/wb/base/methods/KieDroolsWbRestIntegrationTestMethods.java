@@ -11,8 +11,10 @@ import static org.kie.tests.drools.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.drools.wb.base.util.TestConstants.MARY_USER;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -55,6 +57,8 @@ public class KieDroolsWbRestIntegrationTestMethods {
     private String contentType = MediaType.APPLICATION_JSON;
     private String user = MARY_USER; 
     private String password = MARY_PASSWORD; 
+   
+    private static final SimpleDateFormat ouSdf = new SimpleDateFormat("yy-MM-dd_HH:mm:ss");
     
     private void setDeploymentUrl(URL deploymentUrl) { 
         this.deploymentUrl = deploymentUrl;
@@ -105,11 +109,14 @@ public class KieDroolsWbRestIntegrationTestMethods {
      * Tests the following REST urls: 
      * 
      * ../rest/repostitories GET
+     * ../rest/organizationalunit POST
      * ../rest/repostitories POST
      * ../rest/jobs/{id} GET
-     * ../rest/repositories/{repo}/projects POST>
-     * ../rest/repositories/{repo}/projects GET
-     * ../rest/repositories/{repo}/projects DELETE
+     * ../rest/repositories/{repo}/projects POST
+     * ../rest/repositories/{repoName}/projects/{projectName} DELETE
+     * ../rest/repositories/{repoName}/projects/{projectName} GET
+     * ../rest/organizationalunits/{ouName}/repositories/{repoName} DELETE
+     * ../rest/repositories/{repoName} DELETE
      * 
      * @param deploymentUrl URL of deployment
      * @throws Exception When things go wrong.. 
@@ -131,6 +138,24 @@ public class KieDroolsWbRestIntegrationTestMethods {
             }
         }
         assertEquals( "UF-Playground Git URL", "git://uf-playground", ufPlaygroundUrl );
+       
+        String orgUnitName = "repo-user-" + ouSdf.format(new Date());
+        {
+            // rest/organizationalunit POST
+            OrganizationalUnit orgUnit = new OrganizationalUnit();
+            orgUnit.setName(orgUnitName);
+            orgUnit.setDefaultGroupId("org.kie.smoke");
+            orgUnit.setDescription("Test user for the Kie Workbench smoke tests");
+            orgUnit.setOwner(this.getClass().getName());
+
+            CreateOrganizationalUnitRequest createOuRequest = post("organizationalunits", 202, orgUnit, CreateOrganizationalUnitRequest.class);
+            assertNotNull("create org unit request", createOuRequest);
+            assertEquals("job request status", JobStatus.APPROVED, createOuRequest.getStatus());
+            String jobId = createOuRequest.getJobId();
+
+            // rest/jobs/{jobId} GET
+            waitForJobToComplete(deploymentUrl, jobId, createOuRequest.getStatus());
+        }
         
         { 
             // rest/repositories POST

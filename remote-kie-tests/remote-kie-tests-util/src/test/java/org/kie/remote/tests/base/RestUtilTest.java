@@ -28,7 +28,6 @@ import org.guvnor.rest.client.RepositoryResponse;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class RestUtilTest {
 
     private static final String contentType = MediaType.APPLICATION_JSON;
@@ -38,7 +37,7 @@ public class RestUtilTest {
     private static URL deploymentUrl;
     static {
         try {
-            deploymentUrl = new URL("http://localhost:8080/kie-wb");
+            deploymentUrl = new URL("http://localhost:8080/test/");
         } catch( MalformedURLException e ) {
             // no-op
         }
@@ -76,7 +75,7 @@ public class RestUtilTest {
         repoRequest.setName(repositoryName);
         repoRequest.setRequestType("clone");
         repoRequest.setGitURL(repoUrl);
-        repoRequest.setOrganizationlUnitName(orgUnit.getName());
+        repoRequest.setOrganizationalUnitName(orgUnit.getName());
         
         CreateOrCloneRepositoryRequest createRepoRequest = postEntity(deploymentUrl,
                 "rest/repositories", contentType, 
