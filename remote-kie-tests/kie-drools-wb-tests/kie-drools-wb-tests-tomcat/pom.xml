@@ -14,10 +14,9 @@
   <name>KIE Drools Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
-
+  
   <dependencies>
     <!-- base -->
     <dependency>

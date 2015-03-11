@@ -40,7 +40,7 @@ public class TomcatRemoteApiIntegrationTest extends AbstractRemoteApiIntegration
 
     @Override
     public boolean doDeploy() {
-        return false;
+        return true;
     }
 
     @Override
