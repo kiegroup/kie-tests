@@ -14,6 +14,7 @@ import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
@@ -32,7 +33,11 @@ public abstract class AbstractRemoteApiIntegrationTest {
     private final KieWbJmsIntegrationTestMethods jmsTests;
 
     @ArquillianResource
-    URL deploymentUrl;
+    protected URL deploymentUrl;
+    
+    protected void liveSetDeploymentUrl() { 
+       // do nothing, but can be overridden 
+    }
    
     public abstract boolean doDeploy();
     public abstract String getContentType();
@@ -86,6 +91,11 @@ public abstract class AbstractRemoteApiIntegrationTest {
     protected void printTestName() { 
         String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
         System.out.println( "-=> " + testName );
+    }
+   
+    @Before
+    public void before() {
+        liveSetDeploymentUrl();
     }
     
     @Test

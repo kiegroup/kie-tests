@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.kie.remote.tests.base.RestUtil.postEntity;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
@@ -48,7 +48,7 @@ import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_I
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.VERSION;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -366,7 +366,7 @@ public class KieWbRestIntegrationTestMethods {
                 200, JOHN_USER, JOHN_PASSWORD, 
                 JaxbTaskSummaryListResponse.class);
 
-        TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
+        TaskSummary taskSum = findTaskSummaryByProcessInstanceId(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
         assertNotNull("Null actual owner", taskSum.getActualOwner());
 
@@ -478,16 +478,16 @@ public class KieWbRestIntegrationTestMethods {
                 .addUserName(user)
                 .addDeploymentId("")
                 .addPassword(password);
-        TaskService taskService = builder.build().getTaskService();
+        TaskService noDepTaskService = builder.build().getTaskService();
         // @formatter:on
         
-        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long taskId = findTaskId(procInstId, tasks);
+        List<TaskSummary> tasks = noDepTaskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
 
         logger.debug("Found task " + taskId);
-        Task task = taskService.getTaskById(taskId);
+        Task task = noDepTaskService.getTaskById(taskId);
         logger.debug("Got task " + taskId + ": " + task);
-        taskService.start(taskId, taskUserId);
+        depIdTaskService.start(taskId, taskUserId);
         depIdTaskService.complete(taskId, taskUserId, null);
 
         logger.debug("Now expecting failure");
@@ -501,7 +501,7 @@ public class KieWbRestIntegrationTestMethods {
 
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
-        List<TaskSummary> taskIds = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        List<TaskSummary> taskIds = noDepTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
@@ -645,7 +645,7 @@ public class KieWbRestIntegrationTestMethods {
         queryparams.put("processInstanceId", String.valueOf(procInstId));
         JaxbTaskSummaryListResponse taskSumlistResponse = get( "task/query", 200, queryparams, JaxbTaskSummaryListResponse.class);
 
-        TaskSummary taskSum = findTaskSummary(procInstId, taskSumlistResponse.getResult());
+        TaskSummary taskSum = findTaskSummaryByProcessInstanceId(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
 
         // start task
@@ -1412,8 +1412,54 @@ public class KieWbRestIntegrationTestMethods {
         return pids;
     }
 
-    @Test
-    public void notBeingFilteredTest() {
+    public void getDeploymentIdFromTaskTest(URL deploymentUrl, String user, String password ) throws Exception  { 
+        // setup
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        KieSession ksession = engine.getKieSession();
+
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId("") // workaround 'empty' deploymentid
+                .addPassword(password);
+        TaskService noDepTaskService = builder.build().getTaskService();
+        // @formatter:on
+
+        // 1. start process (could do it this way or a via REST url or whatever.. 
+        ProcessInstance processInstance = ksession.startProcess(SINGLE_HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+        logger.debug("Started process instance: " + processInstance + " " + procInstId);
+        
+        // 2. find task (without deployment id)
+        List<TaskSummary> tasks = noDepTaskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+        logger.debug("Found task " + taskId);
+        
+        // 3. retrieve task and get deployment id from task
+        Task task = noDepTaskService.getTaskById(taskId);
+        logger.debug("Got task " + taskId);
+        String deploymentId = task.getTaskData().getDeploymentId();
+        logger.debug("Got deployment id " + deploymentId );
        
+        // 4. start task 
+        noDepTaskService.start(taskId, user);
+        
+        // 4. configure remote api client with deployment id
+        // @formatter:off
+        TaskService depIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId(deploymentId) // set new deployment id in task
+                .addPassword(password).build().getTaskService();
+        // @formatter:on
+       
+        // 5. complete task with TaskService instance that *has a deployment id*
+        depIdTaskService.complete(taskId, user, null);
+
+        // 6. verify that process has completed
+        processInstance = ksession.getProcessInstance(procInstId);
+        assertTrue( "Process instance has not completed!", processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED);
     }
 }

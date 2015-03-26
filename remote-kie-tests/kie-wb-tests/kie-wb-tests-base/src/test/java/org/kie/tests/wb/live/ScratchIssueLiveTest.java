@@ -9,33 +9,33 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
-import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
+//@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class ScratchIssueLiveTest {
 
-    private KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
- 
     private static URL deploymentUrl;
     static { 
         try {
-            deploymentUrl = new URL("http://localhost:8080/kie-wb/");
+            deploymentUrl = new URL("http://localhost:8080/business-central/");
         } catch( MalformedURLException e ) {
             // do nothingj
         }
     }
     
-    @Test
-    public void issueTest() throws Exception { 
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML)
-                .build();
+    KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+            .setDeploymentId(KJAR_DEPLOYMENT_ID)
+            .setMediaType(MediaType.APPLICATION_XML)
+            .build();
         
-        // deploy
-        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    @Test
+    public void queryUrlTest() throws Exception { 
+        restTests.urlsHumanTaskWithVariableChangeFormParameters(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+    
+    @Test 
+    public void remoteApiTest() throws Exception { 
+        restTests.getDeploymentIdFromTaskTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

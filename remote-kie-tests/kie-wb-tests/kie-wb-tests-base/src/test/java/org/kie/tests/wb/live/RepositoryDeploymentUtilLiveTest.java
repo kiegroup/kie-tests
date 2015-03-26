@@ -10,7 +10,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
+//@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class RepositoryDeploymentUtilLiveTest {
 
     private static String user = "mary";
@@ -20,7 +20,7 @@ public class RepositoryDeploymentUtilLiveTest {
     private static URL deploymentUrl;
     static { 
         try {
-            deploymentUrl =  new URL("http://localhost:8080/kie-wb/");
+            deploymentUrl =  new URL("http://localhost:8080/business-central/");
         } catch( MalformedURLException e ) {
             // do nothing
         }
@@ -31,8 +31,8 @@ public class RepositoryDeploymentUtilLiveTest {
         // create repo if not present
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-        String repositoryName = "integration-tests";
-        String project = "integration-tests-classpath";
+        String repositoryName = "tests";
+        String project = "integration-tests";
         String orgUnitName = UUID.randomUUID().toString();
         
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, KJAR_DEPLOYMENT_ID, orgUnitName, user);

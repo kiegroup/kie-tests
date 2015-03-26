@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.logger;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
@@ -382,7 +382,7 @@ public class KieWbJmsIntegrationTestMethods {
 
         TaskService taskService = engine.getTaskService();
         List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(SALA_USER, "en-UK");
-        long taskId = findTaskId(processInstance.getId(), tasks);
+        long taskId = findTaskIdByProcessInstanceId(processInstance.getId(), tasks);
 
         logger.debug("Found task " + taskId);
         Task task = taskService.getTaskById(taskId);

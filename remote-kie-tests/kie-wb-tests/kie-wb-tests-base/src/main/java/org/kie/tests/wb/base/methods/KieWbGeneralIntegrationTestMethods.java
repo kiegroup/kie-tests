@@ -40,9 +40,9 @@ public class KieWbGeneralIntegrationTestMethods {
    
     protected final static int MAX_TRIES = 5;
     
-    public static long findTaskId(Long procInstId, List<TaskSummary> taskSumList) { 
+    public static long findTaskIdByProcessInstanceId(Long procInstId, List<TaskSummary> taskSumList) { 
         long taskId = -1;
-        TaskSummary task = findTaskSummary(procInstId, taskSumList);
+        TaskSummary task = findTaskSummaryByProcessInstanceId(procInstId, taskSumList);
         if( task != null ) { 
             taskId = task.getId();
         }
@@ -50,7 +50,7 @@ public class KieWbGeneralIntegrationTestMethods {
         return taskId;
     }
     
-    public static TaskSummary findTaskSummary(Long procInstId, List<TaskSummary> taskSumList) { 
+    public static TaskSummary findTaskSummaryByProcessInstanceId(Long procInstId, List<TaskSummary> taskSumList) { 
         for( TaskSummary task : taskSumList ) { 
             if( procInstId.equals(task.getProcessInstanceId()) ) {
                 return task;
@@ -167,7 +167,7 @@ public class KieWbGeneralIntegrationTestMethods {
             String user = "krisv";
             TaskService taskService = krisRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = findTaskSummary(procInstId, tasks);
+            TaskSummary task = findTaskSummaryByProcessInstanceId(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -181,7 +181,7 @@ public class KieWbGeneralIntegrationTestMethods {
             String user = "john";
             TaskService taskService = johnRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = findTaskSummary(procInstId, tasks);
+            TaskSummary task = findTaskSummaryByProcessInstanceId(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'john' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);
@@ -195,7 +195,7 @@ public class KieWbGeneralIntegrationTestMethods {
             String user = "mary";
             TaskService taskService = maryRuntimeEngine.getTaskService();
             List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(user, "en-UK");
-            TaskSummary task = findTaskSummary(procInstId, tasks);
+            TaskSummary task = findTaskSummaryByProcessInstanceId(procInstId, tasks);
             assertNotNull("Unable to find " + user + "'s task", task);
             System.out.println("'" + user + "' completing task " + task.getName() + ": " + task.getDescription());
             taskService.start(task.getId(), user);

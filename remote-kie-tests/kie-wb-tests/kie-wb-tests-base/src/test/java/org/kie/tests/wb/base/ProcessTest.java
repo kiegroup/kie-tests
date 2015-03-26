@@ -2,14 +2,16 @@ package org.kie.tests.wb.base;
 
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.VERSION;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +44,8 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
@@ -270,4 +274,42 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         procInst = ksession.getProcessInstance(processInstanceId);
         assertNull(procInst);
     } 
+    
+    @Test
+    public void singleHumanTaskProcessTest() { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/singleHumanTask.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);;
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
+        // 1. start process (could do it this way or a via REST url or whatever.. 
+        ProcessInstance processInstance = ksession.startProcess(SINGLE_HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+        logger.debug("Started process instance: " + processInstance + " " + procInstId);
+        
+        // 2. find task (without deployment id)
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, "en-UK");
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+        logger.debug("Found task " + taskId);
+        
+        // 3. retrieve task and get deployment id from task
+        Task task = taskService.getTaskById(taskId);
+        logger.debug("Got task " + taskId);
+        String deploymentId = task.getTaskData().getDeploymentId();
+        logger.debug("Got deployment id " + deploymentId );
+       
+        // 4. start task 
+        taskService.start(taskId, MARY_USER);
+        
+        // 5. complete task with TaskService instance that *has a deployment id*
+        taskService.complete(taskId, MARY_USER, null);
+
+        // 6. verify that process has completed
+        processInstance = ksession.getProcessInstance(procInstId);
+        assertTrue( "Process instance has not completed!", processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED);
+    }
 }

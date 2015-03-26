@@ -8,7 +8,7 @@ import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore
+@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class CommandWebServiceLiveTest {
 
    protected static final Logger logger = LoggerFactory.getLogger(CommandWebServiceLiveTest.class);
