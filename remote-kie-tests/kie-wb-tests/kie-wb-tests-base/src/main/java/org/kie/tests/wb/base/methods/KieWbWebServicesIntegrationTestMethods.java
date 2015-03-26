@@ -38,9 +38,13 @@ public class KieWbWebServicesIntegrationTestMethods {
 
     private static Logger logger = LoggerFactory.getLogger(KieWbRestIntegrationTestMethods.class);
     
-    public void startSimpleProcess(URL deploymentUrl) throws Exception {
-        CommandWebService commandWebService = createClient(deploymentUrl); 
-       
+    public static void startSimpleProcess(URL deploymentUrl) throws Exception {
+        CommandWebService commandWebService = createDefaultClient(deploymentUrl); 
+        
+        startSimpleProcess(commandWebService);
+    }
+    
+    public static void startSimpleProcess(CommandWebService commandWebService ) throws Exception {
         // start process
         StartProcessCommand spc = new StartProcessCommand();
         spc.setProcessId(HUMAN_TASK_PROCESS_ID);
@@ -101,7 +105,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         
     }
 
-    private <T> T doWebserviceRequest(CommandWebService service, Command<?> cmd, String oper, Class<T> respClass) throws Exception { 
+    private static <T> T doWebserviceRequest(CommandWebService service, Command<?> cmd, String oper, Class<T> respClass) throws Exception { 
         // Get a response from the WebService
         JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, cmd);
         JaxbCommandsResponse response = service.execute(req);
@@ -116,9 +120,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         return (T) cmdResp;
     }
     
-
-    
-    private CommandWebService createClient(URL deploymentUrl) throws Exception {
+    private static CommandWebService createDefaultClient(URL deploymentUrl) throws Exception {
         final String user = "mary";
         final String pwd = "mary123@";
  

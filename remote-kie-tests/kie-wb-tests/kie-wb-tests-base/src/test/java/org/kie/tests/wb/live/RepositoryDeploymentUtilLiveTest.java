@@ -1,4 +1,4 @@
-package org.kie.tests.wb.base;
+package org.kie.tests.wb.live;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 
@@ -6,10 +6,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
-public class RepositoryDeploymentUtilTest {
+@Ignore // add Junit "Ping Succeed or Ignore" rule
+public class RepositoryDeploymentUtilLiveTest {
 
     private static String user = "mary";
     private static String password = "mary123@";

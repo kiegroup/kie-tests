@@ -133,6 +133,23 @@
       <artifactId>btm</artifactId>
       <scope>test</scope>
     </dependency>
+    
+    <!--  TEST: remote initial context -->
+    <!-- jboss
+     -->
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-naming</artifactId>
+    </dependency>
+    <!-- weblogic 
+    <dependency>
+      <groupId>weblogic</groupId>
+      <artifactId>weblogic-server</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>/opt/java/oracle/inventory/wlserver/server/lib/wlthint3client.jar</systemPath>
+    </dependency>
+    -->
   </dependencies>
 
   <build>

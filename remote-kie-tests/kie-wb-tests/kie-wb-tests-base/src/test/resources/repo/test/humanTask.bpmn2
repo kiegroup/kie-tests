@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<definitions id="Definition"
+             targetNamespace="http://www.omg.org/bpmn20"
+             typeLanguage="http://www.java.com/javaTypes"
+             expressionLanguage="http://www.mvel.org/2.0"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             xmlns:g="http://www.jboss.org/drools/flow/gpd"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:tns="http://www.jboss.org/drools">
+
+  <itemDefinition id="_approval_documentItem" structureRef="String" />
+  <itemDefinition id="_approval_translatedDocumentItem" structureRef="String" />
+  <itemDefinition id="_approval_reviewCommentItem" structureRef="String" />
+
+  <itemDefinition id="_2-task-approval_documentItem" structureRef="String" />
+  <itemDefinition id="_2-task-approval_translatedDocumentItem" structureRef="String" />
+  <itemDefinition id="_2-task-approval_reviewCommentItem" structureRef="String" />
+
+  <itemDefinition id="_4-task-approval_documentItem" structureRef="String" />
+  <itemDefinition id="_4-task-approval_translatedDocumentItem" structureRef="String" />
+  <itemDefinition id="_4-task-approval_reviewCommentItem" structureRef="String" />
+
+  <itemDefinition id="_5-task-approval_documentItem" structureRef="String" />
+  <itemDefinition id="_5-task-approval_translatedDocumentItem" structureRef="String" />
+  <itemDefinition id="_5-task-approval_reviewCommentItem" structureRef="String" />
+
+  <process processType="Private" isExecutable="true" id="org.test.kjar.writedocument" name="humanTaskSample" tns:packageName="defaultPackage" tns:version="1">
+
+    <!-- process variables -->
+    <property id="approval_document" itemSubjectRef="_approval_documentItem"/>
+    <property id="approval_translatedDocument" itemSubjectRef="_approval_translatedDocumentItem"/>
+    <property id="approval_reviewComment" itemSubjectRef="_approval_reviewCommentItem"/>
+
+    <!-- nodes -->
+    <startEvent id="_1-start" name="Start" />
+    <userTask id="_2-task" name="Write a Document" >
+      <ioSpecification>
+        <dataInput id="_2-task_CommentInput" name="Comment" />
+        <dataInput id="_2-task_TaskNameInput" name="TaskName" />
+        <dataInput id="_2-task_PriorityInput" name="Priority" />
+        <dataOutput id="_2-task_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_2-task_CommentInput</dataInputRefs>
+          <dataInputRefs>_2-task_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_2-task_PriorityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_2-task_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <targetRef>_2-task_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Write a Document</from>
+          <to xsi:type="tFormalExpression">_2-task_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_2-task_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Write a Document</from>
+          <to xsi:type="tFormalExpression">_2-task_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_2-task_PriorityInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">null</from>
+          <to xsi:type="tFormalExpression">_2-task_PriorityInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_2-task_ResultOutput</sourceRef>
+        <targetRef>approval_document</targetRef>
+      </dataOutputAssociation>
+      <potentialOwner>
+        <resourceAssignmentExpression>
+          <formalExpression>salaboy</formalExpression>
+        </resourceAssignmentExpression>
+      </potentialOwner>
+    </userTask>
+    <parallelGateway id="_3-gateway" name="Review and Translate" gatewayDirection="Diverging" />
+    <userTask id="_4-task" name="Translate Document" >
+      <ioSpecification>
+        <dataInput id="_4-task_TaskNameInput" name="TaskName" />
+        <dataOutput id="_4-task_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_4-task_TaskNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_4-task_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <targetRef>_4-task_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Translate Document</from>
+          <to xsi:type="tFormalExpression">_4-task_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_4-task_ResultOutput</sourceRef>
+        <targetRef>approval_translatedDocument</targetRef>
+      </dataOutputAssociation>
+      <potentialOwner>
+        <resourceAssignmentExpression>
+          <formalExpression>translator</formalExpression>
+        </resourceAssignmentExpression>
+      </potentialOwner>
+    </userTask>
+    <userTask id="_5-task" name="Review Document" >
+      <ioSpecification>
+        <dataInput id="_5-task_TaskNameInput" name="TaskName" />
+        <dataOutput id="_5-task_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_5-task_TaskNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_5-task_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <targetRef>_5-task_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Review Document</from>
+          <to xsi:type="tFormalExpression">_5-task_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_5-task_ResultOutput</sourceRef>
+        <targetRef>approval_reviewComment</targetRef>
+      </dataOutputAssociation>
+      <potentialOwner>
+        <resourceAssignmentExpression>
+          <formalExpression>mary</formalExpression>
+        </resourceAssignmentExpression>
+      </potentialOwner>
+    </userTask>
+    <parallelGateway id="_6-gateway" name="Reviewed and Translated" gatewayDirection="Converging" />
+    <endEvent id="_8-end" name="End" >
+        <terminateEventDefinition />
+    </endEvent>
+    <scriptTask id="_7-script" name="Report" scriptFormat="http://www.java.com/java" >
+      <script>System.out.println("### REPORT - ");System.out.println("### \t");System.out.println("### \t approval_document: "+approval_document);System.out.println("### \t approval_translatedDocument: "+approval_translatedDocument);System.out.println("### \t approval_reviewComment: "+approval_reviewComment);</script>
+    </scriptTask>
+
+    <!-- connections -->
+    <sequenceFlow id="_1-_2" sourceRef="_1-start" targetRef="_2-task" />
+    <sequenceFlow id="_2-_3" sourceRef="_2-task" targetRef="_3-gateway" />
+    <sequenceFlow id="_3-_4" sourceRef="_3-gateway" targetRef="_4-task" />
+    <sequenceFlow id="_3-_5" sourceRef="_3-gateway" targetRef="_5-task" />
+    <sequenceFlow id="_4-_6-" sourceRef="_4-task" targetRef="_6-gateway" />
+    <sequenceFlow id="_5-_6" sourceRef="_5-task" targetRef="_6-gateway" />
+    <sequenceFlow id="_7-_8" sourceRef="_7-script" targetRef="_8-end" />
+    <sequenceFlow id="_6--_7" sourceRef="_6-gateway" targetRef="_7-script" />
+
+  </process>
+
+</definitions>

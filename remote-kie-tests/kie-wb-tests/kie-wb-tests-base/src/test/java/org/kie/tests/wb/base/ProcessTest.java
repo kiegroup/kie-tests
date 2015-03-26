@@ -1,7 +1,9 @@
 package org.kie.tests.wb.base;
 
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.junit.Assert.*;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
@@ -214,19 +216,12 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
     public void runGroupAssignmentHumanTaskTest() throws Exception { 
         // setup
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
-        resources.put("repo/test/singleHumanTaskGroupAssignment.bpmn2", ResourceType.BPMN2);
+        resources.put("repo/test/groupAssignmentHumanTask.bpmn2", ResourceType.BPMN2);
         RuntimeManager runtimeManager = createRuntimeManager(resources);
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("certifiate", "test");
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
-        assertNotNull( "No ProcessInstance!", pi);
-        long procInstId = pi.getId();
-        
-        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
-        assertEquals( 1, taskIds.size());
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
     }
     
     @Test

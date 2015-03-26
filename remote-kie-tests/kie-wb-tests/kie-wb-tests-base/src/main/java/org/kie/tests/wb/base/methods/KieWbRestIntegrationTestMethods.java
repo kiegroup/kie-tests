@@ -24,7 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.kie.remote.tests.base.RestUtil.postEntity;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummary;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Random;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
@@ -77,6 +78,7 @@ import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.services.task.utils.ContentMarshallerHelper;
+import org.junit.Test;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
@@ -153,6 +155,8 @@ public class KieWbRestIntegrationTestMethods {
     
     private int timeoutInMillisecs;
     private static final int DEFAULT_TIMEOUT = 10;
+    
+    private static Random random = new Random();
 
     static { 
         System.setProperty("org.kie.xml.encode", "true");
@@ -472,6 +476,7 @@ public class KieWbRestIntegrationTestMethods {
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addUrl(deploymentUrl)
                 .addUserName(user)
+                .addDeploymentId("")
                 .addPassword(password);
         TaskService taskService = builder.build().getTaskService();
         // @formatter:on
@@ -1084,20 +1089,7 @@ public class KieWbRestIntegrationTestMethods {
                 .addUrl(deploymentUrl)
                 .build();
         // @formatter:on
-
-
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("taskOwnerGroup", "HR");
-        params.put("taskName", "Mary's Task");
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
-        assertNotNull("No ProcessInstance!", pi);
-        long procInstId = pi.getId();
-
-        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
-        assertEquals(1, taskIds.size());
-
-        List<String> processIds = (List<String>) runtimeEngine.getKieSession().execute(new GetProcessIdsCommand());
-        assertTrue("No process ids returned.", !processIds.isEmpty() && processIds.size() > 5);
+        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
     }
 
     public void remoteApiHumanTaskOwnTypeTest( URL deploymentUrl ) {
@@ -1299,7 +1291,8 @@ public class KieWbRestIntegrationTestMethods {
             .addPassword(MARY_PASSWORD)
             .addUrl(deploymentUrl)
             .build();
-        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+        
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
     }
     
     public void urlsProcessQueryOperationsTest( URL deploymentUrl, String user, String password ) throws Exception  { 
@@ -1370,5 +1363,57 @@ public class KieWbRestIntegrationTestMethods {
         ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
         return procInst.getId();
     }
-   
+    
+    public void urlsQueryProcessInstancesNotFilteringTest( URL deploymentUrl, String user, String password ) throws Exception  { 
+        KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
+      
+        String prefix = random.nextInt(Integer.MAX_VALUE) + "-";
+        long pids [] = runObjectVarProcess(ksession, prefix);
+        
+        Map<String, String> queryParams = new HashMap<String, String>(2);
+        queryParams.put( "processinstancestatus", "1");
+        queryParams.put( "varregex_myobject", prefix + "Hello.*");
+       
+        JaxbQueryProcessInstanceResult result = RestUtil.getQuery(
+                deploymentUrl, "rest/query/runtime/process", 
+                MediaType.APPLICATION_XML, 200, 
+                user, password, 
+                queryParams, JaxbQueryProcessInstanceResult.class);
+        
+        assertNotNull( "Null result", result );
+        assertFalse( "Empty result (all)", result.getProcessInstanceInfoList().isEmpty() );
+        assertEquals( "Process instance info results", 2, result.getProcessInstanceInfoList().size() );
+        for( JaxbQueryProcessInstanceInfo queryInfo : result.getProcessInstanceInfoList() ) { 
+           assertNotNull( "No process instance info!", queryInfo.getProcessInstance() );
+           assertEquals( "No variable info!", 1, queryInfo.getVariables().size() );
+           JaxbVariableInfo varInfo = queryInfo.getVariables().get(0);
+           assertNotNull( "No variable info!", varInfo );
+           String varValue = (String) varInfo.getValue();
+           assertNotNull( "No variable value!", varValue );
+           assertTrue( "Incorrect variable value", varValue.startsWith(prefix + "Hello")); 
+        } 
+    }
+  
+    protected long[] runObjectVarProcess( KieSession ksession, String prefix) {
+        long[] pids = new long[3];
+        
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("myobject", prefix + "Hello World!");
+
+        ProcessInstance pi = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, params); // completed
+        pids[0] = pi.getId();
+        params.put("myobject", prefix + "Hello Ivo!");
+        pi = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, params); // completed
+        pids[1] = pi.getId();
+        params.put("myobject", prefix + "Bye Ivo!");
+        pi = ksession.startProcess(OBJECT_VARIABLE_PROCESS_ID, params); // completed
+        pids[2] = pi.getId();
+        
+        return pids;
+    }
+
+    @Test
+    public void notBeingFilteredTest() {
+       
+    }
 }

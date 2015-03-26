@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.logger;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
@@ -792,6 +793,34 @@ public class KieWbJmsIntegrationTestMethods {
             .addUserName(MARY_USER)
             .addPassword(MARY_PASSWORD)
             .build();
-        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+        
+        RuntimeEngine johnRuntimeEngine 
+            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            .addJbossServerHostName(deploymentUrl.getHost())
+            .addDeploymentId(KJAR_DEPLOYMENT_ID)
+            .useSsl(true)
+            .addHostName("localhost")
+            .addJmsConnectorPort(5446)
+            .addKeystoreLocation("ssl/client_keystore.jks")
+            .addKeystorePassword("CLIENT_KEYSTORE_PASSWORD")
+            .useKeystoreAsTruststore()
+            .addUserName(JOHN_USER)
+            .addPassword(JOHN_PASSWORD)
+            .build();
+        
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, johnRuntimeEngine);
+    }
+    
+    public void remoteApiHumanTaskGroupVarAssignTest( URL deploymentUrl ) {
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
+                .addUrl(deploymentUrl)
+                .build();
+        // @formatter:on
+        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
     }
 }

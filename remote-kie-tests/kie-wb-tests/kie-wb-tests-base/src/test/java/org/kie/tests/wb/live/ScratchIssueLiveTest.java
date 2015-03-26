@@ -1,4 +1,4 @@
-package org.kie.tests.wb.base;
+package org.kie.tests.wb.live;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
@@ -9,11 +9,13 @@ import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 
-public class IssueTest {
+@Ignore // add Junit "Ping Succeed or Ignore" rule
+public class ScratchIssueLiveTest {
 
     private KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods();
  

@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.kie.tests.wb.base.util.TestConstants.EVALUTAION_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.MyType;
 import org.kie.tests.Person;
@@ -206,9 +208,9 @@ public class KieWbGeneralIntegrationTestMethods {
         System.out.println("Process instance completed");
     }
 
-    public static void runRemoteApiGroupAssignmentEngineeringTest(RuntimeEngine runtimeEngine) throws Exception {
-        KieSession ksession = runtimeEngine.getKieSession();
-        TaskService taskService = runtimeEngine.getTaskService();
+    public static void runRemoteApiGroupAssignmentEngineeringTest(RuntimeEngine maryRuntime, RuntimeEngine johnRuntime) throws Exception {
+        KieSession ksession = maryRuntime.getKieSession();
+        TaskService taskService = maryRuntime.getTaskService();
         ProcessInstance pi = ksession.startProcess(GROUP_ASSSIGNMENT_PROCESS_ID, null);
         assertNotNull(pi);
         assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
@@ -233,9 +235,11 @@ public class KieWbGeneralIntegrationTestMethods {
         
         // complete 'Task 2' as john
         taskService.release(taskSummary.getId(), MARY_USER);
-        taskService.claim(taskSummary.getId(), JOHN_USER);
-        taskService.start(taskSummary.getId(), JOHN_USER);
-        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+        
+        TaskService johnTaskService = johnRuntime.getTaskService();
+        johnTaskService.claim(taskSummary.getId(), JOHN_USER);
+        johnTaskService.start(taskSummary.getId(), JOHN_USER);
+        johnTaskService.complete(taskSummary.getId(), JOHN_USER, null);
         
         // now make sure that the next task has been assigned to the
         // correct person. it should be john.
@@ -244,8 +248,8 @@ public class KieWbGeneralIntegrationTestMethods {
         assertEquals(JOHN_USER, taskSummary.getActualOwner().getId());
         
         // complete 'Task 3' as john
-        taskService.start(taskSummary.getId(), JOHN_USER);
-        taskService.complete(taskSummary.getId(), JOHN_USER, null);
+        johnTaskService.start(taskSummary.getId(), JOHN_USER);
+        johnTaskService.complete(taskSummary.getId(), JOHN_USER, null);
         
         // assert process finished
         pi = ksession.getProcessInstance(pi.getId());
@@ -264,4 +268,24 @@ public class KieWbGeneralIntegrationTestMethods {
         }
         return result;
     }
+    
+    public static void runHumanTaskGroupVarAssignTest( RuntimeEngine runtimeEngine, String user, String group ) { 
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("taskOwnerGroup", "HR");
+        params.put("taskName", "Mary's Task");
+        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
+        assertNotNull("No ProcessInstance!", pi);
+        long procInstId = pi.getId();
+
+        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
+        assertEquals(1, taskIds.size());
+
+        List<String> processIds = (List<String>) runtimeEngine.getKieSession().execute(new GetProcessIdsCommand());
+        assertTrue("No process ids returned.", !processIds.isEmpty() && processIds.size() > 5);
+        
+        TaskService taskService = runtimeEngine.getTaskService();
+        long taskId = taskIds.get(0);
+        taskService.claim(taskIds.get(0), user);
+    }
+
 }

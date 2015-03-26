@@ -16,10 +16,10 @@ public class KieWbWarJbossEapDeploy {
         return createTestWar(null);
     }
 
-    private static final String classifier = "eap6_4";
+    private static final String classifier = "eap-6_1";
 
     static WebArchive createTestWar( String database ) {
-        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
+        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, "6.0.3-SNAPSHOT");
 
         // Replace persistence.xml with postgres version
         if( database != null ) {
@@ -35,11 +35,9 @@ public class KieWbWarJbossEapDeploy {
 
         String[][] jarsToReplace = {
                 // kie-remote
-                { "org.kie.remote", "kie-remote-services" },
-                { "org.guvnor", "guvnor-rest-client" },
-                { "org.guvnor", "guvnor-rest-backend" }
+                { "org.kie.remote", "kie-remote-services" }
         };
-        replaceJars(war, PROJECT_VERSION, jarsToReplace);
+//        replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
         boolean webXmlReplace = false;
         if( webXmlReplace ) {
