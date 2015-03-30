@@ -68,11 +68,45 @@
 
   <dependencyManagement>
     <dependencies>
-      <!--  move to kie-bom -->
+      <!-- Do _not_ move these kie-tests-* artifacts into kie-bom. They are not being released with the rest
+           of the artifacts and just pollute the BOM with inaccessible dependencies -->
       <dependency>
         <groupId>org.kie.tests.remote</groupId>
         <artifactId>remote-kie-tests-util</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>kie-wb-tests-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>kie-wb-tests-base</artifactId>
+        <version>${project.version}</version>
+        <classifier>sources</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>drools-wb-tests-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>drools-wb-tests-base</artifactId>
+        <version>${project.version}</version>
+        <classifier>sources</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>jbpm-console-tests-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.kie.tests.remote</groupId>
+        <artifactId>jbpm-console-tests-base</artifactId>
+        <version>${project.version}</version>
+        <classifier>sources</classifier>
       </dependency>
       
       <!--  arquillian -->
