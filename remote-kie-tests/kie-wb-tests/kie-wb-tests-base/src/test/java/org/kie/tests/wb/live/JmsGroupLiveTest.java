@@ -14,15 +14,12 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Queue;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.ws.rs.core.MediaType;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.client.api.RemoteJmsRuntimeEngineBuilder;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

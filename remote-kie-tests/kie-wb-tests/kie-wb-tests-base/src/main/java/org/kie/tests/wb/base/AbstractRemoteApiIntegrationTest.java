@@ -8,8 +8,6 @@ import static org.kie.tests.wb.base.util.TestConstants.SALA_USER;
 
 import java.net.URL;
 
-import javax.ws.rs.core.MediaType;
-
 import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
@@ -35,7 +33,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     @ArquillianResource
     protected URL deploymentUrl;
     
-    protected void liveSetDeploymentUrl() { 
+    protected void liveSetDeploymentUrl() throws Exception { 
        // do nothing, but can be overridden 
     }
    
@@ -94,7 +92,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
    
     @Before
-    public void before() {
+    public void optionalSetDeploymentUrl() throws Exception {
         liveSetDeploymentUrl();
     }
     
@@ -104,24 +102,15 @@ public abstract class AbstractRemoteApiIntegrationTest {
         Assume.assumeTrue(doDeploy());
         
         printTestName();
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD, true);
+        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
         Thread.sleep(5000);
     }
-
     
     @Test
     @InSequence(REST_ERROR)
     public void webserviceTest() throws Exception {
         printTestName();
         wsTests.startSimpleProcess(deploymentUrl);
-    }
-    
-    @Test
-    @InSequence(REST_FAILING)
-    public void testRestUrlStartHumanTaskProcess() throws Exception {
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.urlsStartHumanTaskProcess(deploymentUrl, SALA_USER, SALA_PASSWORD);
     }
     
     @Test
@@ -175,10 +164,10 @@ public abstract class AbstractRemoteApiIntegrationTest {
 
     @Test
     @InSequence(REST_FAILING)
-    public void testRestHumanTaskCompleteWithVariable() throws Exception {
+    public void testRestHumanTask() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.urlsHumanTaskWithVariableChangeFormParameters(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsHumanTaskTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
     @Test
@@ -215,22 +204,6 @@ public abstract class AbstractRemoteApiIntegrationTest {
 
     @Test
     @InSequence(REST_SUCCEEDING)
-    public void testRestRemoteApiGetTaskInstance() throws Exception {
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.remoteApiGetTaskInstance(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(REST_RANDOM)
-    public void testRestUrlsGetTaskContent() throws Exception {
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.urlsGetTaskAndTaskContent(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsVariableHistory() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -258,7 +231,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testRestUrlsGroupAssignmentProcess() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
-        restTests.urlsGroupAssignmentTest(deploymentUrl);
+        restTests.urlsHumanTaskGroupAssignmentTest(deploymentUrl);
     }
    
     @Test

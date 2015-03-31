@@ -1,16 +1,10 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
-import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.*;
 
 import java.util.ArrayList;
@@ -44,8 +38,6 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
-import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
-import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
@@ -312,4 +304,40 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         processInstance = ksession.getProcessInstance(procInstId);
         assertTrue( "Process instance has not completed!", processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED);
     }
+    
+    @Test
+    public void urlHumanTaskTestTest() { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/humanTaskVar.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);;
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+       
+        Map<String, Object> vars = new HashMap<String, Object>();
+        vars.put("userName", "John");
+        ProcessInstance procInst = ksession.startProcess(HUMAN_TASK_VAR_PROCESS_ID, vars);
+        long procInstId = procInst.getId();
+       
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+        long taskId = taskIds.get(0);
+        
+        taskService.start(taskId, MARY_USER);
+        
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("outUserName", "George");
+        taskService.complete(taskId, MARY_USER, results);
+        
+        Map<String, Object> contentMap = taskService.getTaskContent(taskId);
+        String groupId = null;
+        for( Entry<String, Object> entry : contentMap.entrySet() ) { 
+            if( entry.getKey().equals("GroupId") ) {
+                groupId = new String((String) entry.getValue());
+                break;
+            }
+        }
+        assertEquals("reviewer", groupId);
+    }
+    
 }

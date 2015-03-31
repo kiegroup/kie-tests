@@ -6,7 +6,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 

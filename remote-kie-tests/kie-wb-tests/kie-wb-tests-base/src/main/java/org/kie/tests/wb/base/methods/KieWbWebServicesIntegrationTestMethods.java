@@ -15,7 +15,6 @@ import org.jbpm.services.task.utils.ContentMarshallerHelper;
 import org.kie.api.command.Command;
 import org.kie.api.task.model.Content;
 import org.kie.api.task.model.Task;
-import org.kie.internal.jaxb.StringKeyObjectValueMap;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.jaxb.gen.GetContentCommand;
