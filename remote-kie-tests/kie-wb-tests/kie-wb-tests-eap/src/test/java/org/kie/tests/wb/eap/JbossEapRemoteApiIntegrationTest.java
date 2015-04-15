@@ -31,8 +31,8 @@ import org.junit.runner.RunWith;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
-//@RunAsClient
-//@RunWith(Arquillian.class)
+@RunAsClient
+@RunWith(Arquillian.class)
 public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
@@ -41,7 +41,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public boolean doDeploy() { 
-        return false;
+        return true;
     }
  
     public String getContentType() { 
@@ -68,8 +68,7 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
         return 4;
     }
     
-    @Override
-    public void liveSetDeploymentUrl() { 
+    public void noLiveSetDeploymentUrl() { 
         // Modify this string to match your kie-wb/BPMS installation
         String urlString = "http://localhost:8080/business-central/";
         try { 

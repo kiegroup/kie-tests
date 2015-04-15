@@ -53,13 +53,4 @@ public class DummyTest {
        assertTrue(true); 
     }
     
-    @Test
-    public void testRestHumanTaskCompleteWithVariable() throws Exception {
-        restTests.urlsHumanTaskWithVariableChangeFormParameters(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-    
-    @Test
-    public void testRestRemoteApiHumanTaskProcess() throws Exception {
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    } 
 }

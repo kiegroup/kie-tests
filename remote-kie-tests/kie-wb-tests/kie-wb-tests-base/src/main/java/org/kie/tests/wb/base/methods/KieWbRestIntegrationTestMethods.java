@@ -371,7 +371,7 @@ public class KieWbRestIntegrationTestMethods {
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
         String orgUnit = UUID.randomUUID().toString();
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit, user);
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
         int sleep = 5;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
@@ -452,6 +452,19 @@ public class KieWbRestIntegrationTestMethods {
     
         assertNotNull("No task retrieved!", jsonTask);
         assertEquals("task id", taskId, jsonTask.getId().intValue());
+       
+        String signalProcessUrl = "rest/runtime/" + deploymentId + "/process/instance/" + procInstId + "/signal";
+        
+        formParams = new HashMap<String, String>(2);
+        formParams.put("signal", "MySignal");
+        formParams.put("event", "MySignal");
+        RestUtil.postForm(deploymentUrl,
+                signalProcessUrl, contentType,
+                200, user, password,
+                formParams,
+                JaxbGenericResponse.class);
+        
+        processInstance = get("runtime/" + deploymentId + "/process/instance/" + procInstId, 200, JaxbProcessInstanceResponse.class);
     }
 
     public void urlsHumanTaskGroupAssignmentTest( URL deploymentUrl ) throws Exception {
@@ -562,32 +575,42 @@ public class KieWbRestIntegrationTestMethods {
         long procInstId = processInstance.getId();
 
         // @formatter:off
-        TaskService noDepTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+        TaskService nullDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addUrl(deploymentUrl)
                 .addUserName(user)
+                .addDeploymentId(null)
+                .addPassword(password)
+                .build().getTaskService();
+        // @formatter:on
+    
+        // @formatter:off
+        TaskService emptyDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId("")
                 .addPassword(password)
                 .build().getTaskService();
         // @formatter:on
      
+        // 2c. Another way to find the task
+        List<TaskSummary> tasks = nullDepIdTaskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+        
         // 2. find task (without deployment id)
-        long taskId;
+        long sameTaskId;
         { 
-            List<Long> taskIds = noDepTaskService.getTasksByProcessInstanceId(procInstId);
+            List<Long> taskIds = nullDepIdTaskService.getTasksByProcessInstanceId(procInstId);
             assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
-            taskId = taskIds.get(0);
+            sameTaskId = taskIds.get(0);
         }
+        assertEquals( "Did not find the same task!", taskId, sameTaskId );
         
         // 2b. Get the task instance itself
-        Task task = noDepTaskService.getTaskById(taskId);
+        Task task = nullDepIdTaskService.getTaskById(taskId);
         checkReturnedTask(task, taskId);
-       
-        // 2c. Another way to find the task
-        List<TaskSummary> tasks = noDepTaskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
-        long sameTaskId = findTaskIdByProcessInstanceId(procInstId, tasks);
-        assertEquals( "Did not find the same task!", taskId, sameTaskId );
 
         // 3. Start the task
-        noDepTaskService.start(taskId, taskUserId);
+        emptyDepIdTaskService.start(taskId, taskUserId);
 
         // 4. configure remote api client with deployment id
         // @formatter:off
@@ -599,7 +622,7 @@ public class KieWbRestIntegrationTestMethods {
         // @formatter:on
        
         // 5. complete task with TaskService instance that *has a deployment id*
-        depIdTaskService.complete(taskId, user, null);
+        emptyDepIdTaskService.complete(taskId, taskUserId, null);
        
         // the second time should fail!
         try {
@@ -610,10 +633,10 @@ public class KieWbRestIntegrationTestMethods {
             // do nothing
         }
         
-        Map<String, Object> contentMap = noDepTaskService.getTaskContent(taskId);
+        Map<String, Object> contentMap = nullDepIdTaskService.getTaskContent(taskId);
         assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
         
-        org.kie.api.task.model.Content content = noDepTaskService.getContentById(task.getTaskData().getDocumentContentId());
+        org.kie.api.task.model.Content content = nullDepIdTaskService.getContentById(task.getTaskData().getDocumentContentId());
         if( content != null && content.getContent() != null ) {
             Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
             contentMap = (Map<String, Object>) contentMapObj;
@@ -624,7 +647,7 @@ public class KieWbRestIntegrationTestMethods {
         
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
-        List<TaskSummary> taskSums = noDepTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        List<TaskSummary> taskSums = nullDepIdTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
         assertEquals("Expected 2 tasks.", 2, taskSums.size());
     }
 
@@ -677,10 +700,6 @@ public class KieWbRestIntegrationTestMethods {
             .build();
         
         runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
-    }
-
-    public void ________o() {
-        
     }
 
     /**
@@ -1167,10 +1186,6 @@ public class KieWbRestIntegrationTestMethods {
         return pids;
     }
 
-    private void _________o() { 
-        
-    }
-    
     public void remoteApiSerialization( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
         RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
@@ -1244,7 +1259,7 @@ public class KieWbRestIntegrationTestMethods {
         String orgUnit = "Classpath User";
     
         if( ! deployUtil.checkRepositoryExistence(repositoryName) ) { 
-            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, classpathDeploymentId, orgUnit, user);
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, classpathDeploymentId, orgUnit);
         } else { 
             deployUtil.deploy(classpathDeploymentId);
         }

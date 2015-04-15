@@ -59,7 +59,7 @@ public class RepositoryDeploymentUtil {
         this.password = password;
     }
     
-    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnitName, String user) { 
+    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnitName) { 
         if( repositoryExists(repositoryName) ) {
             JobRequest delRepoJob = deleteRepository(repositoryName);
             waitForJobsToFinish(sleepSecs, delRepoJob);

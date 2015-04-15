@@ -34,6 +34,6 @@ public class RepositoryDeploymentUtilLiveTest {
         String project = "integration-tests";
         String orgUnitName = UUID.randomUUID().toString();
         
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, KJAR_DEPLOYMENT_ID, orgUnitName, user);
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, KJAR_DEPLOYMENT_ID, orgUnitName);
     }
 }

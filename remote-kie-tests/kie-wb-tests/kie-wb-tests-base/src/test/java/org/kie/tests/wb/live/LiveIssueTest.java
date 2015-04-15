@@ -1,21 +1,4 @@
-/*
-t  * JBoss, Home of Professional Open Source
- * 
- * Copyright 2012, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.kie.tests.wb.eap;
+package org.kie.tests.wb.live;
 
 import static org.junit.Assert.assertEquals;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
@@ -23,7 +6,6 @@ import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,20 +15,9 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.Archive;
-import org.junit.AfterClass;
-import org.junit.Assume;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.remote.client.api.RemoteRuntimeEngineFactory;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
@@ -55,52 +26,29 @@ import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bpms.flood.model.Person;
-import com.bpms.flood.model.Request;
+public class LiveIssueTest {
 
-//@RunAsClient
-//@RunWith(Arquillian.class)
-public class JbossEapRemoteApiIssueTest {
-
-    @Deployment(testable = false, name = "kie-wb-eap")
-    public static Archive<?> createWar() {
-        return createTestWar();
-    }
- 
-    private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
+    protected static final Logger logger = LoggerFactory.getLogger(LiveIssueTest.class);
     
-//    @ArquillianResource
-    URL deploymentUrl;
-    { 
-        try {
-            deploymentUrl = new URL("http://localhost:8080/business-central/");
-        } catch( MalformedURLException e ) {
-            e.printStackTrace();
-        }
-    }
+    private static String user = "mary";
+    private static String password = "mary123@";
    
     
-    @AfterClass
-    public static void waitForTxOnServer() throws InterruptedException {
-        long sleep = 1000;
-        logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
-        Thread.sleep(sleep);
-    }
-
-    protected void printTestName() { 
-        String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
-        System.out.println( "-=> " + testName );
+    private static URL deploymentUrl;
+    static { 
+        try {
+            deploymentUrl =  new URL("http://localhost:8080/business-central/");
+        } catch( MalformedURLException e ) {
+            // do nothing
+        }
     }
     
     @Test
     public void issueTest() throws Exception { 
-        printTestName();
-        String username = MARY_USER;
-        String password = MARY_PASSWORD;
         
         // deploy
 
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
@@ -127,7 +75,7 @@ public class JbossEapRemoteApiIssueTest {
         formParams.put("map_userName", "John");
         JaxbProcessInstanceResponse processInstance = RestUtil.postForm(deploymentUrl,
                 startProcessUrl, MediaType.APPLICATION_XML,
-                 200, username, password,
+                 200, user, password,
                  formParams,
                  JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
@@ -137,7 +85,7 @@ public class JbossEapRemoteApiIssueTest {
         queryparams.put("processInstanceId", String.valueOf(procInstId));
         JaxbTaskSummaryListResponse taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
                 "task/query", MediaType.APPLICATION_XML,
-                200, username, password,
+                200, user, password,
                 queryparams, JaxbTaskSummaryListResponse.class);
     
         TaskSummary taskSum = findTaskSummaryByProcessInstanceId(procInstId, taskSumlistResponse.getResult());
@@ -146,7 +94,7 @@ public class JbossEapRemoteApiIssueTest {
         // get task info
         org.kie.remote.jaxb.gen.Task task = RestUtil.get(deploymentUrl, 
                 "task/" + taskId, MediaType.APPLICATION_XML,
-                200, username, password,
+                200, user, password,
                 org.kie.remote.jaxb.gen.Task.class);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
         
@@ -155,11 +103,11 @@ public class JbossEapRemoteApiIssueTest {
         queryparams.put("taskid", String.valueOf(taskId));
         taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
                 "task/query", MediaType.APPLICATION_XML,
-                200, username, password,
+                200, user, password,
                 queryparams, JaxbTaskSummaryListResponse.class);
     
         assertEquals("Incorrect num tasks", 1, taskSumlistResponse.getResult().size() );
         taskSum = taskSumlistResponse.getResult().get(0);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
-    }
+    } 
 }

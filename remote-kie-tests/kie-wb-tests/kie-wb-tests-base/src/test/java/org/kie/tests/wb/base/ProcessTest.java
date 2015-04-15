@@ -329,6 +329,13 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         results.put("outUserName", "George");
         taskService.complete(taskId, MARY_USER, results);
         
+        try { 
+            taskService.complete(taskId, MARY_USER, results);
+            fail("Second task complete should have failed!");
+        } catch( Exception e ) { 
+            
+        }
+        
         Map<String, Object> contentMap = taskService.getTaskContent(taskId);
         String groupId = null;
         for( Entry<String, Object> entry : contentMap.entrySet() ) { 
@@ -338,6 +345,11 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
             }
         }
         assertEquals("reviewer", groupId);
+        
+        ksession.signalEvent("MySignal", "MySignal", procInstId);
+       
+        procInst = ksession.getProcessInstance(procInstId);
+        assertTrue( "State: "  +  (procInst == null ? 2 : procInst.getState()), procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED);
     }
     
 }

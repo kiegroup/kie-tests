@@ -16,28 +16,18 @@ public class KieWbWarJbossEapDeploy {
         return createTestWar(null);
     }
 
-    private static final String classifier = "eap-6_1";
+    private static final String classifier = "eap6_4";
 
     static WebArchive createTestWar( String database ) {
-        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, "6.0.3-SNAPSHOT");
-
-        // Replace persistence.xml with postgres version
-        if( database != null ) {
-            war.delete("WEB-INF/classes/META-INF/persistence.xml");
-            if( "oracle".equals(database) ) {
-                war.addAsResource("META-INF/persistence-oracle.xml", "META-INF/persistence.xml");
-            } else if( "postgres".equals(database) ) {
-                war.addAsResource("META-INF/persistence-postgres.xml", "META-INF/persistence.xml");
-            } else {
-                throw new IllegalArgumentException("Unknown database type: " + database);
-            }
-        }
+        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
                 // kie-remote
-                { "org.kie.remote", "kie-remote-services" }
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.jbpm", "jbpm-executor" }
+//                { "org.jbpm", "jbpm-kie-services" }
         };
-//        replaceJars(war, PROJECT_VERSION, jarsToReplace);
+        replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
         boolean webXmlReplace = false;
         if( webXmlReplace ) {

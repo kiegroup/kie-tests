@@ -29,19 +29,6 @@
     <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
   </properties>
 
-  <dependencyManagement>
-    <dependencies>
-          <dependency>
-      <groupId>org.kie</groupId>
-      <artifactId>kie-wb-distribution-wars</artifactId>
-      <classifier>eap-6_1</classifier>
-      <version>6.0.3-SNAPSHOT</version>
-      <scope>test</scope>
-      <type>war</type>
-    </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
