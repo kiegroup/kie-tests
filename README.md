@@ -1,29 +1,16 @@
+
+THE WORKING BRANCH IS CURRENTLY: MASTER
+=======================================
+
 kie-tests
 =========
 
 Repository for tests involving multiple projects as well as tests that might not fit into specific
 modules. Please feel free to add any tests!
 
-In general, when adding modules (at any level) to this repo, try to keep the following structure 
-in mind: 
-
-- Root level modules should be named after what they're testing. For example:  
-  - "remote-kie-tests"
-  - "core-kie-tests"
-
-- Nested modules should be named after the specific types of tests that they include. For example:
-  - "core-kie-tests/core-marshalling-kie-tests/jbpm-marshalling-kie-tests"
-
-The format here is: `<type test>`-kie-tests. 
-
-- However, if the tests are aimed at a specific war or application, please name them after the
-  application, followed by the platform that they test. For example:   
-  - "remote-kie-tests/drools-wb-tests/drools-wb-tests-jboss"
-
-Using this naming system ('nomenclature') means it's easier for other developers to quickly 
-find existing tests or otherwise create new tests or modules in the appropriate place. 
-
-Thanks!
+In particular, this has become Marco's private repository for developing remote API integration
+tests. Until the Remote API is good and stable (and it's alnmost there -- but not quite), Marco 
+needs this repository to easily and quickly test issues and develop code. 
 
 Developing Drools and jBPM
 ==========================
