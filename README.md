@@ -3,8 +3,7 @@
 
 # MASTER
 
-kie-tests
-=========
+### The kie-tests repository
 
 Repository for tests involving multiple projects as well as tests that might not fit into specific
 modules. Please feel free to add any tests!
@@ -13,8 +12,7 @@ In particular, this has become Marco's private repository for developing remote 
 tests. Until the Remote API is good and stable (and it's alnmost there -- but not quite), Marco 
 needs this repository to easily and quickly test issues and develop code. 
 
-Developing Drools and jBPM
-==========================
+### Developing Drools and jBPM
 
 **If you want to build or contribute to a droolsjbpm project, [read this document](https://github.com/droolsjbpm/droolsjbpm-build-bootstrap/blob/master/README.md).**
 
