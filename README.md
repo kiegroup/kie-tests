@@ -1,6 +1,7 @@
 
-THE WORKING BRANCH IS CURRENTLY: MASTER
-=======================================
+## THE WORKING BRANCH IS CURRENTLY: 
+
+# MASTER
 
 kie-tests
 =========
