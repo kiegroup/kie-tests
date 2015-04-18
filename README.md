@@ -11,7 +11,7 @@ Repository for tests involving multiple projects as well as tests that might not
 modules. Please feel free to add any tests!
 
 In particular, this has become Marco's private repository for developing remote API integration
-tests. Until the Remote API is good and stable (and it's alnmost there -- but not quite), Marco 
+tests. Until the Remote API is good and stable (and it's almost there -- but not quite), Marco 
 needs this repository to easily and quickly test issues and develop code. 
 
 ### Developing Drools and jBPM
