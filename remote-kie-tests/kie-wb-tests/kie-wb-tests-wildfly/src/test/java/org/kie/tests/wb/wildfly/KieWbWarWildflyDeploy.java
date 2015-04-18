@@ -1,6 +1,8 @@
 package org.kie.tests.wb.wildfly;
 
-import static org.kie.remote.tests.base.DeployUtil.*;
+import static org.kie.remote.tests.base.DeployUtil.addNewJars;
+import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
+import static org.kie.remote.tests.base.DeployUtil.replaceJars;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -10,23 +12,21 @@ import org.slf4j.LoggerFactory;
 public class KieWbWarWildflyDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarWildflyDeploy.class);
+
+    private static final String classifier = "wildfly8";
     
-    static WebArchive createTestWar(String classifier) {
+    static WebArchive createTestWar() {
         // Import kie-wb war
-        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", "jboss-as7", PROJECT_VERSION);
-       
-        String [][] jarsToReplace = {
-                { "org.kie.remote", "kie-remote-services" }, 
-                { "org.kie.remote", "kie-remote-jaxb" },
-                { "org.kie.remote", "kie-remote-common" }
-        };
+        WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
+
+        String[][] jarsToReplace = { 
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.guvnor", "guvnor-rest-client" },
+                { "org.guvnor", "guvnor-rest-backend" },
+                };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
-        
-       
-        // Add data service resource for tests
-        war.addPackage("org/kie/tests/wb/base/services/data");
-        
+
         return war;
     }
-    
+
 }

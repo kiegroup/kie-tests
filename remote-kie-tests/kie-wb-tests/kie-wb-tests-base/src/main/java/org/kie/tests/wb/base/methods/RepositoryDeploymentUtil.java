@@ -1,12 +1,17 @@
 package org.kie.tests.wb.base.methods;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response.Status;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.guvnor.rest.client.CreateOrCloneRepositoryRequest;
@@ -18,13 +23,9 @@ import org.guvnor.rest.client.JobStatus;
 import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryRequest;
 import org.guvnor.rest.client.RepositoryRequest;
-import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.client.ClientResponse;
-import org.jboss.resteasy.client.core.BaseClientResponse;
-import org.jboss.resteasy.spi.BadRequestException;
-import org.jboss.resteasy.spi.ReaderException;
+import org.guvnor.rest.client.RepositoryResponse;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.remote.tests.base.RestRequestHelper;
+import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit.JaxbDeploymentStatus;
@@ -32,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * With thanks to Ivo Bek, Radovan Synek, Marek Baluch, Jiri Locker, Luask Petrovicky.
+ * With thanks to Ivo Bek, Radovan Synek, Marek Baluch, Jiri Locker, Lukas Petrovicky.
  * </p> 
  * Copied from the RestWorkbenchClient and BusinessCentral classes and then modified. 
  */
@@ -43,31 +44,66 @@ public class RepositoryDeploymentUtil {
    
     public static final RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
     
-    private RestRequestHelper requestHelper;
-    
-    public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password) { 
-        requestHelper = RestRequestHelper.newInstance(deploymentUrl, user, password);
-    }
-    
-    public void createAndDeployRepository(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnit, String user, int sleepSecs) { 
-        try {
-            deleteRepository(repositoryName);
-        } catch (Exception ex) {
-            // just ignore, we only need to have working
-            // environment created by the steps below
-        }
+    private int sleepSecs;
+    private final URL deploymentUrl;
+    private final String user;
+    private final String password;
 
-        JobRequest createRepoJob = createRepository(repositoryName, repoUrl);
-        JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnit, user, repositoryName);
-        waitForJobsToFinish(sleepSecs, createRepoJob, createOrgUnitJob);
+    private final String contentType = MediaType.APPLICATION_JSON;
+    
+    public RepositoryDeploymentUtil(URL deploymentUrl, String user, String password, int sleepSecs) { 
+        this.sleepSecs = sleepSecs;
+        assertTrue( "Sleep/timeout period is too short: " + this.sleepSecs, this.sleepSecs > 2 );
+        this.deploymentUrl = deploymentUrl;
+        this.user = user;
+        this.password = password;
+    }
+    
+    public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnitName) { 
+        if( repositoryExists(repositoryName) ) {
+            JobRequest delRepoJob = deleteRepository(repositoryName);
+            waitForJobsToFinish(sleepSecs, delRepoJob);
+        }
+       
+        if( ! organizationalUnitExists(orgUnitName) ) { 
+            JobRequest createOrgUnitJob = createOrganizationalUnit(orgUnitName, user);
+            waitForJobsToFinish(sleepSecs, createOrgUnitJob);
+        }
         
+        JobRequest createRepoJob = createRepository(repositoryName, orgUnitName, repoUrl);
+        waitForJobsToFinish(sleepSecs, createRepoJob);
+        
+        deploy(deploymentId);
+    }
+  
+    public void undeploy(String deploymentId) { 
+        JaxbDeploymentJobResult deployJob = removeDeploymentUnit(deploymentId);
+        waitForDeploymentToFinish(sleepSecs, false, deployJob.getDeploymentUnit());
+    }
+    
+    public void deploy(String deploymentId) { 
         JaxbDeploymentJobResult deployJob = createDeploymentUnit(deploymentId, strategy);
-        JaxbDeploymentUnit deployUnit = deployJob.getDeploymentUnit();    
-        waitForDeploymentToFinish(sleepSecs, deployUnit);
+        waitForDeploymentToFinish(sleepSecs, true, deployJob.getDeploymentUnit());    
+    }
+    
+    // submethods ------------------------------------------------------------------------------------------------------------
+  
+    /**
+     * Delete the repository with the given repository name
+     * @param repositoryName
+     * @return A {@link JobRequest} instance returned by the request with the initial status of the request
+     */
+    private boolean repositoryExists(String repositoryName) { 
+        Collection<RepositoryResponse> repos = get("repositories/", 200, Collection.class, RepositoryResponse.class);
+        for( RepositoryResponse repo : repos ) { 
+            if( repo.getName().equals(repositoryName) ) { 
+                return true;
+            }
+        }
+        return false;
     }
    
-    // submethods ------------------------------------------------------------------------------------------------------------
-   
+    
     /**
      * Delete the repository with the given repository name
      * @param repositoryName
@@ -75,9 +111,8 @@ public class RepositoryDeploymentUtil {
      */
     private JobRequest deleteRepository(String repositoryName) { 
         logger.info("Deleting repository '{}'", repositoryName);
-        RemoveRepositoryRequest entity 
-            = delete(createRequest("repositories/" + repositoryName), RemoveRepositoryRequest.class);
-        if (entity.getStatus() == JobStatus.ACCEPTED || entity.getStatus() == JobStatus.SUCCESS) {
+        RemoveRepositoryRequest entity = delete("repositories/" + repositoryName, 202, RemoveRepositoryRequest.class);
+        if (entity.getStatus().equals(JobStatus.ACCEPTED) || entity.getStatus().equals(JobStatus.SUCCESS) || entity.getStatus().equals(JobStatus.APPROVED)) {
             return entity;
         } else {
             throw new IllegalStateException("Delete request failed with status " +  entity.getStatus() );
@@ -90,17 +125,68 @@ public class RepositoryDeploymentUtil {
      * @param cloneRepoUrl The location of the repository
      * @return A {@link JobRequest} instance returned by the request with the initial status of the request
      */
-    private JobRequest createRepository(String repositoryName, String cloneRepoUrl) {
+    private JobRequest createRepository(String repositoryName, String orgUnit, String cloneRepoUrl) {
         logger.info("Cloning repo '{}' from URL '{}'", repositoryName, cloneRepoUrl);
         RepositoryRequest repoRequest = new RepositoryRequest();
         repoRequest.setName(repositoryName);
         repoRequest.setRequestType("clone");
         repoRequest.setGitURL(cloneRepoUrl);
-        String input = serializeToJsonString(repoRequest);
-        ClientRequest request = createRequest("repositories/", input);
-        return post( request, CreateOrCloneRepositoryRequest.class);
+        repoRequest.setOrganizationalUnitName(orgUnit);
+        
+        return post( "repositories", repoRequest, 202, CreateOrCloneRepositoryRequest.class);
     }
-  
+
+    public boolean checkRepositoryExistence(String repositoryName) { 
+        logger.info("Checking existence of repo '{}'", repositoryName);
+      
+        try { 
+            get( "repositories/" + repositoryName, 200, RepositoryResponse.class );
+        } catch( IllegalStateException ise ) { 
+            if( ise.getMessage().contains("code: 404") ) { 
+                return false;
+            }
+            throw ise;
+        }
+        return true;
+    }
+   
+    
+    /**
+     * Create an organizational unit in order to manage the repository
+     * @param name The name of the organizational unit
+     * @param owner The owner of the organizational unit
+     * @param repositories The list of repositories that the org unit should own
+     * @return A {@link JobRequest} instance returned by the request with the initial status of the request
+     */
+    private OrganizationalUnit getOrganizaionalUnit(String name) {
+        OrganizationalUnit orgUnit = null;
+        try { 
+            orgUnit = get("organizationalunits/" + name, 200, OrganizationalUnit.class);
+        } catch( IllegalStateException ise ) { 
+            String errMsg = ise.getMessage();
+           assertTrue( errMsg, errMsg.contains("code: 404"));
+        }
+        return orgUnit;
+    }
+   
+    
+    /**
+     * Create an organizational unit in order to manage the repository
+     * @param name The name of the organizational unit
+     * @param owner The owner of the organizational unit
+     * @param repositories The list of repositories that the org unit should own
+     * @return A {@link JobRequest} instance returned by the request with the initial status of the request
+     */
+    private boolean organizationalUnitExists(String orgUnitName) { 
+        Collection<OrganizationalUnit> orgUnits = get("organizationalunits/", 200, Collection.class, OrganizationalUnit.class);
+        for( OrganizationalUnit orgUnit : orgUnits ) { 
+           if( orgUnit.getName().equals(orgUnitName) ) { 
+               return true;
+           }
+        }
+        return false;
+    }
+    
     /**
      * Create an organizational unit in order to manage the repository
      * @param name The name of the organizational unit
@@ -118,7 +204,7 @@ public class RepositoryDeploymentUtil {
         ou.setName(name);
         ou.setOwner(owner);
         String input = serializeToJsonString(ou);
-        return post(createRequest("organizationalunits/", input), CreateOrganizationalUnitRequest.class);
+        return post("organizationalunits/", ou, 202, CreateOrganizationalUnitRequest.class);
     }
 
     /**
@@ -144,8 +230,8 @@ public class RepositoryDeploymentUtil {
      */
     private JobRequest installProject(String repositoryName, String project) {
         logger.info("Installing project '{}' from repo '{}'", project, repositoryName);
-        ClientRequest request = createMavenOperationRequest(repositoryName, project, "install");
-        return post(request, InstallProjectRequest.class);
+        String mavenOpRelUrl = createMavenOperationRequest(repositoryName, project, "install");
+        return post(mavenOpRelUrl, 202, InstallProjectRequest.class);
     }
 
     /**
@@ -155,9 +241,8 @@ public class RepositoryDeploymentUtil {
      * @param operation The maven operation to be executed
      * @return The {@link ClientRequest} to be called
      */
-    private ClientRequest createMavenOperationRequest(String repositoryName, String project, String operation) {
-        logger.info("Calling maven '{}' operation on project '{}' in repo '{}'", operation, project, repositoryName);
-        return createRequest("repositories/" + repositoryName + "/projects/" + project + "/maven/" + operation);
+    private String createMavenOperationRequest(String repositoryName, String project, String operation) {
+        return "repositories/" + repositoryName + "/projects/" + project + "/maven/" + operation;
     }
     
     /**
@@ -167,10 +252,14 @@ public class RepositoryDeploymentUtil {
      */
     private JaxbDeploymentJobResult removeDeploymentUnit(String deploymentId) {
         logger.info("Undeploying '{}'", deploymentId);
-        ClientRequest request = createRequest("deployment/" + deploymentId + "/undeploy");
-        return post(request, JaxbDeploymentJobResult.class);
+        return post("deployment/" + deploymentId + "/undeploy", 202, JaxbDeploymentJobResult.class);
     }
 
+    public JaxbDeploymentUnit getDeploymentUnit(String deploymentId) { 
+        logger.info("Getting info on '{}'", deploymentId);
+        return get("deployment/" + deploymentId , 200, JaxbDeploymentUnit.class); 
+    }
+    
     /**
      * Create (deploy) the deployment unit specified
      * @param deploymentId The deployment unit id
@@ -184,10 +273,9 @@ public class RepositoryDeploymentUtil {
             opUrl += "?strategy=" + strategy.toString();
         }
        
-        ClientRequest request = createRequest(opUrl);
-        JaxbDeploymentJobResult jr = post(request, JaxbDeploymentJobResult.class); 
+        JaxbDeploymentJobResult deployJobResult = post(opUrl, 202, JaxbDeploymentJobResult.class); 
         
-        return jr;
+        return deployJobResult;
     }
  
     // With java 8, this would be SOOOO much shorter and easier.. :/ 
@@ -195,19 +283,30 @@ public class RepositoryDeploymentUtil {
        Map<String, JobStatus> requestStatusMap = new HashMap<String, JobStatus>();
      
        int totalTries = 10;
-       int allDone = 0;
        int tryCount = 0;
-       while( allDone < requests.length && tryCount < totalTries ) { 
+       List<JobRequest> checkRequests = new ArrayList<JobRequest>(Arrays.asList(requests));
+       while( ! checkRequests.isEmpty() && tryCount < totalTries ) { 
+           List<JobRequest> done = new ArrayList<JobRequest>(checkRequests.size());
            for( JobRequest request : requests ) { 
                String jobId = request.getJobId();
                JobStatus jobStatus  = requestStatusMap.get(jobId);
+               if( jobStatus == null ) { 
+                   JobResult jobResult = get( "jobs/" + jobId, 200, JobResult.class); 
+                   jobStatus = jobResult.getStatus();
+               }
                if( JobStatus.SUCCESS.equals(jobStatus) ) { 
-                  ++allDone;
+                  done.add(request);
                   continue;
                }
-               ClientRequest restRequest = createRequest( "jobs/" + jobId);
-               JobResult jobResult = get(restRequest, JobResult.class);
+               if( JobStatus.FAIL.equals(jobStatus) ) { 
+                   fail( "Job " + jobId + " failed!");
+               }
+               JobResult jobResult = get( "jobs/" + jobId, 200, JobResult.class);
                requestStatusMap.put(jobId, jobResult.getStatus());
+           }
+           checkRequests.removeAll(done);
+           if( checkRequests.isEmpty()) { 
+               break;
            }
            ++tryCount;
            try { 
@@ -219,23 +318,42 @@ public class RepositoryDeploymentUtil {
     }
    
     // With java 8, this would be SOOOO much shorter and easier.. :/ 
-    private void waitForDeploymentToFinish(int sleepSecs, JaxbDeploymentUnit ...deployUnits ) { 
+    public void waitForDeploymentToFinish(int sleepSecs, boolean deploy, JaxbDeploymentUnit ...deployUnits ) { 
         Map<String, JaxbDeploymentStatus> requestStatusMap = new HashMap<String, JaxbDeploymentStatus>();
       
         int totalTries = 10;
-        int allDone = 0;
         int tryCount = 0;
-        while( allDone < deployUnits.length && tryCount < totalTries ) { 
+        List<JaxbDeploymentUnit> deployRequests = new ArrayList<JaxbDeploymentUnit>(Arrays.asList(deployUnits));
+        while( ! deployRequests.isEmpty() && tryCount < totalTries ) { 
+            List<JaxbDeploymentUnit> done = new ArrayList<JaxbDeploymentUnit>(deployRequests.size());
             for( JaxbDeploymentUnit deployUnit : deployUnits ) { 
                 String deployId = deployUnit.getIdentifier();
                 JaxbDeploymentStatus jobStatus  = requestStatusMap.get(deployId);
-                if( JaxbDeploymentStatus.DEPLOYED.equals(jobStatus) ) { 
-                   ++allDone;
-                   continue;
+                if( jobStatus == null ) { 
+                    JaxbDeploymentUnit requestedDeployUnit = get("deployment/" + deployId, 200, JaxbDeploymentUnit.class);
+                    jobStatus = requestedDeployUnit.getStatus();
                 }
-                ClientRequest restRequest = createRequest("deployment/" + deployId);
-                JaxbDeploymentUnit requestedDeployUnit = get(restRequest, JaxbDeploymentUnit.class);
+                if( deploy ) { 
+                    if( JaxbDeploymentStatus.DEPLOYED.equals(jobStatus) ) { 
+                        done.add(deployUnit);
+                        continue;
+                    } else if( JaxbDeploymentStatus.DEPLOY_FAILED.equals(jobStatus) ) { 
+                        fail( "Deploy of " + deployId + " failed!");
+                    }
+                } else { 
+                    if( JaxbDeploymentStatus.UNDEPLOYED.equals(jobStatus) ) { 
+                        done.add(deployUnit);
+                        continue;
+                    } else if( JaxbDeploymentStatus.UNDEPLOY_FAILED.equals(jobStatus) ) { 
+                        fail( "Undeploy of " + deployId + " failed!");
+                    }
+                }
+                JaxbDeploymentUnit requestedDeployUnit = get("deployment/" + deployId, 200, JaxbDeploymentUnit.class);
                 requestStatusMap.put(deployId, requestedDeployUnit.getStatus());
+            }
+            deployRequests.removeAll(done);
+            if( deployRequests.isEmpty() ) { 
+                break;
             }
             ++tryCount;
             try { 
@@ -248,104 +366,29 @@ public class RepositoryDeploymentUtil {
     
     // Helper methods -------------------------------------------------------------------------------------------------------------
    
-    /**
-     * Create a {@link ClientRequest} to be called
-     * @param relativeUrl The url of the REST call to be made, relative to the ../rest/ base
-     * @return
-     */
-    private ClientRequest createRequest(String relativeUrl) { 
-       requestHelper.setMediaType(MediaType.APPLICATION_JSON_TYPE);
-       return requestHelper.createRequest(relativeUrl);
+    private <T extends Object> T get(String relativeUrl, int status, Class... returnTypes) {
+        return RestUtil.get(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnTypes);
+    }
+
+    private <T extends Object> T post(String relativeUrl, int status, Class<T> returnType) {
+        return RestUtil.post(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnType);
     }
     
-    private ClientRequest createRequest(String resourcePath, String body) {
-        return createRequest(resourcePath).body(MediaType.APPLICATION_JSON_TYPE, body);
-    }
-  
-    private static final int GET = 0;
-    private static final int POST = 1;
-    private static final int DELETE = 2;
-
-    private <T extends Object> T get(ClientRequest request, Class<T> returnType) {
-        return process(request, GET, returnType);
+    private <T extends Object> T post(String relativeUrl, Object entity, int status, Class<T> returnType) {
+        return RestUtil.postEntity(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                entity, returnType);
     }
 
-    private <T extends Object> T post(ClientRequest request, Class<T> returnType) {
-        return process(request, POST, returnType);
-    }
 
-    private <T extends Object> T delete(ClientRequest request, Class<T> returnType) {
-        return process(request, DELETE, returnType);
+    private <T extends Object> T delete(String relativeUrl, int status, Class<T> returnType) {
+        return RestUtil.delete(deploymentUrl, "rest/" + relativeUrl, contentType,
+                status, user, password,
+                returnType);
     }
     
-    private <T extends Object> T process(ClientRequest request, int method, Class<T> returnType) {
-        ClientResponse<T> response = null;
-        try {
-            switch (method) {
-            case GET:
-                response = request.get(returnType);
-                break;
-            case POST:
-                response = request.post(returnType);
-                break;
-            case DELETE:
-                response = request.delete(returnType);
-                break;
-            default:
-                throw new AssertionError();
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-        try {
-            String contentType = response.getHeaders().getFirst("Content-Type");
-            if (MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_XML.equals(contentType)) {
-                try {
-                    checkResponse(response);
-                } catch (Exception ex) { 
-                    // TODO add throws to all the operations
-                    ex.printStackTrace();
-                    return null;
-                }
-                T res = response.getEntity();
-                return res;
-            }
-            // now that we know that the result is wrong, try to identify the
-            // reason
-            final String responseBody = response.getEntity(String.class).replaceAll("><", ">\n<");
-            final String headerTag = "<h1>";
-            final int h1StartPosition = responseBody.indexOf(headerTag);
-            if (h1StartPosition < 0) {
-                logger.error("Failed cloning repository. Full response body on DEBUG.");
-                logger.debug("Repository cloning response body: {}", responseBody);
-                throw new IllegalStateException("Unexpected content-type: " + contentType);
-            } else {
-                final int h1EndPosition = responseBody.indexOf("</h1>");
-                final String reason = responseBody.substring(h1StartPosition + headerTag.length(), h1EndPosition);
-                logger.error("Failed cloning repository, reason given: '{}'. Full response body on DEBUG.", reason);
-                logger.debug("Repository cloning response body: {}", responseBody);
-                throw new IllegalStateException("Failed cloning repository.");
-            }
-        } catch (ReaderException ex) {
-            response.resetStream();
-            logger.error("Bad entity: {}", response.getEntity(String.class));
-            throw new IllegalStateException(ex);
-        } finally {
-            response.releaseConnection();
-        }
-    }
-
-    private void checkResponse(ClientResponse<?> responseObj) throws Exception {
-        ClientResponse<?> test = BaseClientResponse.copyFromError(responseObj);
-        responseObj.resetStream();
-        if (test.getResponseStatus() == Status.BAD_REQUEST) {
-            throw new BadRequestException(test.getEntity(String.class));
-        } else if (test.getResponseStatus() != Status.OK && test.getResponseStatus() != Status.ACCEPTED && test.getResponseStatus() != Status.NOT_FOUND) {
-            throw new IllegalStateException("Request operation failed. Response status = " + test.getResponseStatus() + "\n\n"
-                    + test.getEntity(String.class));
-        } else {
-            logger.info("Response entity: [{}]", test.getEntity(String.class));
-        }
-    }
-
 }

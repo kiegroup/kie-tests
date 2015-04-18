@@ -14,7 +14,7 @@ public class TestConstants {
     public static final String HUMAN_TASK_VAR_PROCESS_ID    = "org.test.kjar.HumanTaskWithForm";
     public static final String SCRIPT_TASK_PROCESS_ID       = "org.test.kjar.scripttask";
     public static final String SCRIPT_TASK_VAR_PROCESS_ID   = "org.test.kjar.scripttask.var";
-    public static final String SINGLE_HUMAN_TASK_PROCESS_ID = "org.test.kjar.HumanTask";
+    public static final String SINGLE_HUMAN_TASK_PROCESS_ID = "org.test.kjar.singleHumanTask";
     public static final String OBJECT_VARIABLE_PROCESS_ID   = "org.test.kjar.ObjectVariableProcess";
     public static final String RULE_TASK_PROCESS_ID         = "org.test.kjar.RuleTask";
     public static final String TASK_CONTENT_PROCESS_ID      = "org.test.kjar.UserTask";

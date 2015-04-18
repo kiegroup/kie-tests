@@ -33,9 +33,9 @@ import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 @RunWith(Arquillian.class)
 public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
-    @Deployment(testable = false, name = "kie-wb-jboss")
+    @Deployment(testable = false, name = "kie-wb-wildfly")
     public static Archive<?> createWar() {
-        return createTestWar("jboss-as7");
+        return createTestWar();
     }
 
     public boolean doDeploy() { 
@@ -43,8 +43,8 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     }
 
     @Override
-    public MediaType getMediaType() {
-        return MediaType.APPLICATION_JSON_TYPE;
+    public String getContentType() {
+        return MediaType.APPLICATION_JSON;
     }
 
     @Override
@@ -64,6 +64,6 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
     
     @Override
     public int getTimeoutInSecs() {
-        return 4;
+        return 7*1000;
     }
 }

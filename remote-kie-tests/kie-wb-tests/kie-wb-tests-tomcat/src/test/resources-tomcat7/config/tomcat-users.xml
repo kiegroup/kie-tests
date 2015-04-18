@@ -33,6 +33,7 @@
   <!-- kie-wb roles -->
   <role rolename="admin"/>
   <role rolename="analyst"/>
+  <role rolename="reviewer"/>
   <role rolename="developer"/>
   <role rolename="user"/>
   <role rolename="manager"/>

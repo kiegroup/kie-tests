@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.kie.tests.remote</groupId>
     <artifactId>kie-drools-wb-tests</artifactId>
-    <version>6.2.0-SNAPSHOT</version>
+    <version>6.2.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>kie-drools-wb-tests-tomcat</artifactId>
@@ -14,10 +14,9 @@
   <name>KIE Drools Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <version.org.apache.tomcat>7.0.32</version.org.apache.tomcat>
     <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
-
+  
   <dependencies>
     <!-- base -->
     <dependency>
@@ -128,11 +127,6 @@
     <dependency>
       <groupId>org.jboss.spec.javax.transaction</groupId>
       <artifactId>jboss-transaction-api_1.1_spec</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

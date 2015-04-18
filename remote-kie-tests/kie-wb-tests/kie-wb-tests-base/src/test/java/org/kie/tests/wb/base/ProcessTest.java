@@ -1,11 +1,11 @@
 package org.kie.tests.wb.base;
 
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
-import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGN_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
-import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.VERSION;
+import static org.junit.Assert.assertEquals;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -212,19 +212,12 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
     public void runGroupAssignmentHumanTaskTest() throws Exception { 
         // setup
         Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
-        resources.put("repo/test/singleHumanTaskGroupAssignment.bpmn2", ResourceType.BPMN2);
+        resources.put("repo/test/groupAssignmentHumanTask.bpmn2", ResourceType.BPMN2);
         RuntimeManager runtimeManager = createRuntimeManager(resources);
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("certifiate", "test");
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(GROUP_ASSSIGN_VAR_PROCESS_ID, params);
-        assertNotNull( "No ProcessInstance!", pi);
-        long procInstId = pi.getId();
-        
-        List<Long> taskIds = runtimeEngine.getTaskService().getTasksByProcessInstanceId(procInstId);
-        assertEquals( 1, taskIds.size());
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
     }
     
     @Test
@@ -273,4 +266,90 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         procInst = ksession.getProcessInstance(processInstanceId);
         assertNull(procInst);
     } 
+    
+    @Test
+    public void singleHumanTaskProcessTest() { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/singleHumanTask.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);;
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
+        // 1. start process (could do it this way or a via REST url or whatever.. 
+        ProcessInstance processInstance = ksession.startProcess(SINGLE_HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+        logger.debug("Started process instance: " + processInstance + " " + procInstId);
+        
+        // 2. find task (without deployment id)
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwner(MARY_USER, "en-UK");
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+        logger.debug("Found task " + taskId);
+        
+        // 3. retrieve task and get deployment id from task
+        Task task = taskService.getTaskById(taskId);
+        logger.debug("Got task " + taskId);
+        String deploymentId = task.getTaskData().getDeploymentId();
+        logger.debug("Got deployment id " + deploymentId );
+       
+        // 4. start task 
+        taskService.start(taskId, MARY_USER);
+        
+        // 5. complete task with TaskService instance that *has a deployment id*
+        taskService.complete(taskId, MARY_USER, null);
+
+        // 6. verify that process has completed
+        processInstance = ksession.getProcessInstance(procInstId);
+        assertTrue( "Process instance has not completed!", processInstance == null || processInstance.getState() == ProcessInstance.STATE_COMPLETED);
+    }
+    
+    @Test
+    public void urlHumanTaskTestTest() { 
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/humanTaskVar.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);;
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+       
+        Map<String, Object> vars = new HashMap<String, Object>();
+        vars.put("userName", "John");
+        ProcessInstance procInst = ksession.startProcess(HUMAN_TASK_VAR_PROCESS_ID, vars);
+        long procInstId = procInst.getId();
+       
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+        long taskId = taskIds.get(0);
+        
+        taskService.start(taskId, MARY_USER);
+        
+        Map<String, Object> results = new HashMap<String, Object>();
+        results.put("outUserName", "George");
+        taskService.complete(taskId, MARY_USER, results);
+        
+        try { 
+            taskService.complete(taskId, MARY_USER, results);
+            fail("Second task complete should have failed!");
+        } catch( Exception e ) { 
+            
+        }
+        
+        Map<String, Object> contentMap = taskService.getTaskContent(taskId);
+        String groupId = null;
+        for( Entry<String, Object> entry : contentMap.entrySet() ) { 
+            if( entry.getKey().equals("GroupId") ) {
+                groupId = new String((String) entry.getValue());
+                break;
+            }
+        }
+        assertEquals("reviewer", groupId);
+        
+        ksession.signalEvent("MySignal", "MySignal", procInstId);
+       
+        procInst = ksession.getProcessInstance(procInstId);
+        assertTrue( "State: "  +  (procInst == null ? 2 : procInst.getState()), procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED);
+    }
+    
 }

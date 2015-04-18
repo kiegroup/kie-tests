@@ -29,8 +29,8 @@ public class LiveJbossEapRestIntegrationTest extends AbstractRemoteApiIntegratio
         return false;
     }
 
-    public MediaType getMediaType() { 
-        return MediaType.APPLICATION_JSON_TYPE;
+    public String getContentType() { 
+        return MediaType.APPLICATION_JSON;
     }
 
     @Override

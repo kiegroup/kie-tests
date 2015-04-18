@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.kie.tests.remote</groupId>
     <artifactId>kie-wb-tests</artifactId>
-    <version>6.2.0-SNAPSHOT</version>
+    <version>6.2.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>kie-wb-tests-tomcat</artifactId>
@@ -30,13 +30,6 @@
       <scope>test</scope>
     </dependency>
    
-    <!--  webservices --> 
-    <dependency>
-      <groupId>org.kie.remote.ws</groupId>
-      <artifactId>kie-remote-ws-wsdl-cmd</artifactId>
-      <scope>test</scope>
-    </dependency>
-    
     <!--  war -->
     <dependency>
       <groupId>org.kie</groupId>
@@ -103,6 +96,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
@@ -114,6 +112,11 @@
     </dependency>
     
     <!-- libs necessary for kie-wb -->
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-tomcat-integration</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.codehaus.btm</groupId>
       <artifactId>btm</artifactId>
@@ -139,6 +142,7 @@
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-jaxb-provider</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -204,6 +208,12 @@
             </goals>
             <configuration>
               <artifactItems>
+                <artifactItem>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-tomcat-integration</artifactId>
+                  <type>jar</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
                 <artifactItem>
                   <groupId>org.codehaus.btm</groupId>
                   <artifactId>btm</artifactId>

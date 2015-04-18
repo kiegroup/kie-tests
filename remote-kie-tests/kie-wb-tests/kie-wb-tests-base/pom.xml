@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.kie.tests.remote</groupId>
     <artifactId>kie-wb-tests</artifactId>
-    <version>6.2.0-SNAPSHOT</version>
+    <version>6.2.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>kie-wb-tests-base</artifactId>
@@ -20,19 +20,44 @@
      </dependency>
      
     <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-internal</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-remote-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-jaxb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.guvnor</groupId>
       <artifactId>guvnor-rest-client</artifactId>
     </dependency>
+    
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-flow</artifactId>
     </dependency>
-   
-
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-core</artifactId>
+    </dependency>
+    
     <!-- KModuleDeploymentUnit --> 
     <dependency>
       <groupId>org.jbpm</groupId>
@@ -45,72 +70,53 @@
       </exclusions>
     </dependency>
 
+    <!-- REST -->
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-common</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.arquillian.test</groupId>
+      <artifactId>arquillian-test-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+  
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
+    <!-- other -->
     <dependency>
-      <groupId>org.jboss.spec.javax.ejb</groupId>
-      <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+      <groupId>commons-io</groupId> 
+      <artifactId>commons-io</artifactId>
     </dependency>
-
-    <!-- jms queue setup -->
-    <dependency>
-      <groupId>org.hornetq</groupId>
-      <artifactId>hornetq-core-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hornetq</groupId>
-      <artifactId>hornetq-jms-client</artifactId>
-    </dependency>
-
-    <!-- producers -->
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-io</artifactId>
-    </dependency>
-
-    <!-- for getting *.bpmn2 files in classpath -->
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-net</groupId>
-      <artifactId>commons-net</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.arquillian.junit</groupId>
-      <artifactId>arquillian-junit-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
+    
     <!-- TEST -->
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-bpmn2</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-test</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-human-task-audit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jbpm</groupId>
-      <artifactId>jbpm-human-task-jpa</artifactId>
-      <scope>test</scope>
-    </dependency>
-
+    
     <!-- TEST: persistence -->
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -127,15 +133,42 @@
       <artifactId>btm</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- TEST: logging -->
+    
+    <!--  TEST: remote initial context -->
+    <!-- jboss
+     -->
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-naming</artifactId>
+    </dependency>
+    <!-- weblogic 
+    <dependency>
+      <groupId>weblogic</groupId>
+      <artifactId>weblogic-server</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>/opt/java/oracle/inventory/wlserver/server/lib/wlthint3client.jar</systemPath>
+    </dependency>
+    -->
+    
+    <!-- TEST: fake integration test -->
+    <dependency>
+      <groupId>org.simpleframework</groupId>
+      <artifactId>simple-http</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.simpleframework</groupId>
+        <artifactId>simple-http</artifactId>
+        <version>6.0.1</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
   <build>
     <testResources>
         <testResource>

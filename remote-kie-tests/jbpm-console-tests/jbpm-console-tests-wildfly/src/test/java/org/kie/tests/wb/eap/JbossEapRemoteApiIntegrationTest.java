@@ -41,8 +41,8 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
         return true;
     }
  
-    public MediaType getMediaType() { 
-        return MediaType.APPLICATION_XML_TYPE;
+    public String getContentType() { 
+        return MediaType.APPLICATION_XML;
     }
 
     @Override

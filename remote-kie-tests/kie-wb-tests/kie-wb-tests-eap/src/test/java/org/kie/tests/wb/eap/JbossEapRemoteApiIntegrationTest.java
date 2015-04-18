@@ -19,6 +19,8 @@ package org.kie.tests.wb.eap;
 
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
+import java.net.URL;
+
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -42,8 +44,8 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
         return true;
     }
  
-    public MediaType getMediaType() { 
-        return MediaType.APPLICATION_JSON_TYPE;
+    public String getContentType() { 
+        return MediaType.APPLICATION_JSON;
     }
 
     @Override
@@ -64,5 +66,16 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     @Override
     public int getTimeoutInSecs() {
         return 4;
+    }
+    
+    public void noLiveSetDeploymentUrl() { 
+        // Modify this string to match your kie-wb/BPMS installation
+        String urlString = "http://localhost:8080/business-central/";
+        try { 
+            this.deploymentUrl = new URL(urlString);
+        } catch( Exception e ) { 
+            System.err.println( "The following URL is not a valid URL: '" + urlString + "'");
+            e.printStackTrace();
+        }
     }
 }
