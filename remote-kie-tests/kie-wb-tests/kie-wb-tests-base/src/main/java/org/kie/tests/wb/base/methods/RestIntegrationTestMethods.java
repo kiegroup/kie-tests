@@ -17,8 +17,30 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
-import static org.kie.tests.wb.base.methods.TestConstants.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.kie.tests.wb.base.methods.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.CLASSPATH_ARTIFACT_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_OWN_TYPE_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.KRIS_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.KRIS_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.methods.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.methods.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.SCRIPT_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.TASK_CONTENT_PROCESS_ID;
+import static org.kie.tests.wb.base.methods.TestConstants.VERSION;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,7 +51,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -47,7 +67,6 @@ import org.apache.commons.net.util.Base64;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.drools.core.command.runtime.process.GetProcessIdsCommand;
 import org.drools.core.command.runtime.process.StartProcessCommand;
 import org.jboss.resteasy.client.ClientExecutor;
 import org.jboss.resteasy.client.ClientRequest;
@@ -59,7 +78,6 @@ import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.process.audit.AuditLogService;
-import org.jbpm.process.audit.JPAAuditLogService;
 import org.jbpm.process.audit.ProcessInstanceLog;
 import org.jbpm.process.audit.VariableInstanceLog;
 import org.jbpm.process.audit.event.AuditEvent;
@@ -67,28 +85,23 @@ import org.jbpm.services.task.commands.CompleteTaskCommand;
 import org.jbpm.services.task.commands.GetTaskCommand;
 import org.jbpm.services.task.commands.GetTasksByProcessInstanceIdCommand;
 import org.jbpm.services.task.commands.StartTaskCommand;
-import org.jbpm.services.task.impl.model.GroupImpl;
 import org.jbpm.services.task.impl.model.xml.JaxbContent;
 import org.jbpm.services.task.impl.model.xml.JaxbTask;
-import org.jbpm.workflow.instance.impl.WorkflowProcessInstanceImpl;
 import org.junit.Assume;
 import org.kie.api.command.Command;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.api.task.TaskService;
-import org.kie.api.task.model.OrganizationalEntity;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.deployment.DeploymentUnit.RuntimeStrategy;
-import org.kie.services.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRestRuntimeFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.RestRequestHelper;
-import org.kie.services.client.api.builder.RemoteJmsRuntimeEngineFactoryBuilder;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.JsonSerializationProvider;
@@ -505,6 +518,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         JaxbProcessInstanceResponse processInstance = (JaxbProcessInstanceResponse) responseObj
                 .getEntity(JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
+        System.out.println("proc id: " + procInstId);
 
         // query tasks for associated task Id
         restRequest = queryRequestHelper.createRequest("task/query?processInstanceId=" + procInstId);
@@ -521,6 +535,7 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         responseObj = get(restRequest);
         JaxbTask task = (JaxbTask) responseObj.getEntity(JaxbTask.class);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
+        System.out.println("task id: " + taskId);
 
         // start task
         restRequest = requestHelper.createRequest("task/" + taskId + "/start");
@@ -532,6 +547,11 @@ public class RestIntegrationTestMethods extends AbstractIntegrationTestMethods {
         restRequest = requestHelper.createRequest("task/" + taskId);
         responseObj = get(restRequest);
         assertNotNull("Task response is null.", responseObj); 
+        
+        // query tasks for associated task Id
+        restRequest = queryRequestHelper.createRequest("task/query?taskId=" + taskId);
+        responseObj = get(restRequest);
+        System.out.println( responseObj.getEntity(String.class) );
     }
 
     /**

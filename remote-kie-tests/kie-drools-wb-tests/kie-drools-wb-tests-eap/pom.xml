@@ -28,7 +28,6 @@
     <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
     
     <version.org.jboss.byteman>2.1.4.1</version.org.jboss.byteman>
-    <version.org.jboss.as.dist>7.2.3.Final-redhat-2</version.org.jboss.as.dist>
     <jboss.server.name>jboss-eap-6.1</jboss.server.name>
   </properties>
 

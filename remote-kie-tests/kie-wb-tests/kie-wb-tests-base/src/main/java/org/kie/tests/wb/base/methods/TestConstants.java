@@ -10,7 +10,7 @@ public class TestConstants {
      * Process ids
      */
     
-    public static final String HUMAN_TASK_PROCESS_ID        = "org.jbpm.writedocument";
+    public static final String HUMAN_TASK_PROCESS_ID        = "org.test.kjar.writedocument";
     public static final String HUMAN_TASK_VAR_PROCESS_ID    = "org.jboss.qa.bpms.HumanTaskWithForm";
     public static final String SCRIPT_TASK_PROCESS_ID       = "org.jbpm.scripttask";
     public static final String SCRIPT_TASK_VAR_PROCESS_ID   = "org.jbpm.scripttask.var";
@@ -57,7 +57,6 @@ public class TestConstants {
             throw new RuntimeException("Unable to initialize projectVersion property: " + e.getMessage(), e);
         }
         projectVersion = testProps.getProperty("project.version");
-        VERSION = projectVersion;
     }
     
     /**
@@ -73,13 +72,13 @@ public class TestConstants {
     public static final String GROUP_ID = "org.test";
     public static final String ARTIFACT_ID = "kjar";
     public static final String CLASSPATH_ARTIFACT_ID = "classpath-kjar";
-    public static final String VERSION; // see above
+    public static final String VERSION = "1.0";
     public static final String KBASE_NAME = "defaultKieBase";
     public static final String KSESSION_NAME = "defaultKieSession";
  
     public static final String KJAR_DEPLOYMENT_ID;
     static { 
-        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
+        KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, "1.0");
         KJAR_DEPLOYMENT_ID = deploymentUnit.getIdentifier();
     }
 
