@@ -16,9 +16,8 @@
 
   <modules>
     <module>jbpm-console-tests-base</module>
-    <module>jbpm-console-tests-jboss</module>
     <module>jbpm-console-tests-tomcat</module>
-    <!-- module>jbpm-console-tests-wildfly</module -->
+    <module>jbpm-console-tests-wildfly</module>
   </modules>
 
   <dependencyManagement>
