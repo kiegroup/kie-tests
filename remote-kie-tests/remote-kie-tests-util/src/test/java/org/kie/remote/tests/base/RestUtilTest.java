@@ -28,6 +28,7 @@ import org.guvnor.rest.client.RepositoryResponse;
 import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class RestUtilTest {
 
     private static final String contentType = MediaType.APPLICATION_JSON;

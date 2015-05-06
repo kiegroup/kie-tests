@@ -44,7 +44,11 @@
       <groupId>org.guvnor</groupId>
       <artifactId>guvnor-rest-client</artifactId>
     </dependency>
-    
+   
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-core</artifactId>
+    </dependency> 
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-flow</artifactId>
@@ -82,6 +86,16 @@
     <dependency>
       <groupId>org.jboss.errai</groupId>
       <artifactId>errai-common</artifactId>
+    </dependency>
+
+    <!-- JMS -->
+    <dependency>
+      <groupId>org.hornetq</groupId>
+      <artifactId>hornetq-core-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hornetq</groupId>
+      <artifactId>hornetq-jms-client</artifactId>
     </dependency>
     
     <dependency>

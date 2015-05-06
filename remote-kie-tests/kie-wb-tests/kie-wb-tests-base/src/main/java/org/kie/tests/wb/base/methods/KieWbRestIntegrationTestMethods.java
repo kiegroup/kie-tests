@@ -421,7 +421,7 @@ public class KieWbRestIntegrationTestMethods {
         formParams.put("map_outUserName", georgeVal);
         resp = post("task/" + taskId + "/complete", 200, JaxbGenericResponse.class); 
         
-        JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable/userName", 200, JaxbHistoryLogList.class);
+        JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable", 200, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for( AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList ) {
@@ -452,7 +452,8 @@ public class KieWbRestIntegrationTestMethods {
     
         assertNotNull("No task retrieved!", jsonTask);
         assertEquals("task id", taskId, jsonTask.getId().intValue());
-       
+      
+        // DOCS 3
         String signalProcessUrl = "rest/runtime/" + deploymentId + "/process/instance/" + procInstId + "/signal";
         
         formParams = new HashMap<String, String>(2);
@@ -463,13 +464,15 @@ public class KieWbRestIntegrationTestMethods {
                 200, user, password,
                 formParams,
                 JaxbGenericResponse.class);
-        
+       
+        // DOCS 2
         processInstance = get("runtime/" + deploymentId + "/process/instance/" + procInstId, 200, JaxbProcessInstanceResponse.class);
     }
 
     public void urlsHumanTaskGroupAssignmentTest( URL deploymentUrl ) throws Exception {
         setRestInfo(deploymentUrl, user, password);
-        
+       
+        // DOCS 1
         JaxbProcessInstanceResponse procInstResp = RestUtil.post(deploymentUrl, 
                 "rest/runtime/" + deploymentId + "/process/" + GROUP_ASSSIGNMENT_PROCESS_ID + "/start", contentType,
                 200, MARY_USER, MARY_PASSWORD, 
@@ -774,6 +777,7 @@ public class KieWbRestIntegrationTestMethods {
         setRestInfo(deploymentUrl, user, password);
         
         // Start process
+        // DOCS 1
         JaxbProcessInstanceResponse processInstance = post(
                 "runtime/" + deploymentId + "/process/" + SCRIPT_TASK_VAR_PROCESS_ID + "/start?map_x=initVal", 
                 200, 
@@ -827,6 +831,7 @@ public class KieWbRestIntegrationTestMethods {
     }
 
     public void urlsJsonJaxbStartProcess( URL deploymentUrl, String user, String password ) throws Exception {
+        // DOCS 1
         String startProcessOper = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_PROCESS_ID + "/start";
     
         // XML

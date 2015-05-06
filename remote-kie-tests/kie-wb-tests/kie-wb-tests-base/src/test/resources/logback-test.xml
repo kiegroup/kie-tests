@@ -15,7 +15,7 @@
   <logger name="bitronix.tm" level="error"/>
   <logger name="org.hibernate" level="warn"/>
   
-  <logger name="org.kie.remote.tests.base" level="debug" />
+  <logger name="org.kie.remote.tests.base" level="trace" />
   
   <root level="info">
     <appender-ref ref="consoleAppender" />

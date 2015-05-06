@@ -6,10 +6,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
-//@Ignore // add Junit "Ping Succeed or Ignore" rule
+@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class RepositoryDeploymentUtilLiveTest {
 
     private static String user = "mary";

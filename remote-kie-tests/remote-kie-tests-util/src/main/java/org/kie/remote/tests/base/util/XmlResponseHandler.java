@@ -2,6 +2,8 @@ package org.kie.remote.tests.base.util;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -16,6 +18,11 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.http.entity.ContentType;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 
 public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
 
@@ -33,8 +40,26 @@ public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
     public void addExtraJaxbClasses( Class... extraClass ) { 
         this.extraJaxbClasses.addAll(Arrays.asList(extraClass));
     }
-    
-    protected T deserialize(Reader reader) {
+   
+    @Override
+    protected T deserialize(String content) {
+
+        if( logger.isTraceEnabled() ) { 
+            try {
+                Document doc = DocumentHelper.parseText(content);  
+                StringWriter sw = new StringWriter();  
+                OutputFormat format = OutputFormat.createPrettyPrint();  
+                XMLWriter xw = new XMLWriter(sw, format);  
+                xw.write(doc);
+                String prettyContent = sw.toString();
+                logger.trace("XML  < |\n{}", prettyContent );
+            } catch( IOException ioe ) {
+                logger.error( "Unabel to write XML document: " + ioe.getMessage(), ioe );
+            } catch( DocumentException de ) {
+                logger.error( "Unabel to parse text: " + de.getMessage(), de );
+            }  
+        }
+
         JAXBContext jaxbContext = getJaxbContext();
         
         Unmarshaller unmarshaller = null;
@@ -44,9 +69,10 @@ public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
             throw new IllegalStateException("Unable to create unmarshaller", jaxbe);
         }
 
+        ByteArrayInputStream contentStream = new ByteArrayInputStream(content.getBytes());
         Object jaxbObj = null;
         try { 
-            jaxbObj = unmarshaller.unmarshal(reader);
+            jaxbObj = unmarshaller.unmarshal(contentStream);
         } catch( JAXBException jaxbe ) { 
            throw new IllegalStateException("Unable to unmarshal reader", jaxbe);
         }
@@ -95,11 +121,14 @@ public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
         
         return serialize(entity, jaxbContext); 
     }
-    
+   
     public String serialize( Object entity, JAXBContext jaxbContext ) {
         Marshaller marshaller = null;
         try {
             marshaller = jaxbContext.createMarshaller();
+            if( logger.isTraceEnabled() ) { 
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            }
         } catch( JAXBException jaxbe ) { 
             throw new IllegalStateException("Unable to create unmarshaller", jaxbe);
         }
@@ -111,7 +140,9 @@ public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
            throw new IllegalStateException("Unable to marshal " + entity.getClass().getSimpleName() + " instance", jaxbe);
         }
 
-        return xmlStrWriter.toString(); 
+        String out = xmlStrWriter.toString(); 
+        logger.trace("XML  > |\n{}", out );
+        return out;
     }
 
 }

@@ -24,6 +24,7 @@ import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryRequest;
 import org.guvnor.rest.client.RepositoryRequest;
 import org.guvnor.rest.client.RepositoryResponse;
+import org.junit.Ignore;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentJobResult;

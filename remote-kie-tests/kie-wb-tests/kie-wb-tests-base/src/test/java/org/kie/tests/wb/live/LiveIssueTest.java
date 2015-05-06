@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,6 +13,7 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
@@ -26,6 +25,7 @@ import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class LiveIssueTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(LiveIssueTest.class);

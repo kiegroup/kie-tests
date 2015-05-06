@@ -10,10 +10,12 @@
   </appender>
 
   <logger name="org.jbpm" level="info"/>
-  <logger name="org.kie.tests" level="debug"/>
+  <logger name="org.drools" level="info"/>
+  
   <logger name="org.kie.services.client" level="debug" />
   
-  <logger name="org.drools" level="debug"/>
+  <logger name="org.kie.tests" level="debug"/>
+  <logger name="org.kie.remote.tests.base" level="trace" />
   
   <root level="info">
     <appender-ref ref="consoleAppender" />

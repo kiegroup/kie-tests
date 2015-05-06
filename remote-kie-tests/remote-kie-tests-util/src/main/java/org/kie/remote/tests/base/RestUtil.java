@@ -83,11 +83,11 @@ public class RestUtil {
     }
     
     private static void logOp(String op, String uri) {
-       logger.debug(op + " "  + uri);
+       logger.debug( "[" + op + "] "  + uri);
     }
     
     private static void logOp(String op, Object entity, String uri) {
-       logger.debug(op + " [" + entity.getClass().getSimpleName() + "] " + uri);
+       logger.debug( "[" + op + "] (" + entity.getClass().getSimpleName() + ") " + uri);
     }
     
     // Public Helper methods ------------------------------------------------------------------------------------------------------

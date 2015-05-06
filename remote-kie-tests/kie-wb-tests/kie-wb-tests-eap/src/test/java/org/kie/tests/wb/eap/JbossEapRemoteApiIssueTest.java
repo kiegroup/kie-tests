@@ -58,8 +58,8 @@ import org.slf4j.LoggerFactory;
 import com.bpms.flood.model.Person;
 import com.bpms.flood.model.Request;
 
-//@RunAsClient
-//@RunWith(Arquillian.class)
+@RunAsClient
+@RunWith(Arquillian.class)
 public class JbossEapRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
@@ -69,16 +69,8 @@ public class JbossEapRemoteApiIssueTest {
  
     private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
     
-//    @ArquillianResource
+    @ArquillianResource
     URL deploymentUrl;
-    { 
-        try {
-            deploymentUrl = new URL("http://localhost:8080/business-central/");
-        } catch( MalformedURLException e ) {
-            e.printStackTrace();
-        }
-    }
-   
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
@@ -105,7 +97,7 @@ public class JbossEapRemoteApiIssueTest {
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
         String project = "integration-tests";
-        String deploymentId = "org.test:kjar:1.0";
+        String deploymentId = KJAR_DEPLOYMENT_ID;
         String orgUnit = UUID.randomUUID().toString();
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
@@ -119,7 +111,9 @@ public class JbossEapRemoteApiIssueTest {
                 .setStrategy(RuntimeStrategy.SINGLETON)
                 .setTimeoutInSecs(5)
                 .build();
-                
+               
+        restTests.urlsHumanTaskTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        
         // Start process
         String startProcessUrl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
     

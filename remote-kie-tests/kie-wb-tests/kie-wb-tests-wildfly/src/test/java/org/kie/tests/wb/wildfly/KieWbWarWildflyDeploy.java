@@ -1,6 +1,5 @@
 package org.kie.tests.wb.wildfly;
 
-import static org.kie.remote.tests.base.DeployUtil.addNewJars;
 import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
 import static org.kie.remote.tests.base.DeployUtil.replaceJars;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
@@ -20,9 +19,7 @@ public class KieWbWarWildflyDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = { 
-                { "org.kie.remote", "kie-remote-services" },
-                { "org.guvnor", "guvnor-rest-client" },
-                { "org.guvnor", "guvnor-rest-backend" },
+                { "org.kie.remote", "kie-remote-services" }
                 };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 

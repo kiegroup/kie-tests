@@ -49,7 +49,7 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
 
     @Override
     public boolean jmsQueuesAvailable() {
-        return true;
+        return false;
     }
 
     @Override

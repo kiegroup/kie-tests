@@ -45,12 +45,12 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     }
  
     public String getContentType() { 
-        return MediaType.APPLICATION_JSON;
+        return MediaType.APPLICATION_XML;
     }
 
     @Override
     public boolean jmsQueuesAvailable() {
-        return true;
+        return false;
     }
 
     @Override

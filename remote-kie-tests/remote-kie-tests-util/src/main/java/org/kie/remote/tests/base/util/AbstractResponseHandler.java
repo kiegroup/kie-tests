@@ -20,9 +20,14 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.entity.ContentType;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.kie.remote.tests.base.DeployUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T> {
 
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractResponseHandler.class);
+    
     protected final Class<T> returnType;
     protected Class<P> parameterType = null;
     private int status = 200;
@@ -102,16 +107,24 @@ public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T>
                 assertEquals("Response status", status, responseStatus);
             }
         } 
-           
+          
+        char[] arr = new char[8 * 1024];
+        StringBuilder buffer = new StringBuilder();
+        int numCharsRead;
+        while ((numCharsRead = reader.read(arr, 0, arr.length)) != -1) {
+            buffer.append(arr, 0, numCharsRead);
+        }
+        reader.close();
+        
         if( returnType != null ) { 
-            return deserialize(reader);
+            return deserialize(buffer.toString());
         } else { 
             return null;
         }
                     
     }
 
-    protected abstract T deserialize(Reader reader);
+    protected abstract T deserialize(String content);
     
     public abstract String serialize(Object entity);
     
