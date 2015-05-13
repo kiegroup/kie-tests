@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- TODO use a different parent -->
+  <parent>
+    <groupId>org.kie.tests</groupId>
+    <artifactId>kie-tests</artifactId>
+    <version>6.3.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>workbench-tests</artifactId>
+  <packaging>pom</packaging>
+  <name>Workbench Tests</name>
+  <description>Workbench tests organized by features/use cases.</description>
+  <modules>
+    <module>workbench-tests-authoring</module>
+    <module>workbench-tests-social</module>
+    <module>workbench-tests-administration</module>
+    <module>workbench-tests-widgets</module>
+    <module>workbench-tests-process-management</module>
+    <module>workbench-tests-task-list</module>
+    <module>workbench-tests-dashboards</module>
+    <module>workbench-tests-extensions</module>
+    <module>workbench-tests-artifact-repo</module>
+  </modules>
+</project>
