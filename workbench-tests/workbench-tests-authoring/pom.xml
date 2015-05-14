@@ -14,5 +14,6 @@
     <module>workbench-tests-rules</module>
     <module>workbench-tests-forms</module>
     <module>workbench-tests-data-modeler</module>
+    <module>workbench-tests-authoring-common</module>
   </modules>
 </project>
