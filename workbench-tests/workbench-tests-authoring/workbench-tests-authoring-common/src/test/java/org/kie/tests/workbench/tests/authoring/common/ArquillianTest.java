@@ -15,6 +15,9 @@
  */
 package org.kie.tests.workbench.tests.authoring.common;
 
+import java.io.File;
+import java.io.FilenameFilter;
+
 import javax.inject.Inject;
 
 import org.drools.workbench.screens.drltext.client.handlers.NewDrlTextHandler;
@@ -22,7 +25,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.workbench.common.widgets.client.handlers.NewResourcePresenter;
@@ -32,10 +34,22 @@ public class ArquillianTest {
 
     @Deployment
     public static JavaArchive createDeployment() {
-        // FIXME the jar is currently empty!!
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class)
-                .merge(ShrinkWrap.create(JavaArchive.class, "target/test-libs/kie-wb-common-ui.jar"))
-                .merge(ShrinkWrap.create(JavaArchive.class, "target/test-libs/drools-wb-drl-text-editor-client.jar"));
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class);
+        File testLibs = new File("target/test-libs");
+        FilenameFilter filter = new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".jar");
+            }
+
+        };
+        for (File f : testLibs.listFiles(filter)) {
+//            jar.merge(ShrinkWrap.createFromZipFile(JavaArchive.class, f));
+        }
+
+        jar.merge(ShrinkWrap.createFromZipFile(JavaArchive.class, new File("target/test-libs/kie-wb-common-ui.jar")));
+        jar.merge(ShrinkWrap.createFromZipFile(JavaArchive.class, new File("target/test-libs/drools-wb-drl-text-editor-client.jar")));
         System.out.println(jar.toString());
         System.out.println(jar.toString(true));
         return jar;

@@ -16,6 +16,7 @@
 
   <dependencies>
 
+    <!-- compile scoped dependencies that will be copied to target/test-libs -->
     <dependency>
       <groupId>org.kie.workbench.widgets</groupId>
       <artifactId>kie-wb-common-ui</artifactId>
@@ -23,6 +24,10 @@
     <dependency>
       <groupId>org.drools</groupId>
       <artifactId>drools-wb-drl-text-editor-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-user</artifactId>
     </dependency>
 
     <!-- Test dependencies: Arquillian, JUnit, Weld, Java EE -->
@@ -91,8 +96,8 @@
               <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
               <stripVersion>true</stripVersion>
               <overWriteSnapshots>true</overWriteSnapshots>
-              <addParentPoms>true</addParentPoms>
-              <includeArtifactIds>kie-wb-common-ui,drools-wb-drl-text-editor-client</includeArtifactIds>
+              <includeScope>compile</includeScope>
+              <excludeTransitive>true</excludeTransitive>
             </configuration>
           </execution>
         </executions>
