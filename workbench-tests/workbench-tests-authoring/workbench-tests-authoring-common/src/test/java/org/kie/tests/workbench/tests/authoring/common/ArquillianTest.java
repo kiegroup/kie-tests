@@ -17,32 +17,34 @@ package org.kie.tests.workbench.tests.authoring.common;
 
 import javax.inject.Inject;
 
+import org.drools.workbench.screens.drltext.client.handlers.NewDrlTextHandler;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.workbench.common.widgets.client.handlers.NewResourcePresenter;
 
 @RunWith(Arquillian.class)
 public class ArquillianTest {
 
     @Deployment
     public static JavaArchive createDeployment() {
+        // FIXME the jar is currently empty!!
         JavaArchive jar = ShrinkWrap.create(JavaArchive.class)
-                .addClass(Greeter.class)
-                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+                .merge(ShrinkWrap.create(JavaArchive.class, "target/test-libs/kie-wb-common-ui.jar"))
+                .merge(ShrinkWrap.create(JavaArchive.class, "target/test-libs/drools-wb-drl-text-editor-client.jar"));
+        System.out.println(jar.toString());
         System.out.println(jar.toString(true));
         return jar;
     }
     @Inject
-    Greeter greeter;
+    private NewResourcePresenter p;
 
     @Test
     public void should_create_greeting() {
-        Assert.assertEquals("Hello, Earthling!", greeter.createGreeting("Earthling"));
-        greeter.greet(System.out, "Earthling");
+        p.show(new NewDrlTextHandler());
     }
 }

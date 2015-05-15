@@ -15,6 +15,17 @@
   </properties>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.kie.workbench.widgets</groupId>
+      <artifactId>kie-wb-common-ui</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-wb-drl-text-editor-client</artifactId>
+    </dependency>
+
+    <!-- Test dependencies: Arquillian, JUnit, Weld, Java EE -->
     <dependency>
       <groupId>org.jboss.spec.javax.ejb</groupId>
       <artifactId>jboss-ejb-api_3.1_spec</artifactId>
@@ -61,4 +72,31 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <!--TODO uberjar will be needed-->
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <executions>
+          <execution>
+            <id>copy-test-libs</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
+              <stripVersion>true</stripVersion>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <addParentPoms>true</addParentPoms>
+              <includeArtifactIds>kie-wb-common-ui,drools-wb-drl-text-editor-client</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

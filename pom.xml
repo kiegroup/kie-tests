@@ -40,6 +40,7 @@
 
   <modules>
     <module>remote-kie-tests</module>
+    <module>workbench-tests</module>
   </modules>
 
   <properties>
