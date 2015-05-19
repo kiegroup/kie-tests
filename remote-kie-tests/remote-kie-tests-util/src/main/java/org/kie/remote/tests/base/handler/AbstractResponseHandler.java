@@ -1,6 +1,8 @@
-package org.kie.remote.tests.base.util;
+package org.kie.remote.tests.base.handler;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,20 +12,17 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 
-import javax.xml.bind.JAXBContext;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.entity.ContentType;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.kie.remote.tests.base.DeployUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unchecked")
 public abstract class AbstractResponseHandler<T,P> implements ResponseHandler<T> {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractResponseHandler.class);

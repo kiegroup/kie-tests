@@ -1,8 +1,10 @@
 package org.kie.remote.tests.base;
 
-import static org.kie.remote.tests.base.RestUtil.*;
-import static org.junit.Assert.*;
-import static org.kie.remote.tests.base.RestUtil.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.kie.remote.tests.base.RestUtil.delete;
+import static org.kie.remote.tests.base.RestUtil.get;
+import static org.kie.remote.tests.base.RestUtil.postEntity;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,26 +27,32 @@ import org.guvnor.rest.client.OrganizationalUnit;
 import org.guvnor.rest.client.RemoveRepositoryRequest;
 import org.guvnor.rest.client.RepositoryRequest;
 import org.guvnor.rest.client.RepositoryResponse;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.kie.remote.tests.base.unit.GetIgnoreRule;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.ConditionalIgnore;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class RestUtilTest {
 
     private static final String contentType = MediaType.APPLICATION_JSON;
     private static final String user = "mary";
     private static final String password = "mary123@";
-    
+   
+    private final static String urlString = "http://localhost:8080/business-central/";
     private static URL deploymentUrl;
     static {
         try {
-            deploymentUrl = new URL("http://localhost:8080/test/");
+            deploymentUrl = new URL(urlString);
         } catch( MalformedURLException e ) {
             // no-op
         }
     }
+   
+    @Rule
+    public GetIgnoreRule liveServerRule = new GetIgnoreRule();
     
     @Test
+    @ConditionalIgnore(getUrl=urlString+"rest/deployment")
     public void restMethods() throws Exception { 
        
         Collection<RepositoryResponse> repoList = 

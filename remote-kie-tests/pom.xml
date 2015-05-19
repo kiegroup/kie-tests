@@ -36,9 +36,6 @@
     
     <!-- jetty -->    
     <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>
- 
-     <!-- eap artifacts -->
-     <classifier.eap.artifact>eap6_4</classifier.eap.artifact>
   </properties>
 
   <dependencyManagement>

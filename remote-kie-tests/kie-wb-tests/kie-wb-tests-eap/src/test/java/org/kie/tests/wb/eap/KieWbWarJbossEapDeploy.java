@@ -27,6 +27,8 @@ public class KieWbWarJbossEapDeploy {
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
+        war.delete("META-INF/jboss-all.xml");
+        
         boolean webXmlReplace = false;
         if( webXmlReplace ) {
             replaceWebXmlForWebServices(war);

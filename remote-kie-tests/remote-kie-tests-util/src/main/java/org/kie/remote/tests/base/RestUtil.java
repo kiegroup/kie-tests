@@ -30,7 +30,6 @@ import java.util.Map.Entry;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.JAXBContext;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ResponseHandler;
@@ -39,12 +38,13 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.kie.remote.tests.base.util.AbstractResponseHandler;
-import org.kie.remote.tests.base.util.JsonResponseHandler;
-import org.kie.remote.tests.base.util.XmlResponseHandler;
+import org.kie.remote.tests.base.handler.AbstractResponseHandler;
+import org.kie.remote.tests.base.handler.JsonResponseHandler;
+import org.kie.remote.tests.base.handler.XmlResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("null")
 public class RestUtil {
 
     private static Logger logger = LoggerFactory.getLogger(RestUtil.class);
@@ -60,6 +60,7 @@ public class RestUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> ResponseHandler<T> createResponseHandler( String mediaType, int status, Class... responseTypes ) {
         ResponseHandler<T> rh = null;
         if( MediaType.APPLICATION_XML.equals(mediaType) ) {
@@ -77,7 +78,7 @@ public class RestUtil {
         try {
             uriStr = deploymentUrl.toURI() + relativeUrl;
         } catch( URISyntaxException urise ) {
-            failAndLog("Invalid uri :" + deploymentUrl.toString(), urise);
+            logAndFail("Invalid uri :" + deploymentUrl.toString(), urise);
         }
         return uriStr;
     }
@@ -92,7 +93,7 @@ public class RestUtil {
     
     // Public Helper methods ------------------------------------------------------------------------------------------------------
     
-    public static void failAndLog( String msg, Exception e ) {
+    public static void logAndFail( String msg, Exception e ) {
         logger.error(msg, e);
         fail(msg + ": " + e.getMessage());
     }
@@ -109,20 +110,20 @@ public class RestUtil {
         Request request = Request.Get(uriStr)
                 .addHeader(HttpHeaders.ACCEPT, mediaType.toString())
                 .addHeader(HttpHeaders.AUTHORIZATION, basicAuthenticationHeader(user, password));
-        // @formatter:off
+        // @formatter:on
 
         Response resp = null;
         try {
             logOp("GET", uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -136,12 +137,10 @@ public class RestUtil {
             String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
             uriBuilder = new URIBuilder(uriStr);
         } catch( URISyntaxException urise ) {
-            failAndLog("Invalid uri :" + deploymentUrl.toString(), urise);
+            logAndFail("Invalid uri :" + deploymentUrl.toString(), urise);
         }
 
         for( Entry<String, String> paramEntry: queryParams.entrySet() ) { 
-           String param = paramEntry.getKey();
-           String value = paramEntry.getValue();
            uriBuilder.addParameter(paramEntry.getKey(), paramEntry.getValue());
         }
         
@@ -151,7 +150,7 @@ public class RestUtil {
           uri = uriBuilder.build();
           uriStr = uri.toString();
         } catch( URISyntaxException urise ) { 
-           failAndLog("Invalid uri!", urise);
+           logAndFail("Invalid uri!", urise);
         }
         
         ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
@@ -167,13 +166,13 @@ public class RestUtil {
             logOp("GET", uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -198,7 +197,7 @@ public class RestUtil {
         try {
             bodyEntity = new StringEntity(entityStr);
         } catch( UnsupportedEncodingException uee ) {
-            failAndLog("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
+            logAndFail("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
         }
 
         // @formatter:off
@@ -214,13 +213,13 @@ public class RestUtil {
             logOp("POST", entity, uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -238,7 +237,7 @@ public class RestUtil {
         try {
             bodyEntity = new StringEntity(entityStr);
         } catch( UnsupportedEncodingException uee ) {
-            failAndLog("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
+            logAndFail("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
         }
 
         // @formatter:off
@@ -254,13 +253,13 @@ public class RestUtil {
             logOp("POST", entity, uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -279,7 +278,7 @@ public class RestUtil {
         try {
             bodyEntity = new StringEntity(entityStr);
         } catch( UnsupportedEncodingException uee ) {
-            failAndLog("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
+            logAndFail("Unable to encode serialized " + entity.getClass().getSimpleName() + " entity", uee);
         }
 
         // @formatter:off
@@ -298,7 +297,7 @@ public class RestUtil {
             resp = request.execute();
             after = System.currentTimeMillis();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         long duration = after - before;
@@ -308,7 +307,7 @@ public class RestUtil {
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -337,7 +336,7 @@ public class RestUtil {
             resp = request.execute();
             after = System.currentTimeMillis();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         long duration = after - before;
@@ -347,7 +346,7 @@ public class RestUtil {
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -372,13 +371,13 @@ public class RestUtil {
             logOp("POST", uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -389,7 +388,6 @@ public class RestUtil {
             String password, Map<String, String> formParams, Class<T>... responseTypes ) {
 
         String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
-
 
         // form content
         Form formContent = Form.form();
@@ -406,19 +404,18 @@ public class RestUtil {
         // @formatter:on
 
         Response resp = null;
-        long before = 0, after = 0;
         try {
             logOp("POST", uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens
@@ -442,13 +439,13 @@ public class RestUtil {
             logOp("DELETE", uriStr);
             resp = request.execute();
         } catch( Exception e ) {
-            failAndLog("[GET] " + uriStr, e);
+            logAndFail("[GET] " + uriStr, e);
         }
 
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
-            failAndLog("Failed retrieving response from [GET] " + uriStr, e);
+            logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 
         // never happens

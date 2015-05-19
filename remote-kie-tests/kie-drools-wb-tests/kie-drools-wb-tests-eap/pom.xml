@@ -36,7 +36,7 @@
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-drools-wb-distribution-wars</artifactId>
-      <classifier>${classifier.eap.artifact}</classifier>
+      <classifier>eap6_4</classifier>
       <type>war</type>
       <scope>test</scope>
     </dependency>
@@ -186,7 +186,7 @@
                     <artifactItem>
                       <groupId>org.kie</groupId>
                       <artifactId>kie-drools-wb-distribution-wars</artifactId>
-                      <classifier>${classifier.eap.artifact}</classifier>
+                      <classifier>eap6_4</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
                     </artifactItem>

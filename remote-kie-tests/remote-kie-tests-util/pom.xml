@@ -46,7 +46,8 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>jaxrs-api</artifactId>
     </dependency>
-   
+
+     
     <!--  Stay with httpcomponents: it will save us pain (as opposed to changing from resteasy to cxf to cxf 3.0, etc. --> 
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -61,6 +62,11 @@
       <artifactId>fluent-hc</artifactId>
     </dependency>
    
+    <dependency>
+      <groupId>dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+    </dependency>
+    
     <!-- json --> 
     <dependency>
       <groupId>org.codehaus.jackson</groupId>

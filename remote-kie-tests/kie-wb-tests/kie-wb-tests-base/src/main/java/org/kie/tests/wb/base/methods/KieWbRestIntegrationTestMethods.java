@@ -1066,7 +1066,10 @@ public class KieWbRestIntegrationTestMethods {
         
         // Start process
         JaxbProcessDefinitionList jaxbProcDefList = get("deployment/processes/", 200, JaxbProcessDefinitionList.class);
-    
+   
+        assertNotNull( "Null return object",  jaxbProcDefList );
+        assertNotNull( "Null proc def list", jaxbProcDefList.getProcessDefinitionList() );
+        assertFalse( "Empty process definition list!",jaxbProcDefList.getProcessDefinitionList().isEmpty() );
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
         for( JaxbProcessDefinition jaxbProcDef : procDefList ) {
             validateProcessDefinition(jaxbProcDef);
@@ -1080,7 +1083,6 @@ public class KieWbRestIntegrationTestMethods {
                 || procDef.getDeploymentId().isEmpty());
         assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty());
         assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty());
-        assertFalse("Process def " + id + ": null variables", procDef.getVariables() == null || procDef.getVariables().isEmpty());
         assertFalse("Process def " + id + ": null version", procDef.getVersion() == null || procDef.getVersion().isEmpty());
     }
 

@@ -1,11 +1,12 @@
-package org.kie.remote.tests.base.util;
+package org.kie.remote.tests.base.handler;
 
-import static org.kie.remote.tests.base.RestUtil.failAndLog;
+import static org.kie.remote.tests.base.RestUtil.logAndFail;
 
 import org.apache.http.entity.ContentType;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
 
+@SuppressWarnings("unchecked")
 public class JsonResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
 
     public JsonResponseHandler(int status, Class<T>... returnTypes) { 
@@ -30,14 +31,14 @@ public class JsonResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
                 }
                 return obj;
             } catch( Exception e ) {
-               failAndLog(returnType.getSimpleName() + " deserialization failed", e); 
+               logAndFail(returnType.getSimpleName() + " deserialization failed", e); 
             } 
         } else { 
             JavaType genericsType = om.getTypeFactory().constructParametricType(this.returnType, this.parameterType);
             try { 
                 return (T) om.readValue(content, genericsType);
             } catch( Exception e ) {
-               failAndLog(returnType.getSimpleName() + "<" + parameterType.getSimpleName() + ">" + " deserialization failed", e); 
+               logAndFail(returnType.getSimpleName() + "<" + parameterType.getSimpleName() + ">" + " deserialization failed", e); 
             } 
         }
         
@@ -54,7 +55,7 @@ public class JsonResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
                 logger.trace("JSON > |\n{} ", om.writerWithDefaultPrettyPrinter().writeValueAsString(entity) );
             }
         } catch( Exception e ) {
-            failAndLog(entity.getClass().getSimpleName() + " instance serialization failed", e); 
+            logAndFail(entity.getClass().getSimpleName() + " instance serialization failed", e); 
         } 
         
         return out;

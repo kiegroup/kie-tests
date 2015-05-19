@@ -1,10 +1,9 @@
-package org.kie.remote.tests.base.util;
+package org.kie.remote.tests.base.handler;
 
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +23,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
+@SuppressWarnings("unchecked")
 public class XmlResponseHandler<T,P> extends AbstractResponseHandler<T, P> {
 
     private JAXBContext jaxbContext = null;
