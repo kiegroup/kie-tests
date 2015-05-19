@@ -50,7 +50,7 @@
     <!-- war -->
     <dependency>
       <groupId>org.kie</groupId>
-      <artifactId>kie-wb-distribution-wars-cdi1.0</artifactId>
+      <artifactId>kie-wb-distribution-wars</artifactId>
       <classifier>eap6_4</classifier>
       <scope>test</scope>
        <type>war</type>
@@ -347,7 +347,7 @@
                   <artifactItems>
                     <artifactItem>
                       <groupId>org.kie</groupId>
-                      <artifactId>kie-wb-distribution-wars-cdi1.0</artifactId>
+                      <artifactId>kie-wb-distribution-wars</artifactId>
                       <classifier>eap6_4</classifier>
                       <type>war</type>
                       <overWrite>false</overWrite>
