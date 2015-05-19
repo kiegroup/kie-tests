@@ -18,7 +18,6 @@
   <modules>
     <module>remote-kie-tests-util</module>
     <module>kie-wb-tests</module>
-    <module>jbpm-console-tests</module>
     <module>kie-drools-wb-tests</module>
   </modules>
 
