@@ -80,42 +80,6 @@
         <classifier>sources</classifier>
       </dependency>
       
-      <!--  arquillian -->
-      <dependency>
-        <groupId>org.jboss.arquillian.container</groupId>
-        <artifactId>arquillian-tomcat-managed-7</artifactId>
-        <version>1.0.0.CR6</version>
-        <scope>test</scope>
-      </dependency> 
-      <dependency>
-        <groupId>org.wildfly</groupId>
-        <artifactId>wildfly-arquillian-container-managed</artifactId>
-        <version>8.1.0.Final</version>
-        <scope>test</scope>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.jboss.byteman</groupId>
-        <artifactId>byteman-bmunit</artifactId>
-        <version>2.2.0.1</version>
-        <scope>test</scope>
-      </dependency>
-      
-      <!--  other -->
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.180</version>
-        <scope>test</scope>
-      </dependency>
-  
-     <!-- kie-tests --> 
-     <dependency>
-        <groupId>org.kie.tests.remote</groupId>
-        <artifactId>remote-kie-tests-util</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-  
       <!-- apache maven--> 
       <dependency>
         <groupId>org.apache.maven</groupId>
