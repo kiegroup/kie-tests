@@ -14,7 +14,7 @@
   <name>KIE Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
+    <tomcat.home>${project.build.directory}/tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
 
   <dependencies>
@@ -167,7 +167,7 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>org.apache.tomcat</groupId>
-                  <artifactId>apache-tomcat</artifactId>
+                  <artifactId>tomcat</artifactId>
                   <version>${version.org.apache.tomcat}</version>
                   <type>zip</type>
                   <overWrite>false</overWrite>
@@ -318,7 +318,7 @@
             <phase>generate-test-resources</phase>
             <configuration>
               <tasks>
-                <delete dir="${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}/webapps/ROOT" />
+                <delete dir="${project.build.directory}/tomcat-${version.org.apache.tomcat}/webapps/ROOT" />
               </tasks>
             </configuration>
             <goals>

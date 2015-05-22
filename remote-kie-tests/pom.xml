@@ -167,7 +167,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.tomcat</groupId>
-        <artifactId>apache-tomcat</artifactId>
+        <artifactId>tomcat</artifactId>
         <version>${version.org.apache.tomcat}</version>
         <type>zip</type>
         <scope>test</scope>
