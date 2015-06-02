@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.kie.tests</groupId>
+        <artifactId>kie-tests</artifactId>
+        <version>6.3.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>performance-tests</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Performance Tests</name>
+
+    <modules>
+        <module>jbpm-performance-tests</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- ensure that repository directory is deleted before test 
+                    runs -->
+                <plugin>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <configuration>
+                        <filesets>
+                            <fileset>
+                                <directory>${basedir}</directory>
+                                <includes>
+                                    <include>btm*log</include>
+                                </includes>
+                            </fileset>
+                        </filesets>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>

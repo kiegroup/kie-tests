@@ -41,6 +41,7 @@
   <modules>
     <module>remote-kie-tests</module>
     <module>workbench-tests</module>
+    <module>jbpm-performance-tests</module>
   </modules>
 
   <properties>
