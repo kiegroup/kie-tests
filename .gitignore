@@ -19,4 +19,5 @@ nbproject/
 # Test info
 bitronix-default-config.properties
 *.db
+reportData
 
