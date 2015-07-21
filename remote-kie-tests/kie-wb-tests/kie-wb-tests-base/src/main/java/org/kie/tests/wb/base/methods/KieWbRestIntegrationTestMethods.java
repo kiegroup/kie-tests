@@ -17,7 +17,7 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -61,8 +61,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +99,7 @@ import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
+import org.kie.remote.jaxb.gen.Comment;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
@@ -1359,4 +1362,69 @@ public class KieWbRestIntegrationTestMethods {
         procInst = ksession.getProcessInstance(processInstanceId);
         assertNull(procInst);
     }
+    
+    public void remoteApiHumanTaskCommentTest( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        setRestInfo(deploymentUrl, user, password);
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+               
+        // start process
+        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
+        assertNotNull(pi);
+        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
+   
+        // get task
+        TaskService taskService = runtimeEngine.getTaskService();
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(pi.getId());
+        assertFalse(taskIds.isEmpty());
+        long taskId = taskIds.get(0);
+    
+        taskService.start(taskId, JOHN_USER);
+  
+        // test add comment
+        String commentText = UUID.randomUUID().toString();
+        String commentUser = MARY_USER;
+        Long taskCommentId = taskService.addComment(taskId, commentUser, commentText);
+        assertNotNull("Null task comment id!", taskCommentId);
+        
+        // test get comment
+        org.kie.api.task.model.Comment comment = taskService.getCommentById(taskCommentId);
+        assertEquals("Comment user", commentUser, comment.getAddedBy().getId());
+        assertEquals("Comment text", commentText, comment.getText());
+        Date commentDate = comment.getAddedAt();
+        GregorianCalendar fiveMinAgoCal = new GregorianCalendar();
+        fiveMinAgoCal.add(Calendar.MINUTE, -5);
+        Date fiveMinAgo = fiveMinAgoCal.getTime();
+        assertTrue( "Comment date: " + sdf.format(commentDate) + " [" + sdf.format(fiveMinAgo) + "]", fiveMinAgo.before(commentDate));
+
+        // test get all comments
+        String anotherCommentText = UUID.randomUUID().toString();
+        String anotherCommentUser = KRIS_USER;
+        Long anotherTaskCommentId = taskService.addComment(taskId, anotherCommentUser, anotherCommentText);
+
+        assertNotNull("Null task comment id!", taskCommentId);
+       
+        List<org.kie.api.task.model.Comment> commentList = taskService.getAllCommentsByTaskId(taskId);
+        for( org.kie.api.task.model.Comment kieComment : commentList ) { 
+           if( kieComment.getId() == anotherTaskCommentId ) { 
+               assertEquals("(Another) Comment user", anotherCommentUser, kieComment.getAddedBy().getId());
+               assertEquals("(Another) Comment text", anotherCommentText, kieComment.getText());
+           } else if( kieComment.getId() == taskCommentId ) { 
+               assertEquals("Comment user", commentUser, kieComment.getAddedBy().getId());
+               assertEquals("Comment text", commentText, kieComment.getText());
+           } else { 
+               fail( "Retrieved unknown comment for task! [task: " + taskId + "/comment: " + kieComment.getId() + "]" );
+           }
+        }
+        int origCommentListSize = commentList.size();
+        
+        // test delete comments
+        taskService.deleteComment(taskId, taskCommentId);
+        commentList = taskService.getAllCommentsByTaskId(taskId);
+        assertEquals( "Delete comment did not succeed", origCommentListSize-1, commentList.size());
+        for( org.kie.api.task.model.Comment kieComment : commentList ) { 
+           assertNotEquals("Deleted comment found", taskCommentId, kieComment.getId());
+        }
+    }
+    
 }

@@ -15,8 +15,11 @@
 
   <!-- IF YOU AUTO-FORMAT THIS FILE, PLEASE DOUBLE CHECK LINES BELOW MARKED WITH "AUTO-FORMAT" -->
 
-  <!-- == test setup == generate-test-resources: unpack jboss process-test-resources: place standalone-full.xml fix sstandalone-full.xml 
-    post-integration-test: fix weird characters in failsafe reports -->
+  <!-- == test setup == 
+       generate-test-resources: unpack jboss 
+       process-test-resources: place standalone-full.xml, fix standalone-full.xml 
+       post-integration-test: fix weird characters in failsafe reports 
+       -->
   <properties>
     <skip.integration.tests>true</skip.integration.tests>
 
@@ -179,8 +182,6 @@
     </pluginManagement>
 
     <plugins>
-
-
       <!-- only run when -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -240,6 +241,7 @@
             <version>1.0.4.GA-redhat-1</version>
             <scope>runtime</scope>
           </dependency>
+
 
         </dependencies>
       </dependencyManagement>

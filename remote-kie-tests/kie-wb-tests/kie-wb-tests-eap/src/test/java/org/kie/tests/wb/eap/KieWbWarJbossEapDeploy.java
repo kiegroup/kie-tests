@@ -23,12 +23,16 @@ public class KieWbWarJbossEapDeploy {
 
         String[][] jarsToReplace = {
                 // kie-remote
+                { "org.kie", "kie-api" },
+                { "org.jbpm", "jbpm-human-task-core" },
+                { "org.jbpm", "jbpm-human-task-jpa" },
+                { "org.jbpm", "jbpm-runtime-manager" },
+                { "org.kie.remote", "kie-remote-jaxb" },
                 { "org.kie.remote", "kie-remote-services" }
         };
+        String [][] noJars = {{}};
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
-        war.delete("META-INF/jboss-all.xml");
-        
         boolean webXmlReplace = false;
         if( webXmlReplace ) {
             replaceWebXmlForWebServices(war);
