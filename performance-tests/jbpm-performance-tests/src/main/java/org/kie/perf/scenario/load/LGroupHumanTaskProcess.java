@@ -23,6 +23,7 @@ public class LGroupHumanTaskProcess implements IPerfTest {
     private JBPMController jc;
     
     private Timer startProcess;
+    private Timer queryTaskDuration;
     private Timer claimTaskDuration;
     private Timer startTaskDuration;
     private Timer completeTaskDuration;
@@ -47,6 +48,7 @@ public class LGroupHumanTaskProcess implements IPerfTest {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
         completedProcess = metrics.meter(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.process.completed"));
         startProcess = metrics.timer(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.process.start.duration"));
+        queryTaskDuration = metrics.timer(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.task.query.duration"));
         claimTaskDuration = metrics.timer(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.task.claim.duration"));
         startTaskDuration = metrics.timer(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.task.start.duration"));
         completeTaskDuration = metrics.timer(MetricRegistry.name(LGroupHumanTaskProcess.class, "scenario.task.complete.duration"));
@@ -61,10 +63,12 @@ public class LGroupHumanTaskProcess implements IPerfTest {
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance pi = ksession.startProcess(ProcessStorage.GroupHumanTask.getProcessDefinitionId());
         context.stop();
-        
+
+        context = queryTaskDuration.time();
         TaskService taskService = runtimeEngine.getTaskService();
         List<Long> tasks = taskService.getTasksByProcessInstanceId(pi.getId());
         Long taskSummaryId = tasks.get(0);
+        context.stop();
 
         context = claimTaskDuration.time();
         taskService.claim(taskSummaryId, UserStorage.EngUser.getUserId());
