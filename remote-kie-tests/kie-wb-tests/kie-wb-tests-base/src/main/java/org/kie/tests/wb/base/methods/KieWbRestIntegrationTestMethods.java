@@ -17,8 +17,9 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -47,8 +48,6 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.io.BufferedReader;
@@ -92,6 +91,8 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.process.CorrelationAwareProcessRuntime;
+import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
@@ -99,11 +100,12 @@ import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
-import org.kie.remote.jaxb.gen.Comment;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
+import org.kie.remote.jaxb.gen.GetProcessInstanceByCorrelationKeyCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
+import org.kie.remote.jaxb.gen.StartCorrelatedProcessCommand;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
 import org.kie.remote.tests.base.RestUtil;
@@ -126,6 +128,7 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbWorkItemRespo
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
+import org.kie.services.client.serialization.jaxb.impl.runtime.JaxbCorrelationKeyFactory;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.MyType;
@@ -281,19 +284,25 @@ public class KieWbRestIntegrationTestMethods {
     
     private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Command<?>... command ) 
         throws Exception {
-        List<JaxbCommandResponse<?>> responses = executeCommands(appUrl, user, password, deploymentId, command) ;
+        List<JaxbCommandResponse<?>> responses = executeCommands(appUrl, user, password, deploymentId, null, command) ;
         return responses.get(0);
     }
 
-    private List<JaxbCommandResponse<?>> executeCommands( URL appUrl, String user, String password, String deploymentId, Command<?>... command )
+    private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Long procInstId, Command<?>... command ) 
+        throws Exception {
+        List<JaxbCommandResponse<?>> responses = executeCommands(appUrl, user, password, deploymentId, procInstId, command) ;
+        return responses.get(0);
+    }
+
+    private List<JaxbCommandResponse<?>> executeCommands( URL appUrl, String user, String password, String deploymentId, Long processInstanceId, 
+            Command<?>... command )
             throws Exception {
-        JaxbCommandsRequest req = new JaxbCommandsRequest(command[0]);
-        if( command.length > 1 ) { 
-            for( int i = 1; i < command.length; ++i ) { 
-                req.getCommands().add(command[i]);
-            }
+        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, command[0]);
+        req.setProcessInstanceId(processInstanceId);
+        for( int i = 1; i < command.length; ++i ) { 
+            req.getCommands().add(command[i]);
         }
-        req.setDeploymentId(deploymentId);
+        
         assertNotNull("Commands are null!", req.getCommands());
         assertTrue("Commands are empty!", req.getCommands().size() > 0);
     
@@ -1426,5 +1435,35 @@ public class KieWbRestIntegrationTestMethods {
            assertNotEquals("Deleted comment found", taskCommentId, kieComment.getId());
         }
     }
+   
     
+    public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        setRestInfo(deploymentUrl, user, password);
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        KieSession kieSession = runtimeEngine.getKieSession();
+
+        // start process
+        String businessKey = "taxes";
+        CorrelationKey corrKey = JaxbCorrelationKeyFactory.getInstance().newCorrelationKey(businessKey);
+        ProcessInstance procInst = ((CorrelationAwareProcessRuntime) kieSession).startProcess(HUMAN_TASK_PROCESS_ID, corrKey, null);
+        assertNotNull( "Could not start process instance by correlation key!", procInst );
+        long procInstId = procInst.getId();
+        
+        procInst = ((CorrelationAwareProcessRuntime) kieSession).getProcessInstance(corrKey);
+        assertNotNull( "Could not get process instance by correlation key!", procInst );
+        assertEquals( "Incorrect process instance retrieved", procInstId, procInst.getId());
+        
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                // Add correlation key property to builder!
+                .addCorrelationProperties(businessKey)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password);
+      
+        runtimeEngine = builder.build();
+
+        runtimeEngine.getKieSession().abortProcessInstance(procInstId);
+    }
 }

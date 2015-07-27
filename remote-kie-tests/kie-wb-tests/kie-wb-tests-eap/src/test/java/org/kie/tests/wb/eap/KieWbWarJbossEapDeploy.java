@@ -22,15 +22,21 @@ public class KieWbWarJbossEapDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
-                // kie-remote
-                { "org.kie", "kie-api" },
+                // kie-internal
+                { "org.kie", "kie-internal" },
+                // drools
+                { "org.drools", "drools-core" },
+                // jbpm
+                { "org.jbpm", "jbpm-persistence-jpa" },
+                { "org.jbpm", "jbpm-audit" },
+                { "org.jbpm", "jbpm-flow" },
+                { "org.jbpm", "jbpm-human-task-audit" },
                 { "org.jbpm", "jbpm-human-task-core" },
-                { "org.jbpm", "jbpm-human-task-jpa" },
-                { "org.jbpm", "jbpm-runtime-manager" },
-                { "org.kie.remote", "kie-remote-jaxb" },
+                { "org.jbpm", "jbpm-kie-services" },
+                // kie-remote
+                
                 { "org.kie.remote", "kie-remote-services" }
         };
-        String [][] noJars = {{}};
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
         boolean webXmlReplace = false;

@@ -289,6 +289,14 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         restTests.remoteApiHumanTaskCommentTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
+   
+    @Test
+    @InSequence(REST_SUCCEEDING)
+    public void testRemoteApiCorrelationKey() throws Exception { 
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
     
     // JMS ------------------------------------------------------------------------------------------------------------------------
     

@@ -23,6 +23,7 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -34,7 +35,9 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,14 +71,33 @@ public class TomcatRemoteApiIssueTest {
     @Test
     public void issueTest() throws Exception { 
         printTestName();
+        printTestName();
+        String username = MARY_USER;
+        String password = MARY_PASSWORD;
+        
+        // deploy
+
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+        deployUtil.setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE);
+
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "tests";
+        String project = "integration-tests";
+        String deploymentId = KJAR_DEPLOYMENT_ID;
+        String orgUnit = UUID.randomUUID().toString();
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+
+        int sleep = 2;
+        logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
+        Thread.sleep(sleep * 1000); 
         
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
+                .setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE)
+                .setTimeoutInSecs(5)
                 .build();
-       
-        // deploy
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
+               
+        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, username, password);
     }
 }

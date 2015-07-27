@@ -43,7 +43,7 @@ public class RepositoryDeploymentUtil {
     private static final Logger logger = LoggerFactory.getLogger(RepositoryDeploymentUtil.class);
 
    
-    public static final RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
+    public RuntimeStrategy strategy = RuntimeStrategy.SINGLETON;
     
     private int sleepSecs;
     private final URL deploymentUrl;
@@ -58,6 +58,10 @@ public class RepositoryDeploymentUtil {
         this.deploymentUrl = deploymentUrl;
         this.user = user;
         this.password = password;
+    }
+   
+    public void setStrategy(RuntimeStrategy strategy) { 
+        this.strategy = strategy;
     }
     
     public void createRepositoryAndDeployProject(String repoUrl, String repositoryName, String project, String deploymentId, String orgUnitName) { 
