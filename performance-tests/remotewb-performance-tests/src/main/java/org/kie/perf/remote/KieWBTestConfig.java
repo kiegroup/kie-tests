@@ -56,33 +56,47 @@ public class KieWBTestConfig extends TestConfig {
     public Properties loadProperties() throws Exception {
         Properties props = super.loadProperties();
 
-        username = props.getProperty("workbench.username");
+        username = System.getProperty("workbench.username");
+        props.put("workbench.username", username);
         
-        password = props.getProperty("workbench.password");
+        password = System.getProperty("workbench.password");
+        props.put("workbench.password", password);
 
-        host = props.getProperty("workbench.host");
+        host = System.getProperty("workbench.host");
+        props.put("workbench.host", host);
         
-        port = Integer.valueOf(props.getProperty("workbench.port"));
+        port = Integer.valueOf(System.getProperty("workbench.port"));
+        props.put("workbench.port", port);
         
-        remotingPort = Integer.valueOf(props.getProperty("workbench.remotingPort"));
+        remotingPort = Integer.valueOf(System.getProperty("workbench.remotingPort"));
+        props.put("workbench.remotingPort", remotingPort);
 
-        name = props.getProperty("workbench.name");
+        name = System.getProperty("workbench.name");
+        props.put("workbench.name", name);
 
-        remoteAPI = props.getProperty("remoteAPI");
+        remoteAPI = System.getProperty("remoteAPI");
+        props.put("remoteAPI", remoteAPI);
 
-        kieSessionQueue = props.getProperty("workbench.jms.queue.kieSession");
+        kieSessionQueue = System.getProperty("workbench.jms.queue.kieSession");
+        props.put("workbench.jms.queue.kieSession", kieSessionQueue);
 
-        kieTaskQueue = props.getProperty("workbench.jms.queue.kieTask");
+        kieTaskQueue = System.getProperty("workbench.jms.queue.kieTask");
+        props.put("workbench.jms.queue.kieTask", kieTaskQueue);
 
-        kieResponseQueue = props.getProperty("workbench.jms.queue.kieResponse");
+        kieResponseQueue = System.getProperty("workbench.jms.queue.kieResponse");
+        props.put("workbench.jms.queue.kieResponse", kieResponseQueue);
 
-        sslEnabled = Boolean.valueOf(props.getProperty("workbench.jms.sslEnabled"));
+        sslEnabled = Boolean.valueOf(System.getProperty("workbench.jms.sslEnabled"));
+        props.put("workbench.jms.sslEnabled", sslEnabled);
 
-        connectionFactory = props.getProperty("workbench.jms.connectionFactory");
+        connectionFactory = System.getProperty("workbench.jms.connectionFactory");
+        props.put("workbench.jms.connectionFactory", connectionFactory);
 
-        keystoreLocation = props.getProperty("workbench.jms.ssl.keystoreLocation");
+        keystoreLocation = System.getProperty("workbench.jms.ssl.keystoreLocation");
+        props.put("workbench.jms.ssl.keystoreLocation", keystoreLocation);
 
-        keystorePassword = props.getProperty("workbench.jms.ssl.keystorePassword");
+        keystorePassword = System.getProperty("workbench.jms.ssl.keystorePassword");
+        props.put("workbench.jms.ssl.keystorePassword", keystorePassword);
         
         return props;
     }

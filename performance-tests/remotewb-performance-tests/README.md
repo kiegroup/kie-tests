@@ -3,20 +3,22 @@ This module uses kie-performance-kit as a basis for the remote workbench scenari
 
 The tests should be executed via `run.sh` bash script since this script is by default used for running selected test suite when no scenario is selected.
 
-1. Edit `performance.properties` located in *src/main/resources*
-2. [optional] Setup JVM in `pom.xml` by adding arguments into *exec-maven-plugin*
-3. Execute `run.sh` or manually *mvn clean install exec:exec -Dscenario=[scenario]*
+1. Setup JBoss EAP 6
+2. Setup KIE Performance Kit and Remote Workbench configuration in `pom.xml`
+3. [optional] Configure JVM in `pom.xml` by adding arguments into *exec-maven-plugin*
+4. Execute `run.sh` or manually *mvn clean install exec:exec -Dscenario=[scenario]*
 
 ## JBoss EAP 6 Setup
 
-1. Make sure that workbench is located at http://localhost:8080/business-central (this location is used by default in the `performance.properties` and the scripts `addUsers.sh` and `deploy.sh`)
-2. Execute `addUsers.sh` to add perfUser and engUser
+1. Make sure that workbench is located at http://localhost:8080/business-central (this location is used by default in the `pom.xml`)
+2. Set system property JBOSS_HOME `export JBOSS_HOME=<EAP6 location>`
+3. Execute `mvn clean install` in remotewb-performance-tests to add application users
 3. Start the application server with deployed workbench
-4. Execute `deploy.sh` in workbench-assets module to build and deploy the kjar containing business processes and business rules for performance testing
+4. Execute `mvn clean install deploy -s settings.xml` in workbench-assets module to build and deploy the kjar containing business processes and business rules for performance testing
 
 ## KIE-Performance-Kit Setup
 
-All configuration goes into `performance.properties` located in *src/main/resources*.
+All configuration goes into `pom.xml`
 
 * Select suite and scenario
  * Available suites = `LoadSuite, ConcurrentLoadSuite`
@@ -46,6 +48,6 @@ All configuration goes into `performance.properties` located in *src/main/resour
 
 * remoteAPI = `REST` or `JMS` (it's not possible to test both at once)
 * username - admin application user for most of the performance tests
-* host - if different to `localhost` it has to be changed in the scripts (`addUser.sh` and `deploy.sh`) and in distribution management of workbench-assets' `pom.xml` too
-* sslEnabled - if SSL is enabled it has to be configured on the application server and keystore information provided!
+* host - if different to `localhost` it has to be changed in distribution management of workbench-assets' `pom.xml`
+* sslEnabled - if SSL is enabled it has to be configured on the application server and keystore information provided through the properties `workbench.jms.ssl.keystoreLocation` and `workbench.jms.ssl.keystorePassword`!
 
