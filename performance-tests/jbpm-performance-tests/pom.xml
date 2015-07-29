@@ -17,6 +17,48 @@
     <kit.version>6.3.0-SNAPSHOT</kit.version>
     <metrics.version>3.1.0</metrics.version>
 
+    <!-- >>>>>>>>>>>>>>>> Performance configuration <<<<<<<<<<<<<<<<<<<< -->
+
+    <suite>LoadSuite</suite>
+    <scenario>LHumanTaskProcess</scenario>
+    <startScriptLocation>./run.sh</startScriptLocation>
+
+    <!-- Duration (in seconds), Iteration -->
+    <runType>Iteration</runType>
+    <duration>30</duration>
+    <iterations>1</iterations>
+
+    <warmUp>false</warmUp>
+    <warmUpCount>3</warmUpCount>
+    <auditLogging>true</auditLogging>
+
+    <!-- Properties applicable to concurrent testing -->
+    <threads>5</threads>
+
+    <!-- Reporting - Console, CSVSingle, CSV, (periodicity in seconds) -->
+
+    <reporterType>Console</reporterType>
+    <periodicity>5</periodicity>
+    <reportDataLocation>reportData</reportDataLocation>
+
+    <!-- Measure - MemoryUsage,FileDescriptors,ThreadStates -->
+    <measure>MemoryUsage,FileDescriptors,ThreadStates</measure>
+
+    <!-- >>>>>>>>>>>>>>>> JBPM Test Configuration <<<<<<<<<<<<<<<<<<<< -->
+
+    <!-- Strategy - Singleton, PerProcessInstance, PerRequest -->
+    <jbpm.runtimeManagerStrategy>Singleton</jbpm.runtimeManagerStrategy>
+    <jbpm.persistence>true</jbpm.persistence>
+    <jbpm.concurrentUsersCount>2</jbpm.concurrentUsersCount>
+
+    <!-- Pessimistic or optimistic locking -->
+    <jbpm.locking>optimistic</jbpm.locking>
+
+    <!-- Lazy loading of human tasks is disabled by default, enabling reduces 
+      queries but may introduce tx risks with getTask when jbpm manages tx itself -->
+    <jbpm.ht.eager>true</jbpm.ht.eager>
+
+    <!-- Database configuration -->
     <maven.jdbc.db.name>H2</maven.jdbc.db.name>
     <maven.hibernate.dialect>org.hibernate.dialect.H2Dialect</maven.hibernate.dialect>
     <maven.datasource.classname>bitronix.tm.resource.jdbc.lrc.LrcXADataSource</maven.datasource.classname>
@@ -151,7 +193,27 @@
         <configuration>
           <executable>java</executable>
           <arguments>
+            <argument>-Dsuite=${suite}</argument>
             <argument>-Dscenario=${scenario}</argument>
+            <argument>-DstartScriptLocation=${startScriptLocation}</argument>
+            <argument>-DrunType=${runType}</argument>
+            <argument>-Dduration=${duration}</argument>
+            <argument>-Diterations=${iterations}</argument>
+            <argument>-DwarmUp=${warmUp}</argument>
+            <argument>-DwarmUpCount=${warmUpCount}</argument>
+            <argument>-DauditLogging=${auditLogging}</argument>
+            <argument>-Dthreads=${threads}</argument>
+            <argument>-DreporterType=${reporterType}</argument>
+            <argument>-Dperiodicity=${periodicity}</argument>
+            <argument>-DreportDataLocation=${reportDataLocation}</argument>
+            <argument>-Dmeasure=${measure}</argument>
+            
+            <argument>-Djbpm.runtimeManagerStrategy=${jbpm.runtimeManagerStrategy}</argument>
+            <argument>-Djbpm.persistence=${jbpm.persistence}</argument>
+            <argument>-Djbpm.concurrentUsersCount=${jbpm.concurrentUsersCount}</argument>
+            <argument>-Djbpm.locking=${jbpm.locking}</argument>
+            <argument>-Djbpm.ht.eager=${jbpm.ht.eager}</argument>
+            
             <argument>-classpath</argument>
             <classpath />
             <argument>org.kie.perf.Executor</argument>

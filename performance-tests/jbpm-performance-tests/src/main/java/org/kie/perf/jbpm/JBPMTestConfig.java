@@ -36,16 +36,21 @@ public class JBPMTestConfig extends TestConfig {
     public Properties loadProperties() throws Exception {
         Properties props = super.loadProperties();
         
-        runtimeManagerStrategy = props.getProperty("jbpm.runtimeManagerStrategy");
+        runtimeManagerStrategy = System.getProperty("jbpm.runtimeManagerStrategy");
+        props.put("jbpm.runtimeManagerStrategy", runtimeManagerStrategy);
 
-        persistence = Boolean.valueOf(props.getProperty("jbpm.persistence"));
+        persistence = Boolean.valueOf(System.getProperty("jbpm.persistence"));
+        props.put("jbpm.persistence", persistence);
         
-        String locking = props.getProperty("jbpm.locking");
+        String locking = System.getProperty("jbpm.locking");
         pessimisticLocking = locking.toLowerCase().equals("pessimistic");
+        props.put("jbpm.pessimisticLocking", pessimisticLocking);
         
-        concurrentUsersCount = Integer.valueOf(props.getProperty("jbpm.concurrentUsersCount"));
+        concurrentUsersCount = Integer.valueOf(System.getProperty("jbpm.concurrentUsersCount"));
+        props.put("jbpm.concurrentUsersCount", concurrentUsersCount);
 
-        humanTaskEager = Boolean.valueOf(props.getProperty("jbpm.ht.eager"));
+        humanTaskEager = Boolean.valueOf(System.getProperty("jbpm.ht.eager"));
+        props.put("jbpm.ht.eager", humanTaskEager);
         
         return props;
     }
