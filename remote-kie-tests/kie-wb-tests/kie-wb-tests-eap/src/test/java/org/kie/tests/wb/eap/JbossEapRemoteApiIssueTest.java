@@ -96,7 +96,7 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, username, password);
+        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
         
     }
 }

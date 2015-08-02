@@ -608,7 +608,8 @@ public class KieWbRestIntegrationTestMethods {
         // @formatter:on
      
         // 2c. Another way to find the task
-        List<TaskSummary> tasks = nullDepIdTaskService.getTasksAssignedAsPotentialOwner(taskUserId, "en-UK");
+        // (testing TaskQueryWhereCommand based operations. )
+        List<TaskSummary> tasks = nullDepIdTaskService.getTasksAssignedAsPotentialOwnerByProcessId(taskUserId, HUMAN_TASK_PROCESS_ID);
         long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
         
         // 2. find task (without deployment id)

@@ -24,17 +24,20 @@ public class KieWbWarJbossEapDeploy {
         String[][] jarsToReplace = {
                 // kie-internal
                 { "org.kie", "kie-internal" },
-                // drools
-                { "org.drools", "drools-core" },
+                { "org.kie", "kie-api" },
                 // jbpm
                 { "org.jbpm", "jbpm-persistence-jpa" },
                 { "org.jbpm", "jbpm-audit" },
-                { "org.jbpm", "jbpm-flow" },
+                { "org.jbpm", "jbpm-query-jpa" },
+                
                 { "org.jbpm", "jbpm-human-task-audit" },
                 { "org.jbpm", "jbpm-human-task-core" },
-                { "org.jbpm", "jbpm-kie-services" },
-                // kie-remote
+                { "org.jbpm", "jbpm-human-task-jpa" },
                 
+                { "org.jbpm", "jbpm-runtime-manager" },
+                { "org.jbpm", "jbpm-kie-services" },
+                
+                // kie-remote
                 { "org.kie.remote", "kie-remote-services" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
