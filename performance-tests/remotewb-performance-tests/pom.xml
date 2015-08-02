@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.kie.tests</groupId>
     <artifactId>performance-tests</artifactId>
-    <version>6.3.0-SNAPSHOT</version>
+    <version>6.4.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.kie.tests.performance</groupId>
@@ -14,7 +14,7 @@
   <name>Remote Workbench Performance Tests</name>
 
   <properties>
-    <kit.version>6.3.0-SNAPSHOT</kit.version>
+    <kit.version>6.4.0-SNAPSHOT</kit.version>
     <metrics.version>3.1.0</metrics.version>
   </properties>
 
