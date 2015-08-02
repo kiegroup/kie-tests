@@ -51,7 +51,7 @@ public class L1000HumanTasksQueryPagination implements IPerfTest {
 
     @Override
     public void execute() {
-        tasks = ((InternalTaskService) taskService).taskQuery(UserStorage.PerfUser.getUserId()).intersect().maxResults(100).buildQuery()
+        tasks = ((InternalTaskService) taskService).taskQuery(UserStorage.PerfUser.getUserId()).intersect().maxResults(100).build()
                 .getResultList();
         taskId++;
     }
