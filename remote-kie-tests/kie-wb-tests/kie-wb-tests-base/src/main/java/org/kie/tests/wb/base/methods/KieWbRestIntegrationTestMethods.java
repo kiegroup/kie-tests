@@ -1273,7 +1273,9 @@ public class KieWbRestIntegrationTestMethods {
                 RemoteOperationStatus.SUCCESS, mapResp.getStatus());
         Map<String, Object> retrievedMap = mapResp.getResult();
         assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
-      
+        assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
+        
+        boolean myTypeRetrieved = false;
         for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
             String key = entry.getKey();
             Object val = entry.getValue();
@@ -1283,10 +1285,12 @@ public class KieWbRestIntegrationTestMethods {
                 assertNotNull( "Entry: " + key, copyType );
                 assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
                 assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
-                continue;
+                myTypeRetrieved = true;
+            } else { 
+                assertEquals( "Entry: " + key, val, retrievedMap.get(key));
             }
-            assertEquals( "Entry: " + key, val, retrievedMap.get(key));
         }
+        assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
         
         // the rest of this test..
         Map<String, Object> data = new HashMap<String, Object>();
