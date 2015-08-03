@@ -17,7 +17,7 @@ import org.kie.api.task.model.Content;
 import org.kie.api.task.model.Task;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
-import org.kie.remote.jaxb.gen.GetContentCommand;
+import org.kie.remote.jaxb.gen.GetContentByIdCommand;
 import org.kie.remote.jaxb.gen.GetTaskCommand;
 import org.kie.remote.jaxb.gen.GetTaskContentCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
@@ -85,7 +85,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         Map<String, Object> contentMap = (Map<String, Object>) response.getResponses().get(1).getResult();
 
         // get content
-        GetContentCommand gcc = new GetContentCommand();
+        GetContentByIdCommand gcc = new GetContentByIdCommand();
         gcc.setContentId(task.getTaskData().getDocumentContentId());
        
         // webservice

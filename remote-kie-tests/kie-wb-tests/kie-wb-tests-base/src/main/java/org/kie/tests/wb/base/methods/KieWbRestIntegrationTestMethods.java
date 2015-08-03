@@ -17,7 +17,7 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -94,7 +94,10 @@ import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.process.CorrelationAwareProcessRuntime;
 import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.client.api.RemoteApiResponse;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
+import org.kie.remote.client.api.RemoteTaskService;
+import org.kie.remote.client.api.RemoteApiResponse.RemoteOperationStatus;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
@@ -111,6 +114,7 @@ import org.kie.remote.jaxb.gen.StartTaskCommand;
 import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
+import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
@@ -1252,7 +1256,39 @@ public class KieWbRestIntegrationTestMethods {
         long taskId = taskIds.get(0);
     
         taskService.start(taskId, JOHN_USER);
-    
+ 
+        // BPMSPL-119 - add content
+        RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
+        Map<String, Object> contentMap = new HashMap<String, Object>(3);
+        contentMap.put("one",  UUID.randomUUID().toString());
+        contentMap.put("two",  new Integer(random.nextInt(1024)));
+        contentMap.put("thr",  new MyType("thr", 3));
+        RemoteApiResponse<Long> resp = remoteTaskService.addOutputContent(taskId, contentMap);
+        assertEquals( "Add Output Content operation: " + resp.getStatusDetails(),
+                RemoteOperationStatus.SUCCESS, resp.getStatus());
+        long contentId = resp.getResult();
+        
+        RemoteApiResponse<Map<String, Object>> mapResp = remoteTaskService.getOutputContentMap(taskId);
+        assertEquals( "Get Output Content Map operations: " + mapResp.getStatusDetails(), 
+                RemoteOperationStatus.SUCCESS, mapResp.getStatus());
+        Map<String, Object> retrievedMap = mapResp.getResult();
+        assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
+      
+        for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
+            String key = entry.getKey();
+            Object val = entry.getValue();
+            if( val instanceof MyType ) { 
+                MyType origType = (MyType) val;
+                MyType copyType =  (MyType) retrievedMap.get(key);
+                assertNotNull( "Entry: " + key, copyType );
+                assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
+                assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
+                continue;
+            }
+            assertEquals( "Entry: " + key, val, retrievedMap.get(key));
+        }
+        
+        // the rest of this test..
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("outMyObject", myType);
         taskService.complete(taskId, JOHN_USER, data);
@@ -1467,4 +1503,5 @@ public class KieWbRestIntegrationTestMethods {
 
         runtimeEngine.getKieSession().abortProcessInstance(procInstId);
     }
+    
 }

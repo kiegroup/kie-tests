@@ -76,7 +76,7 @@ public class JbossEapRemoteApiIssueTest {
         // deploy
 
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
-        deployUtil.setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE);
+        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
@@ -96,7 +96,6 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        
+        restTests.remoteApiHumanTaskOwnTypeTest(deploymentUrl);
     }
 }

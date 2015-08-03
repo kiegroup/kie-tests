@@ -25,14 +25,15 @@ public class KieWbWarJbossEapDeploy {
                 // kie-internal
                 { "org.kie", "kie-internal" },
                 { "org.kie", "kie-api" },
+
                 // jbpm
-                { "org.jbpm", "jbpm-persistence-jpa" },
                 { "org.jbpm", "jbpm-audit" },
+                { "org.jbpm", "jbpm-persistence-jpa" },
                 { "org.jbpm", "jbpm-query-jpa" },
                 
-                { "org.jbpm", "jbpm-human-task-audit" },
                 { "org.jbpm", "jbpm-human-task-core" },
                 { "org.jbpm", "jbpm-human-task-jpa" },
+                { "org.jbpm", "jbpm-human-task-workitems" },
                 
                 { "org.jbpm", "jbpm-runtime-manager" },
                 { "org.jbpm", "jbpm-kie-services" },

@@ -236,7 +236,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         KieWbRestIntegrationTestMethods testMethods = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(depUnit.getIdentifier())
                 .build();
-        testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, new JPAAuditLogService());
+        testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService() );
     }
 
     @Test
