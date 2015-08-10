@@ -11,7 +11,9 @@ public enum ProcessStorage {
     ScriptTask("ScriptTask.bpmn2", "org.kie.perf.ScriptTask"),
     IntermediateSignal("IntermediateSignal.bpmn2", "org.kie.perf.IntermediateSignal"),
     StartEnd("StartEnd.bpmn2", "org.kie.perf.StartEnd"),
-    IntermediateTimer("IntermediateTimer.bpmn2", "org.kie.perf.IntermediateTimer")
+    IntermediateTimer("IntermediateTimer.bpmn2", "org.kie.perf.IntermediateTimer"),
+    AsyncPrintTask("AsyncPrintTask.bpmn2", "org.kie.perf.AsyncPrintTask"),
+    MultiInstanceSubprocesses("MultiInstanceSubprocesses.bpmn2", "org.kie.perf.MultiInstanceSubprocesses")
     ;
     
     private String path;

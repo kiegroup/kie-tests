@@ -20,7 +20,7 @@
     <!-- >>>>>>>>>>>>>>>> Performance configuration <<<<<<<<<<<<<<<<<<<< -->
 
     <suite>LoadSuite</suite>
-    <scenario>LHumanTaskProcess</scenario>
+    <scenario></scenario>
     <startScriptLocation>./run.sh</startScriptLocation>
 
     <!-- Duration (in seconds), Iteration -->
@@ -41,8 +41,8 @@
     <periodicity>5</periodicity>
     <reportDataLocation>reportData</reportDataLocation>
 
-    <!-- Measure - MemoryUsage,FileDescriptors,ThreadStates -->
-    <measure>MemoryUsage,FileDescriptors,ThreadStates</measure>
+    <!-- Measure - MemoryUsage,FileDescriptors,ThreadStates,CPUUsage -->
+    <measure>MemoryUsage,FileDescriptors,ThreadStates,CPUUsage</measure>
 
     <!-- >>>>>>>>>>>>>>>> JBPM Test Configuration <<<<<<<<<<<<<<<<<<<< -->
 

@@ -34,6 +34,7 @@ All configuration goes into `pom.xml`
  * `MemoryUsage` - HEAP and pools usage (Eden, Old Gen, etc.)
  * `ThreadStates` - number of threads and their states (waited, runnable, new, blocked, etc.), deadlocks, ...
  * `FileDescriptors` - number of opened descriptors, percentage of usage
+ * `CPUUsage` - histogram of cpu usage of the process/scenario (count, min, max, mean, median, ...) useful only when scenario iterations/duration takes longer than 300ms
  * Set any of the metrics above as a list into *measure* property
 
 ## JBPM Engine KIE-Performance-Kit Setup

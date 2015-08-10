@@ -66,6 +66,7 @@
     <workbench.jms.ssl.keystorePassword></workbench.jms.ssl.keystorePassword>
 
     <property environment="env" />
+    
     <jboss.home>${env.JBOSS_HOME}</jboss.home>
   </properties>
 
