@@ -47,8 +47,6 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
-import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.io.BufferedReader;
@@ -90,6 +88,8 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.process.CorrelationAwareProcessRuntime;
+import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
@@ -123,6 +123,7 @@ import org.kie.services.client.serialization.jaxb.impl.process.JaxbWorkItemRespo
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
+import org.kie.services.client.serialization.jaxb.impl.runtime.JaxbCorrelationKeyFactory;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
 import org.kie.tests.MyType;
@@ -1062,6 +1063,9 @@ public class KieWbRestIntegrationTestMethods {
         // Start process
         JaxbProcessDefinitionList jaxbProcDefList = get("deployment/processes/", 200, JaxbProcessDefinitionList.class);
     
+        assertNotNull( "Null return object",  jaxbProcDefList );
+        assertNotNull( "Null proc def list", jaxbProcDefList.getProcessDefinitionList() );
+        assertFalse( "Empty process definition list!",jaxbProcDefList.getProcessDefinitionList().isEmpty() );
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
         for( JaxbProcessDefinition jaxbProcDef : procDefList ) {
             validateProcessDefinition(jaxbProcDef);
@@ -1075,7 +1079,6 @@ public class KieWbRestIntegrationTestMethods {
                 || procDef.getDeploymentId().isEmpty());
         assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty());
         assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty());
-        assertFalse("Process def " + id + ": null variables", procDef.getVariables() == null || procDef.getVariables().isEmpty());
         assertFalse("Process def " + id + ": null version", procDef.getVersion() == null || procDef.getVersion().isEmpty());
     }
 
@@ -1351,5 +1354,35 @@ public class KieWbRestIntegrationTestMethods {
     
         procInst = ksession.getProcessInstance(processInstanceId);
         assertNull(procInst);
+    }
+    
+    public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        setRestInfo(deploymentUrl, user, password);
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        KieSession kieSession = runtimeEngine.getKieSession();
+
+        // start process
+        String businessKey = "taxes";
+        CorrelationKey corrKey = JaxbCorrelationKeyFactory.getInstance().newCorrelationKey(businessKey);
+        ProcessInstance procInst = ((CorrelationAwareProcessRuntime) kieSession).startProcess(HUMAN_TASK_PROCESS_ID, corrKey, null);
+        assertNotNull( "Could not start process instance by correlation key!", procInst );
+        long procInstId = procInst.getId();
+        
+        procInst = ((CorrelationAwareProcessRuntime) kieSession).getProcessInstance(corrKey);
+        assertNotNull( "Could not get process instance by correlation key!", procInst );
+        assertEquals( "Incorrect process instance retrieved", procInstId, procInst.getId());
+        
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                // Add correlation key property to builder!
+                .addCorrelationProperties(businessKey)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password);
+      
+        runtimeEngine = builder.build();
+
+        runtimeEngine.getKieSession().abortProcessInstance(procInstId);
     }
 }

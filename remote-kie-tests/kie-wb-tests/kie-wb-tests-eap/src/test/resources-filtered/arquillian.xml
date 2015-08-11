@@ -15,7 +15,7 @@
       <property name="serverConfig">${jboss.server.config.file.name:standalone-full.xml}</property>
       <!-- normal
        -->
-      <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m -Dorg.kie.xml.encode=true</property>
+      <property name="javaVmArguments">-ea -Xms512m -Xmx1024m -XX:MaxPermSize=512m -Dorg.kie.xml.encode=true</property>
       <!-- arquillian
       <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m
       -javaagent:target/byteman.jar=script:src/test/resources/byteman/SecurityLogging.btm,boot:target/byteman.jar,boot:target/${jboss.server.name}/jboss-modules.jar 

@@ -131,7 +131,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_SUCCEEDING)
+    @InSequence(REST_ERROR)
     public void testRestExecuteStartProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -139,7 +139,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_REPAIRED)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiHumanTaskProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -179,7 +179,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_RANDOM)
     public void testRestRemoteApiProcessInstances() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -187,7 +187,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_REPAIRED)
+    @InSequence(REST_ERROR)
     public void testRestRemoteApiExtraJaxbClasses() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -195,7 +195,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_REPAIRED)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiRuleTaskProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -211,7 +211,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_RANDOM)
     public void testRestUrlsRetrieveProcVar() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -219,7 +219,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
    
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_RANDOM)
     public void testRestRemoteApiHumanTaskGroupId() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -227,7 +227,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_ERROR)
     public void testRestUrlsGroupAssignmentProcess() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -243,7 +243,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiHumanTaskOwnType() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -275,7 +275,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
    
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_RANDOM)
     public void testRemoteApiGroupAssignmentEngineeringTest() throws Exception { 
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -285,7 +285,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     // JMS ------------------------------------------------------------------------------------------------------------------------
     
     @Test
-    @InSequence(JMS_RANDOM)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsStartProcess() throws Exception {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -293,7 +293,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(JMS_RANDOM)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiHumanTaskProcess() throws Exception {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -301,7 +301,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(JMS_FAILING)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiExceptions() throws Exception {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -317,7 +317,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(JMS_SUCCEEDING)
+    @InSequence(JMS_ERROR)
     public void testJmsCompleteSimpleHumanTask() throws Exception {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -333,7 +333,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(JMS_RANDOM)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiRuleTaskProcess() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -341,7 +341,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(JMS_RANDOM)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiStartProcessInstanceInitiator() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -349,7 +349,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(JMS_RANDOM)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiHumanTaskGroupId() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
@@ -357,7 +357,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
     
     @Test
-    @InSequence(JMS_ERROR)
+    @InSequence(JMS_SUCCEEDING)
     public void testJmsRemoteApiGroupAssignmentEngineering() throws Exception { 
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();

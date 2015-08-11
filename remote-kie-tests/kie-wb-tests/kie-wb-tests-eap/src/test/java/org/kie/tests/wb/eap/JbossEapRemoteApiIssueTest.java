@@ -17,18 +17,12 @@ t  * JBoss, Home of Professional Open Source
  */
 package org.kie.tests.wb.eap;
 
-import static org.junit.Assert.assertEquals;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
-import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
@@ -36,30 +30,19 @@ import javax.ws.rs.core.MediaType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.remote.client.api.RemoteRuntimeEngineFactory;
-import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
-import org.kie.remote.tests.base.RestUtil;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bpms.flood.model.Person;
-import com.bpms.flood.model.Request;
-
-//@RunAsClient
-//@RunWith(Arquillian.class)
+@RunAsClient
+@RunWith(Arquillian.class)
 public class JbossEapRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
@@ -69,16 +52,8 @@ public class JbossEapRemoteApiIssueTest {
  
     private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
     
-//    @ArquillianResource
+    @ArquillianResource
     URL deploymentUrl;
-    { 
-        try {
-            deploymentUrl = new URL("http://localhost:8080/business-central/");
-        } catch( MalformedURLException e ) {
-            e.printStackTrace();
-        }
-    }
-   
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
@@ -101,11 +76,12 @@ public class JbossEapRemoteApiIssueTest {
         // deploy
 
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
         String project = "integration-tests";
-        String deploymentId = "org.test:kjar:1.0";
+        String deploymentId = KJAR_DEPLOYMENT_ID;
         String orgUnit = UUID.randomUUID().toString();
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
@@ -116,50 +92,10 @@ public class JbossEapRemoteApiIssueTest {
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
-                .setStrategy(RuntimeStrategy.SINGLETON)
+                .setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE)
                 .setTimeoutInSecs(5)
                 .build();
                 
-        // Start process
-        String startProcessUrl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
-    
-        Map<String, String> formParams = new HashMap<String, String>(1);
-        formParams.put("map_userName", "John");
-        JaxbProcessInstanceResponse processInstance = RestUtil.postForm(deploymentUrl,
-                startProcessUrl, MediaType.APPLICATION_XML,
-                 200, username, password,
-                 formParams,
-                 JaxbProcessInstanceResponse.class);
-        long procInstId = processInstance.getId();
-    
-        // query tasks for associated task Id
-        Map<String, String> queryparams = new HashMap<String, String>();
-        queryparams.put("processInstanceId", String.valueOf(procInstId));
-        JaxbTaskSummaryListResponse taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
-                "task/query", MediaType.APPLICATION_XML,
-                200, username, password,
-                queryparams, JaxbTaskSummaryListResponse.class);
-    
-        TaskSummary taskSum = findTaskSummaryByProcessInstanceId(procInstId, taskSumlistResponse.getResult());
-        long taskId = taskSum.getId();
-    
-        // get task info
-        org.kie.remote.jaxb.gen.Task task = RestUtil.get(deploymentUrl, 
-                "task/" + taskId, MediaType.APPLICATION_XML,
-                200, username, password,
-                org.kie.remote.jaxb.gen.Task.class);
-        assertEquals("Incorrect task id", taskId, task.getId().longValue());
-        
-        // query tasks for associated task Id
-        queryparams = new HashMap<String, String>();
-        queryparams.put("taskid", String.valueOf(taskId));
-        taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
-                "task/query", MediaType.APPLICATION_XML,
-                200, username, password,
-                queryparams, JaxbTaskSummaryListResponse.class);
-    
-        assertEquals("Incorrect num tasks", 1, taskSumlistResponse.getResult().size() );
-        taskSum = taskSumlistResponse.getResult().get(0);
-        assertEquals("Incorrect task id", taskId, task.getId().longValue());
+        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }
