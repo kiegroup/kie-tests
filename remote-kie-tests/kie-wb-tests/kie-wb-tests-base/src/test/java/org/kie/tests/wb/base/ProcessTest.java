@@ -1,13 +1,19 @@
 package org.kie.tests.wb.base;
 
-import static org.junit.Assert.assertEquals;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.SINGLE_HUMAN_TASK_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.TASK_CONTENT_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.VERSION;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,14 +45,15 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
+import org.kie.services.client.serialization.JaxbSerializationProvider;
+import org.kie.tests.MyBinaryType;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.tools.internal.ws.wsdl.parser.MemberSubmissionAddressingExtensionHandler;
 
 public class ProcessTest extends JbpmJUnitBaseTestCase {
 
@@ -56,6 +63,15 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         super(true, true, "org.jbpm.domain");
     }
 
+    @Test
+    public void showMyBinaryTypeXml() throws Exception {
+        MyBinaryType type = new MyBinaryType("file-name", "random bytes".getBytes());
+        Class<?> [] arr = {MyBinaryType.class};
+        JaxbSerializationProvider jaxbProvider = ClientJaxbSerializationProvider.newInstance(Arrays.asList(arr));
+        jaxbProvider.addJaxbClasses(MyBinaryType.class);
+       System.out.println( jaxbProvider.serialize(type) );
+    }
+    
     @Test
     public void runRuleTaskProcessTest() throws Exception {
         // setup
