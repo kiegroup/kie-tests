@@ -18,12 +18,6 @@
 package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.kie.remote.tests.base.RestUtil.postEntity;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
@@ -135,6 +129,7 @@ import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
 import org.kie.services.client.serialization.jaxb.impl.runtime.JaxbCorrelationKeyFactory;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbGenericResponse;
+import org.kie.tests.MyBinaryType;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
@@ -433,9 +428,7 @@ public class KieWbRestIntegrationTestMethods {
     
         // complete task
         String georgeVal = "George";
-        formParams.clear();
-        formParams.put("map_outUserName", georgeVal);
-        resp = post("task/" + taskId + "/complete", 200, JaxbGenericResponse.class); 
+        resp = post("task/" + taskId + "/complete?map_outUserName=" + georgeVal, 200, JaxbGenericResponse.class); 
         
         JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable", 200, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
@@ -472,7 +465,7 @@ public class KieWbRestIntegrationTestMethods {
         // DOCS 3
         String signalProcessUrl = "rest/runtime/" + deploymentId + "/process/instance/" + procInstId + "/signal";
         
-        formParams = new HashMap<String, String>(2);
+        formParams.clear();
         formParams.put("signal", "MySignal");
         formParams.put("event", "MySignal");
         RestUtil.postForm(deploymentUrl,
@@ -1044,6 +1037,54 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Text string doesn't match: ", retrievedVar.getText(), param.getText());
     }
 
+    public void urlsByteArrayProcessVariable( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        // Setup
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+    
+        // Start process
+        byte [] bytes = "This is a short byte array".getBytes();
+        MyBinaryType param = new MyBinaryType("wordperfect doc", bytes);
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("myobject", param);
+        long procInstId = engine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, parameters).getId();
+    
+        /**
+         * Check that MyType was correctly deserialized on server side
+         */
+        String varName = "myobject";
+        List<VariableInstanceLog> varLogList = (List<VariableInstanceLog>) engine.getAuditService().findVariableInstancesByName(
+                varName, false);
+        VariableInstanceLog thisProcInstVarLog = null;
+        for( VariableInstanceLog varLog : varLogList ) {
+            if( varLog.getProcessInstanceId() == procInstId ) {
+                thisProcInstVarLog = varLog;
+                break;
+            }
+        }
+        assertNotNull("No VariableInstanceLog found!", thisProcInstVarLog);
+        assertEquals(varName, thisProcInstVarLog.getVariableId());
+        String procInstVar = thisProcInstVarLog.getValue();
+        assertNotNull("Null process instance variable!", procInstVar);
+    
+        JaxbProcessInstanceResponse jaxbProcInstResp = get(
+                "runtime/" + deploymentId + "/process/instance/" + procInstId,
+                200, JaxbProcessInstanceResponse.class);
+        ProcessInstance procInst = jaxbProcInstResp.getResult();
+        assertNotNull(procInst);
+        assertEquals("Unequal process instance id.", procInstId, procInst.getId());
+    
+        MyBinaryType retrievedVar = get(
+                "runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + varName,
+                200, MyBinaryType.class);
+    
+        assertNotNull("Expected filled variable.", retrievedVar);
+        assertEquals("Name from var doesn't match: ", param.getName(), retrievedVar.getName());
+        String origStr = new String(param.getData());
+        String retrievedStr = new String(retrievedVar.getData());
+        assertEquals("Byte [] from var doesn't match: ", origStr, retrievedStr);
+    }
+    
     public void urlsWorkItemTest( URL deploymentUrl, String user, String password ) throws Exception {
     
         JaxbWorkItemResponse workItemResp = get("runtime/" + deploymentId + "/workitem/200", 200, JaxbWorkItemResponse.class);
@@ -1258,39 +1299,41 @@ public class KieWbRestIntegrationTestMethods {
         taskService.start(taskId, JOHN_USER);
  
         // BPMSPL-119 - add content
-        RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
-        Map<String, Object> contentMap = new HashMap<String, Object>(3);
-        contentMap.put("one",  UUID.randomUUID().toString());
-        contentMap.put("two",  new Integer(random.nextInt(1024)));
-        contentMap.put("thr",  new MyType("thr", 3));
-        RemoteApiResponse<Long> resp = remoteTaskService.addOutputContent(taskId, contentMap);
-        assertEquals( "Add Output Content operation: " + resp.getStatusDetails(),
-                RemoteOperationStatus.SUCCESS, resp.getStatus());
-        long contentId = resp.getResult();
-        
-        RemoteApiResponse<Map<String, Object>> mapResp = remoteTaskService.getOutputContentMap(taskId);
-        assertEquals( "Get Output Content Map operations: " + mapResp.getStatusDetails(), 
-                RemoteOperationStatus.SUCCESS, mapResp.getStatus());
-        Map<String, Object> retrievedMap = mapResp.getResult();
-        assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
-        assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
-        
-        boolean myTypeRetrieved = false;
-        for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
-            String key = entry.getKey();
-            Object val = entry.getValue();
-            if( val instanceof MyType ) { 
-                MyType origType = (MyType) val;
-                MyType copyType =  (MyType) retrievedMap.get(key);
-                assertNotNull( "Entry: " + key, copyType );
-                assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
-                assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
-                myTypeRetrieved = true;
-            } else { 
-                assertEquals( "Entry: " + key, val, retrievedMap.get(key));
+        if( runtimeEngine instanceof RemoteRuntimeEngine ) { 
+            RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
+            Map<String, Object> contentMap = new HashMap<String, Object>(3);
+            contentMap.put("one",  UUID.randomUUID().toString());
+            contentMap.put("two",  new Integer(random.nextInt(1024)));
+            contentMap.put("thr",  new MyType("thr", 3));
+            RemoteApiResponse<Long> resp = remoteTaskService.addOutputContent(taskId, contentMap);
+            assertEquals( "Add Output Content operation: " + resp.getStatusDetails(),
+                    RemoteOperationStatus.SUCCESS, resp.getStatus());
+            assertTrue( "Empty content id", resp.getResult() != null && resp.getResult() > 0 );
+
+            RemoteApiResponse<Map<String, Object>> mapResp = remoteTaskService.getOutputContentMap(taskId);
+            assertEquals( "Get Output Content Map operations: " + mapResp.getStatusDetails(), 
+                    RemoteOperationStatus.SUCCESS, mapResp.getStatus());
+            Map<String, Object> retrievedMap = mapResp.getResult();
+            assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
+            assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
+
+            boolean myTypeRetrieved = false;
+            for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
+                String key = entry.getKey();
+                Object val = entry.getValue();
+                if( val instanceof MyType ) { 
+                    MyType origType = (MyType) val;
+                    MyType copyType =  (MyType) retrievedMap.get(key);
+                    assertNotNull( "Entry: " + key, copyType );
+                    assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
+                    assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
+                    myTypeRetrieved = true;
+                } else { 
+                    assertEquals( "Entry: " + key, val, retrievedMap.get(key));
+                }
             }
+            assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
         }
-        assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
         
         // the rest of this test..
         Map<String, Object> data = new HashMap<String, Object>();

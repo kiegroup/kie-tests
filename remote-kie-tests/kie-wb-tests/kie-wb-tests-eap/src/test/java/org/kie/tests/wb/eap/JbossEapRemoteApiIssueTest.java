@@ -92,10 +92,11 @@ public class JbossEapRemoteApiIssueTest {
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
-                .setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE)
+                .setStrategy(RuntimeStrategy.SINGLETON)
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiHumanTaskOwnTypeTest(deploymentUrl);
+//        restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD); // test POST to query methods
+        restTests.urlsHumanTaskTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

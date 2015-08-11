@@ -27,6 +27,10 @@ public class KieWbWarJbossEapDeploy {
                 { "org.kie", "kie-api" },
 
                 // jbpm
+                { "org.drools", "drools-core" },
+                { "org.drools", "drools-compiler" },
+                
+                // jbpm
                 { "org.jbpm", "jbpm-audit" },
                 { "org.jbpm", "jbpm-persistence-jpa" },
                 { "org.jbpm", "jbpm-query-jpa" },
