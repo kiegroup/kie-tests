@@ -96,6 +96,7 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiHumanTaskOwnTypeTest(deploymentUrl);
+//        restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD); // test POST to query methods
+        restTests.urlsByteArrayProcessVariable(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

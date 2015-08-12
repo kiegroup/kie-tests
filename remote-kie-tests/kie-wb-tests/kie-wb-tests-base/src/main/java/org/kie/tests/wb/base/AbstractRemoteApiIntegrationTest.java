@@ -298,6 +298,15 @@ public abstract class AbstractRemoteApiIntegrationTest {
         restTests.remoteApiCorrelationKeyOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
+   
+    @Test
+    @InSequence(REST_SUCCEEDING)
+    public void testByteArrayProcessVariable() throws Exception { 
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.urlsByteArrayProcessVariable(deploymentUrl, MARY_USER, MARY_PASSWORD);
+    }
+    
     // JMS ------------------------------------------------------------------------------------------------------------------------
     
     @Test
