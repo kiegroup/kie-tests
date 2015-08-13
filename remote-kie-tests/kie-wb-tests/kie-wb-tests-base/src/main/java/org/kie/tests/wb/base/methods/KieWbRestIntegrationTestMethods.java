@@ -88,6 +88,7 @@ import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.process.CorrelationAwareProcessRuntime;
 import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.internal.task.api.InternalTaskService;
 import org.kie.remote.client.api.RemoteApiResponse;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.client.api.RemoteTaskService;
@@ -1298,42 +1299,51 @@ public class KieWbRestIntegrationTestMethods {
     
         taskService.start(taskId, JOHN_USER);
  
+        Map<String, Object> contentMap = new HashMap<String, Object>(3);
+        contentMap.put("one",  UUID.randomUUID().toString());
+        contentMap.put("two",  new Integer(random.nextInt(1024)));
+        contentMap.put("thr",  new MyType("thr", 3));
+        
         // BPMSPL-119 - add content
         if( runtimeEngine instanceof RemoteRuntimeEngine ) { 
             RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
-            Map<String, Object> contentMap = new HashMap<String, Object>(3);
-            contentMap.put("one",  UUID.randomUUID().toString());
-            contentMap.put("two",  new Integer(random.nextInt(1024)));
-            contentMap.put("thr",  new MyType("thr", 3));
             RemoteApiResponse<Long> resp = remoteTaskService.addOutputContent(taskId, contentMap);
             assertEquals( "Add Output Content operation: " + resp.getStatusDetails(),
                     RemoteOperationStatus.SUCCESS, resp.getStatus());
             assertTrue( "Empty content id", resp.getResult() != null && resp.getResult() > 0 );
+        } else { 
+           ((InternalTaskService) taskService).addOutputContentFromUser(taskId, JOHN_USER, contentMap);
+        }
 
+        Map<String, Object> retrievedMap;
+        if( runtimeEngine instanceof RemoteRuntimeEngine ) { 
+            RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
             RemoteApiResponse<Map<String, Object>> mapResp = remoteTaskService.getOutputContentMap(taskId);
             assertEquals( "Get Output Content Map operations: " + mapResp.getStatusDetails(), 
                     RemoteOperationStatus.SUCCESS, mapResp.getStatus());
-            Map<String, Object> retrievedMap = mapResp.getResult();
-            assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
-            assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
-
-            boolean myTypeRetrieved = false;
-            for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
-                String key = entry.getKey();
-                Object val = entry.getValue();
-                if( val instanceof MyType ) { 
-                    MyType origType = (MyType) val;
-                    MyType copyType =  (MyType) retrievedMap.get(key);
-                    assertNotNull( "Entry: " + key, copyType );
-                    assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
-                    assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
-                    myTypeRetrieved = true;
-                } else { 
-                    assertEquals( "Entry: " + key, val, retrievedMap.get(key));
-                }
-            }
-            assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
+            retrievedMap = mapResp.getResult();
+        } else { 
+           retrievedMap = ((InternalTaskService) taskService).getOutputContentMapForUser(taskId, JOHN_USER);
         }
+        assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
+        assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
+
+        boolean myTypeRetrieved = false;
+        for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
+            String key = entry.getKey();
+            Object val = entry.getValue();
+            if( val instanceof MyType ) { 
+                MyType origType = (MyType) val;
+                MyType copyType =  (MyType) retrievedMap.get(key);
+                assertNotNull( "Entry: " + key, copyType );
+                assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
+                assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
+                myTypeRetrieved = true;
+            } else { 
+                assertEquals( "Entry: " + key, val, retrievedMap.get(key));
+            }
+        }
+        assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
         
         // the rest of this test..
         Map<String, Object> data = new HashMap<String, Object>();
