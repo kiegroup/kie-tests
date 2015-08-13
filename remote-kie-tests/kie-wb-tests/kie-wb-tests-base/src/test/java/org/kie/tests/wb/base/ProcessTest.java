@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Random;
 import java.util.UUID;
 
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
@@ -39,6 +40,11 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskData;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.task.api.InternalTaskService;
+import org.kie.remote.client.api.RemoteApiResponse;
+import org.kie.remote.client.api.RemoteTaskService;
+import org.kie.remote.client.api.RemoteApiResponse.RemoteOperationStatus;
+import org.kie.services.client.api.command.RemoteRuntimeEngine;
 import org.kie.tests.MyType;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
@@ -51,6 +57,8 @@ import com.sun.tools.internal.ws.wsdl.parser.MemberSubmissionAddressingExtension
 public class ProcessTest extends JbpmJUnitBaseTestCase {
 
     protected static final Logger logger = LoggerFactory.getLogger(ProcessTest.class);
+
+    private static Random random = new Random();
 
     public ProcessTest() {
         super(true, true, "org.jbpm.domain");
@@ -232,11 +240,60 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
 
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        KModuleDeploymentUnit depUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
-        KieWbRestIntegrationTestMethods testMethods = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(depUnit.getIdentifier())
-                .build();
-        testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService() );
+        MyType myType = new MyType("wacky", 123);
+
+        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
+        assertNotNull(pi);
+        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
+
+        TaskService taskService = runtimeEngine.getTaskService();
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(pi.getId());
+        assertFalse(taskIds.isEmpty());
+        long taskId = taskIds.get(0);
+
+        taskService.start(taskId, JOHN_USER);
+
+        Map<String, Object> contentMap = new HashMap<String, Object>(3);
+        contentMap.put("one",  UUID.randomUUID().toString());
+        contentMap.put("two",  new Integer(random.nextInt(1024)));
+        contentMap.put("thr",  new MyType("thr", 3));
+        long contentId = ((InternalTaskService)taskService).addOutputContentFromUser(taskId, JOHN_USER, contentMap);
+        assertNotEquals("Content Id is not valid!", -1l, contentId);
+
+        Map<String, Object> retrievedMap = ((InternalTaskService)taskService).getOutputContentMapForUser(taskId, JOHN_USER);
+        assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
+        assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
+
+        boolean myTypeRetrieved = false;
+        for( Entry<String, Object> entry : contentMap.entrySet()  ) {
+            String key = entry.getKey();
+            Object val = entry.getValue();
+            if( val instanceof MyType ) {
+                MyType origType = (MyType) val;
+                MyType copyType =  (MyType) retrievedMap.get(key);
+                assertNotNull( "Entry: " + key, copyType );
+                assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
+                assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
+                myTypeRetrieved = true;
+            } else {
+                assertEquals( "Entry: " + key, val, retrievedMap.get(key));
+            }
+        }
+        assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
+
+        // the rest of this test..
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("outMyObject", myType);
+        taskService.complete(taskId, JOHN_USER, data);
+
+        Task task = taskService.getTaskById(taskId);
+        assertEquals(Status.Completed, task.getTaskData().getStatus());
+
+        List<? extends org.kie.api.runtime.manager.audit.VariableInstanceLog> vill = runtimeEngine.getAuditService().findVariableInstances(pi.getId(),
+                "myObject");
+        assertNotNull(vill);
+        assertFalse("Empty list of variable instance logs", vill.isEmpty());
+        assertEquals(myType.toString(), vill.get(0).getValue());
     }
 
     @Test
