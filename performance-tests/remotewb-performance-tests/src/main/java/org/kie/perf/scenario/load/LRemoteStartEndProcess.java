@@ -12,16 +12,16 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LRemoteStartEndProcess implements IPerfTest {
-    
+
     private RemoteController rc;
 
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         rc = RemoteControllerProvider.getRemoteController(KieWBTestConfig.DEPLOYMENT_ID);
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -35,10 +35,10 @@ public class LRemoteStartEndProcess implements IPerfTest {
             completedProcess.mark();
         }
     }
-    
+
     @Override
     public void close() {
-        
+
     }
-    
+
 }

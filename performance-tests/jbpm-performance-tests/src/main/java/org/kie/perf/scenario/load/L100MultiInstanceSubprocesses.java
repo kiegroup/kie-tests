@@ -26,42 +26,42 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 @KPKLimit(1)
-@KPKConstraint({"jbpm.runtimeManagerStrategy=PerProcessInstance"})
+@KPKConstraint({ "jbpm.runtimeManagerStrategy=PerProcessInstance" })
 public class L100MultiInstanceSubprocesses implements IPerfTest {
 
     private static final int LOOPS = 100;
-    private static final int THREAD_POOL_SIZE = 9; 
-    
+    private static final int THREAD_POOL_SIZE = 9;
+
     private JBPMController jc;
 
     private Meter completedProcess;
-    
+
     private ExecutorService executorService;
-    
+
     private List<Long> completedProcessIds = new ArrayList<Long>();
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
                 completedProcessIds.add(event.getProcessInstance().getId());
             }
         });
-        
+
         executorService = ExecutorServiceFactory.newExecutorService();
         executorService.setThreadPoolSize(THREAD_POOL_SIZE);
         executorService.setInterval(1);
         executorService.setRetries(5);
         executorService.init();
-        
+
         jc.addWorkItemHandler("async", new AsyncWorkItemHandler(executorService));
-        
+
         jc.createRuntimeManager(ProcessStorage.AsyncPrintTask.getPath(), ProcessStorage.MultiInstanceSubprocesses.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -70,32 +70,36 @@ public class L100MultiInstanceSubprocesses implements IPerfTest {
 
     @Override
     public void execute() {
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("loops", LOOPS);
         ProcessInstance pi = ksession.startProcess(ProcessStorage.MultiInstanceSubprocesses.getProcessDefinitionId(), params);
         long pid = pi.getId();
-        
-        long maxTime = System.currentTimeMillis() + LOOPS*200;
+
+        long maxTime = System.currentTimeMillis() + LOOPS * 200;
         while (!completedProcessIds.contains(pid) && System.currentTimeMillis() < maxTime) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                
+
             }
         }
     }
-    
+
     @Override
     public void close() {
         QueryContext qc = new QueryContext();
         qc.setCount(LOOPS);
-        List<ErrorInfo> errors = executorService.getAllErrors(qc); // OptimisticLockExceptions are expected on PerProcessInstanceStrategy
+        List<ErrorInfo> errors = executorService.getAllErrors(qc); // OptimisticLockExceptions
+                                                                   // are
+                                                                   // expected
+                                                                   // on
+                                                                   // PerProcessInstanceStrategy
         SharedMetricRegistry.getInstance().counter("scenario.executor.errors").inc(errors.size());
-        
+
         executorService.destroy();
         jc.tearDown();
     }
-    
+
 }

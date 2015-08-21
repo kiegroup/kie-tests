@@ -13,24 +13,24 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LStartEndProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
             }
         });
-        
+
         jc.createRuntimeManager(ProcessStorage.StartEnd.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -39,14 +39,14 @@ public class LStartEndProcess implements IPerfTest {
 
     @Override
     public void execute() {
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ksession.startProcess(ProcessStorage.StartEnd.getProcessDefinitionId());
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

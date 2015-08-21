@@ -5,15 +5,15 @@ import java.io.Serializable;
 public class UserFact implements Serializable {
 
     private static final long serialVersionUID = -7364964864697675450L;
-    
+
     private String id;
-    
+
     private int age;
-    
+
     public UserFact() {
-        
+
     }
-    
+
     public UserFact(String id, int age) {
         this.id = id;
         this.age = age;
@@ -34,5 +34,5 @@ public class UserFact implements Serializable {
     public void setAge(int age) {
         this.age = age;
     }
-    
+
 }

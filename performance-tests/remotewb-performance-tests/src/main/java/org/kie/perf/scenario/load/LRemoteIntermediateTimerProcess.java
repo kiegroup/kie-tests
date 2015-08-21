@@ -13,16 +13,16 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LRemoteIntermediateTimerProcess implements IPerfTest {
-    
+
     private RemoteController rc;
 
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         rc = RemoteControllerProvider.getRemoteController(KieWBTestConfig.DEPLOYMENT_ID);
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -33,14 +33,18 @@ public class LRemoteIntermediateTimerProcess implements IPerfTest {
     public void execute() {
         ProcessInstance pi = rc.startProcess(ProcessStorage.IntermediateTimer.getProcessDefinitionId());
         long pid = pi.getId();
-        
+
         long maxTime = System.currentTimeMillis() + 5000;
         int status = pi.getState();
-        while (status != ProcessInstance.STATE_COMPLETED && System.currentTimeMillis() < maxTime) { // timer event should wait 1s
+        while (status != ProcessInstance.STATE_COMPLETED && System.currentTimeMillis() < maxTime) { // timer
+                                                                                                    // event
+                                                                                                    // should
+                                                                                                    // wait
+                                                                                                    // 1s
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                
+
             }
             ProcessInstanceLog plog = rc.getAuditService().findProcessInstance(pid);
             status = plog.getStatus();
@@ -49,10 +53,10 @@ public class LRemoteIntermediateTimerProcess implements IPerfTest {
             completedProcess.mark();
         }
     }
-    
+
     @Override
     public void close() {
-        
+
     }
-    
+
 }

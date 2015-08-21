@@ -6,7 +6,6 @@ import java.net.URL;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 
-
 public class RESTClient extends AbstractClient {
 
     public static final String RestClientId = "RESTClient";
@@ -32,13 +31,11 @@ public class RESTClient extends AbstractClient {
         this(deploymentId, url, username, password, 10, null, classes);
     }
 
-    public RESTClient(String deploymentId, String url, String username, String password, int timeout,
-            Class<?>... classes) {
+    public RESTClient(String deploymentId, String url, String username, String password, int timeout, Class<?>... classes) {
         this(deploymentId, url, username, password, timeout, null, classes);
     }
 
-    public RESTClient(String deploymentId, String url, String username, String password, int timeout, Long processInstanceId,
-            Class<?>... classes) {
+    public RESTClient(String deploymentId, String url, String username, String password, int timeout, Long processInstanceId, Class<?>... classes) {
         this.deploymentId = deploymentId;
         this.timeout = timeout;
         try {
@@ -63,9 +60,8 @@ public class RESTClient extends AbstractClient {
     }
 
     private void buildRuntimeEngine() {
-        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder().addDeploymentId(deploymentId)
-                .addUrl(url).addUserName(username).addPassword(password).addTimeout(timeout)
-                .addExtraJaxbClasses(classes);
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder().addDeploymentId(deploymentId).addUrl(url)
+                .addUserName(username).addPassword(password).addTimeout(timeout).addExtraJaxbClasses(classes);
         if (processInstanceId != null) {
             builder = builder.addProcessInstanceId(processInstanceId);
         }

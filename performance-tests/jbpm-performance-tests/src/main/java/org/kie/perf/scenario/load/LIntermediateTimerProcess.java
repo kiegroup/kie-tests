@@ -17,26 +17,26 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LIntermediateTimerProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Meter completedProcess;
     private List<Long> completedProcessIds = new ArrayList<Long>();
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
                 completedProcessIds.add(event.getProcessInstance().getId());
             }
         });
-        
+
         jc.createRuntimeManager(ProcessStorage.IntermediateTimer.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -45,24 +45,24 @@ public class LIntermediateTimerProcess implements IPerfTest {
 
     @Override
     public void execute() {
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance pi = ksession.startProcess(ProcessStorage.IntermediateTimer.getProcessDefinitionId());
         long pid = pi.getId();
-        
+
         long maxTime = System.currentTimeMillis() + 5000;
         while (!completedProcessIds.contains(pid) && System.currentTimeMillis() < maxTime) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
-                
+
             }
         }
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

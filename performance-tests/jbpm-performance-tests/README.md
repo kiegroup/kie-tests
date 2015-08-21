@@ -30,6 +30,7 @@ All configuration goes into `pom.xml`
  * `Console`
  * `CSV` - reports periodiacally after X seconds into CSV files for every metrics
  * `CSVSingle` - reports scenario CSV files containing the metrics results
+ * `PerfRepo` - creates test definitions and test executions, reports results to remote PerfRepo (requires JDK 1.8, see https://github.com/PerfRepo/PerfRepo)
 * Additional metrics
  * `MemoryUsage` - HEAP and pools usage (Eden, Old Gen, etc.)
  * `ThreadStates` - number of threads and their states (waited, runnable, new, blocked, etc.), deadlocks, ...

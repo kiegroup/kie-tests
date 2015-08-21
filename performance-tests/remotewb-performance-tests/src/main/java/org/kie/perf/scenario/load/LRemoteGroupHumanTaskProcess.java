@@ -80,7 +80,7 @@ public class LRemoteGroupHumanTaskProcess implements IPerfTest {
 
     @Override
     public void close() {
-        
+
     }
 
 }

@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-
 public abstract class AbstractClient implements RemoteController {
 
     protected RuntimeEngine runtimeEngine;
@@ -27,9 +26,9 @@ public abstract class AbstractClient implements RemoteController {
     protected TaskService taskService;
 
     protected KieSession kieSession;
-    
+
     protected AuditService auditService;
-    
+
     protected static KieWBTestConfig config = KieWBTestConfig.getInstance();
 
     // -------------------------------------------------- TaskService
@@ -116,39 +115,37 @@ public abstract class AbstractClient implements RemoteController {
 
     @Override
     public List<TaskSummary> getTasksAssignedAsBusinessAdministrator(String userId, QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksAssignedAsBusinessAdministrator(userId, lang);
     }
 
     @Override
     public List<TaskSummary> getTasksAssignedAsPotentialOwner(String userId, QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksAssignedAsPotentialOwner(userId, lang);
     }
 
     @Override
-    public List<TaskSummary> getTasksAssignedAsPotentialOwnerByStatus(String userId, List<Status> status,
-            QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+    public List<TaskSummary> getTasksAssignedAsPotentialOwnerByStatus(String userId, List<Status> status, QueryFilter queryFilter) {
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksAssignedAsPotentialOwnerByStatus(userId, status, lang);
     }
 
     @Override
     public List<TaskSummary> getTasksOwned(String userId, QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksOwned(userId, lang);
     }
 
     @Override
     public List<TaskSummary> getTasksOwnedByStatus(String userId, List<Status> status, QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksOwnedByStatus(userId, status, lang);
     }
 
     @Override
-    public List<TaskSummary> getTasksByStatusByProcessInstanceId(long processInstanceId, List<Status> status,
-            QueryFilter queryFilter) {
-        String lang = (queryFilter == null)?"":queryFilter.getLanguage();
+    public List<TaskSummary> getTasksByStatusByProcessInstanceId(long processInstanceId, List<Status> status, QueryFilter queryFilter) {
+        String lang = (queryFilter == null) ? "" : queryFilter.getLanguage();
         return taskService.getTasksByStatusByProcessInstanceId(processInstanceId, status, lang);
     }
 
@@ -280,7 +277,7 @@ public abstract class AbstractClient implements RemoteController {
     public WorkItemManager getWorkItemManager() {
         return kieSession.getWorkItemManager();
     }
-    
+
     @Override
     public AuditService getAuditService() {
         return auditService;
@@ -290,7 +287,7 @@ public abstract class AbstractClient implements RemoteController {
     public KieSession getKieSession() {
         return this.kieSession;
     }
-    
+
     @Override
     public TaskService getTaskService() {
         return taskService;
