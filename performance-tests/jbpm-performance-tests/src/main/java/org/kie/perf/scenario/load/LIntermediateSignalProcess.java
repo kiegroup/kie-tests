@@ -15,26 +15,26 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
 public class LIntermediateSignalProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Timer startProcess;
     private Timer signalDuration;
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
             }
         });
-        
+
         jc.createRuntimeManager(ProcessStorage.IntermediateSignal.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -48,19 +48,19 @@ public class LIntermediateSignalProcess implements IPerfTest {
         Timer.Context context;
 
         context = startProcess.time();
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance pi = ksession.startProcess(ProcessStorage.IntermediateSignal.getProcessDefinitionId());
         context.stop();
-        
+
         context = signalDuration.time();
         ksession.signalEvent("MySignal", "value", pi.getId());
         context.stop();
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

@@ -38,7 +38,7 @@ public class LRemoteParallelGatewayTwoTimesProcess implements IPerfTest {
 
     @Override
     public void close() {
-        
+
     }
 
 }

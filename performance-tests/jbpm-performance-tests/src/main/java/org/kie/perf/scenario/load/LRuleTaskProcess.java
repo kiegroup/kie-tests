@@ -19,27 +19,27 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LRuleTaskProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
             }
         });
-        
+
         Map<String, ResourceType> res = new HashMap<String, ResourceType>();
         res.put(ProcessStorage.RuleTask.getPath(), ResourceType.BPMN2);
         res.put(RuleStorage.ValidationUserFact.getPath(), ResourceType.DRL);
         jc.createRuntimeManager(res);
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -48,16 +48,16 @@ public class LRuleTaskProcess implements IPerfTest {
 
     @Override
     public void execute() {
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("user", new UserFact("user", 15));
         ksession.startProcess(ProcessStorage.RuleTask.getProcessDefinitionId(), params);
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

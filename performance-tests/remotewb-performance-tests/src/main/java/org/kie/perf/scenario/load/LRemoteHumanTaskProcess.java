@@ -18,7 +18,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
 public class LRemoteHumanTaskProcess implements IPerfTest {
-    
+
     private RemoteController rc;
 
     private Timer startProcess;
@@ -26,12 +26,12 @@ public class LRemoteHumanTaskProcess implements IPerfTest {
     private Timer completeTaskDuration;
     private Timer queryProcessInstanceDuration;
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         rc = RemoteControllerProvider.getRemoteController(KieWBTestConfig.DEPLOYMENT_ID);
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -49,7 +49,7 @@ public class LRemoteHumanTaskProcess implements IPerfTest {
         context = startProcess.time();
         ProcessInstance pi = rc.startProcess(ProcessStorage.HumanTask.getProcessDefinitionId());
         context.stop();
-        
+
         TaskService taskService = rc.getTaskService();
         List<Long> tasks = taskService.getTasksByProcessInstanceId(pi.getId());
         Long taskSummaryId = tasks.get(0);
@@ -65,15 +65,15 @@ public class LRemoteHumanTaskProcess implements IPerfTest {
         context = queryProcessInstanceDuration.time();
         ProcessInstanceLog plog = rc.getAuditService().findProcessInstance(pi.getId());
         context.stop();
-        
+
         if (plog != null && plog.getStatus() == ProcessInstance.STATE_COMPLETED) {
             completedProcess.mark();
         }
     }
-    
+
     @Override
     public void close() {
-        
+
     }
-    
+
 }

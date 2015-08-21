@@ -12,15 +12,15 @@ public class RemoteControllerProvider {
         }
         return rc;
     }
-    
+
     public static RESTClient getRestClient(String deploymentId, Class<?>... classes) {
         RESTClient client = new RESTClient(deploymentId, classes);
         return client;
     }
-    
+
     public static JMSClient getJMSClient(String deploymentId, Class<?>... classes) {
         JMSClient client = new JMSClient(deploymentId, classes);
         return client;
     }
-    
+
 }

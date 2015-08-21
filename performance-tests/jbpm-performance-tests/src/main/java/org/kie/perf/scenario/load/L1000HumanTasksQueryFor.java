@@ -36,7 +36,6 @@ public class L1000HumanTasksQueryFor implements IPerfTest {
 
     @Override
     public void initMetrics() {
-        taskId = 1;
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
         metrics.register(MetricRegistry.name(L1000HumanTasksQueryFor.class, "scenario.tasks.query.size"), new Gauge<Integer>() {
             @Override
@@ -46,12 +45,9 @@ public class L1000HumanTasksQueryFor implements IPerfTest {
         });
     }
 
-    static int taskId = 1;
-
     @Override
     public void execute() {
         tasks = taskService.getTasksAssignedAsPotentialOwner(UserStorage.PerfUser.getUserId(), "en-UK");
-        taskId++;
     }
 
     @Override

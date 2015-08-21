@@ -14,25 +14,25 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class LParallelGatewayProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
             }
         });
         jc.addWorkItemHandler("Manual Task", new ManualTaskWorkItemHandler());
-        
+
         jc.createRuntimeManager(ProcessStorage.ParallelGateway.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -41,14 +41,14 @@ public class LParallelGatewayProcess implements IPerfTest {
 
     @Override
     public void execute() {
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ksession.startProcess(ProcessStorage.ParallelGateway.getProcessDefinitionId());
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

@@ -19,27 +19,27 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
 public class LHumanTaskProcess implements IPerfTest {
-    
+
     private JBPMController jc;
 
     private Timer startProcess;
     private Timer startTaskDuration;
     private Timer completeTaskDuration;
     private Meter completedProcess;
-    
+
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener(){
+        jc.addProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
             }
         });
-        
+
         jc.createRuntimeManager(ProcessStorage.HumanTask.getPath());
     }
-    
+
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
@@ -54,11 +54,11 @@ public class LHumanTaskProcess implements IPerfTest {
         Timer.Context context;
 
         context = startProcess.time();
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine(); 
+        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
         ProcessInstance pi = ksession.startProcess(ProcessStorage.HumanTask.getProcessDefinitionId());
         context.stop();
-        
+
         TaskService taskService = runtimeEngine.getTaskService();
         List<Long> tasks = taskService.getTasksByProcessInstanceId(pi.getId());
         Long taskSummaryId = tasks.get(0);
@@ -71,10 +71,10 @@ public class LHumanTaskProcess implements IPerfTest {
         taskService.complete(taskSummaryId, UserStorage.PerfUser.getUserId(), null);
         context.stop();
     }
-    
+
     @Override
     public void close() {
         jc.tearDown();
     }
-    
+
 }

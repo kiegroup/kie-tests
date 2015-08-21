@@ -19,6 +19,7 @@
 
     <!-- >>>>>>>>>>>>>>>> Performance configuration <<<<<<<<<<<<<<<<<<<< -->
 
+    <projectName>BPM Suite</projectName>
     <suite>LoadSuite</suite>
     <scenario>LRemoteHumanTaskProcess</scenario>
     <startScriptLocation>./run.sh</startScriptLocation>
@@ -35,11 +36,17 @@
     <!-- Properties applicable to concurrent testing -->
     <threads>5</threads>
 
-    <!-- Reporting - Console, CSVSingle, CSV, (periodicity in seconds) -->
+    <!-- Reporting - Console, CSVSingle, PerfRepo, CSV, (periodicity in seconds) -->
 
     <reporterType>Console</reporterType>
     <periodicity>5</periodicity>
     <reportDataLocation>reportData</reportDataLocation>
+    
+    <!-- PerfRepo configuration -->
+    <perfRepo.host>localhost</perfRepo.host>
+    <perfRepo.urlPath></perfRepo.urlPath>
+    <perfRepo.username></perfRepo.username>
+    <perfRepo.password></perfRepo.password>
 
     <!-- Measure - MemoryUsage,FileDescriptors,ThreadStates -->
     <measure>MemoryUsage,FileDescriptors,ThreadStates</measure>
@@ -150,6 +157,7 @@
         <configuration>
           <executable>java</executable>
           <arguments>
+            <argument>-DprojectName=${projectName}</argument>
             <argument>-Dsuite=${suite}</argument>
             <argument>-Dscenario=${scenario}</argument>
             <argument>-DstartScriptLocation=${startScriptLocation}</argument>
@@ -164,6 +172,11 @@
             <argument>-Dperiodicity=${periodicity}</argument>
             <argument>-DreportDataLocation=${reportDataLocation}</argument>
             <argument>-Dmeasure=${measure}</argument>
+            
+            <argument>-DperfRepo.host=${perfRepo.host}</argument>
+            <argument>-DperfRepo.urlPath=${perfRepo.urlPath}</argument>
+            <argument>-DperfRepo.username=${perfRepo.username}</argument>
+            <argument>-DperfRepo.password=${perfRepo.password}</argument>
 
             <argument>-DremoteAPI=${remoteAPI}</argument>
             <argument>-Dworkbench.username=${workbench.username}</argument>

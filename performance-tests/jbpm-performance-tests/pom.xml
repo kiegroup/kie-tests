@@ -19,13 +19,14 @@
 
     <!-- >>>>>>>>>>>>>>>> Performance configuration <<<<<<<<<<<<<<<<<<<< -->
 
+    <projectName>BPM Suite</projectName>
     <suite>LoadSuite</suite>
     <scenario></scenario>
     <startScriptLocation>./run.sh</startScriptLocation>
 
     <!-- Duration (in seconds), Iteration -->
-    <runType>Iteration</runType>
-    <duration>30</duration>
+    <runType>Duration</runType>
+    <duration>120</duration>
     <iterations>1</iterations>
 
     <warmUp>false</warmUp>
@@ -35,11 +36,17 @@
     <!-- Properties applicable to concurrent testing -->
     <threads>5</threads>
 
-    <!-- Reporting - Console, CSVSingle, CSV, (periodicity in seconds) -->
+    <!-- Reporting - Console, CSVSingle, PerfRepo, CSV, (periodicity in seconds) -->
 
     <reporterType>Console</reporterType>
     <periodicity>5</periodicity>
     <reportDataLocation>reportData</reportDataLocation>
+
+    <!-- PerfRepo configuration -->
+    <perfRepo.host>localhost</perfRepo.host>
+    <perfRepo.urlPath></perfRepo.urlPath>
+    <perfRepo.username></perfRepo.username>
+    <perfRepo.password></perfRepo.password>
 
     <!-- Measure - MemoryUsage,FileDescriptors,ThreadStates,CPUUsage -->
     <measure>MemoryUsage,FileDescriptors,ThreadStates,CPUUsage</measure>
@@ -63,7 +70,6 @@
     <maven.hibernate.dialect>org.hibernate.dialect.H2Dialect</maven.hibernate.dialect>
     <maven.datasource.classname>bitronix.tm.resource.jdbc.lrc.LrcXADataSource</maven.datasource.classname>
     <maven.jdbc.driver.class>org.h2.Driver</maven.jdbc.driver.class>
-    <maven.jdbc.db.name />
     <maven.jdbc.password />
     <maven.jdbc.username>sa</maven.jdbc.username>
     <maven.jdbc.db.port />
@@ -193,6 +199,7 @@
         <configuration>
           <executable>java</executable>
           <arguments>
+            <argument>-DprojectName=${projectName}</argument>
             <argument>-Dsuite=${suite}</argument>
             <argument>-Dscenario=${scenario}</argument>
             <argument>-DstartScriptLocation=${startScriptLocation}</argument>
@@ -207,6 +214,13 @@
             <argument>-Dperiodicity=${periodicity}</argument>
             <argument>-DreportDataLocation=${reportDataLocation}</argument>
             <argument>-Dmeasure=${measure}</argument>
+            
+            <argument>-DperfRepo.host=${perfRepo.host}</argument>
+            <argument>-DperfRepo.urlPath=${perfRepo.urlPath}</argument>
+            <argument>-DperfRepo.username=${perfRepo.username}</argument>
+            <argument>-DperfRepo.password=${perfRepo.password}</argument>
+            
+            <argument>-DdatabaseName=${maven.jdbc.db.name}</argument>
             
             <argument>-Djbpm.runtimeManagerStrategy=${jbpm.runtimeManagerStrategy}</argument>
             <argument>-Djbpm.persistence=${jbpm.persistence}</argument>

@@ -45,8 +45,8 @@ public class JMSClient extends AbstractClient {
     }
 
     public JMSClient(String deploymentId, String host, int remotingPort, String username, String password, Class<?>... classes) {
-        this(deploymentId, host, remotingPort, username, password, config.getKieSessionQueue(), config
-                .getKieTaskQueue(), config.getKieResponseQueue(), classes);
+        this(deploymentId, host, remotingPort, username, password, config.getKieSessionQueue(), config.getKieTaskQueue(), config
+                .getKieResponseQueue(), classes);
     }
 
     public JMSClient(String deploymentId, String host, int remotingPort, String username, String password, String sessionQueueName,
@@ -144,8 +144,9 @@ public class JMSClient extends AbstractClient {
     public String toString() {
         return JmsClientId;
     }
-    
-    public static InitialContext getInitialContext(String host, int port, String username, String password, Map<? extends Object, ? extends Object> additionalEnvironmentProps) {
+
+    public static InitialContext getInitialContext(String host, int port, String username, String password,
+            Map<? extends Object, ? extends Object> additionalEnvironmentProps) {
         Properties initialProps = new Properties();
         initialProps.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
         initialProps.setProperty(Context.PROVIDER_URL, String.format("%s://%s:%d", "remote", host, port));

@@ -5,21 +5,21 @@ import java.util.Properties;
 import org.kie.perf.TestConfig;
 
 public class JBPMTestConfig extends TestConfig {
-    
+
     protected String runtimeManagerStrategy;
 
     protected boolean persistence;
-    
+
     protected boolean pessimisticLocking;
-    
+
     protected int concurrentUsersCount;
-    
+
     protected boolean humanTaskEager;
-    
+
     protected JBPMTestConfig() {
-        
+
     }
-    
+
     public static JBPMTestConfig getInstance() {
         if (tc == null || !(tc instanceof JBPMTestConfig)) {
             tc = new JBPMTestConfig();
@@ -31,48 +31,53 @@ public class JBPMTestConfig extends TestConfig {
         }
         return (JBPMTestConfig) tc;
     }
-    
+
     @Override
     public Properties loadProperties() throws Exception {
-        Properties props = super.loadProperties();
-        
+        super.loadProperties();
+
+        databaseName = System.getProperty("databaseName");
+        properties.put("databaseName", databaseName);
+        addTag(databaseName);
+
         runtimeManagerStrategy = System.getProperty("jbpm.runtimeManagerStrategy");
-        props.put("jbpm.runtimeManagerStrategy", runtimeManagerStrategy);
+        properties.put("jbpm.runtimeManagerStrategy", runtimeManagerStrategy);
+        addTag(runtimeManagerStrategy);
 
         persistence = Boolean.valueOf(System.getProperty("jbpm.persistence"));
-        props.put("jbpm.persistence", persistence);
-        
+        properties.put("jbpm.persistence", persistence);
+
         String locking = System.getProperty("jbpm.locking");
         pessimisticLocking = locking.toLowerCase().equals("pessimistic");
-        props.put("jbpm.pessimisticLocking", pessimisticLocking);
-        
+        properties.put("jbpm.pessimisticLocking", pessimisticLocking);
+
         concurrentUsersCount = Integer.valueOf(System.getProperty("jbpm.concurrentUsersCount"));
-        props.put("jbpm.concurrentUsersCount", concurrentUsersCount);
+        properties.put("jbpm.concurrentUsersCount", concurrentUsersCount);
 
         humanTaskEager = Boolean.valueOf(System.getProperty("jbpm.ht.eager"));
-        props.put("jbpm.ht.eager", humanTaskEager);
-        
-        return props;
+        properties.put("jbpm.ht.eager", humanTaskEager);
+
+        return properties;
     }
-    
+
     public String getRuntimeManagerStrategy() {
         return runtimeManagerStrategy;
     }
-    
+
     public boolean isPersistence() {
         return persistence;
     }
-    
+
     public boolean isPessimisticLocking() {
         return pessimisticLocking;
     }
-    
+
     public int getConcurrentUsersCount() {
         return concurrentUsersCount;
     }
-    
+
     public boolean isHumanTaskEager() {
         return humanTaskEager;
     }
-    
+
 }

@@ -18,6 +18,7 @@ The tests should be executed via `run.sh` bash script since this script is by de
 
 ## KIE-Performance-Kit Setup
 
+
 All configuration goes into `pom.xml`
 
 * Select suite and scenario
@@ -35,13 +36,15 @@ All configuration goes into `pom.xml`
  * The total number of tests = `threads` * iterations
 * Reporting
  * Types of reporters = Console, CSVSingle, CSV
- * **Console**
- * **CSV** - reports periodiacally after X seconds into CSV files for every metrics
- * **CSVSingle** - reports scenario CSV files containing the metrics results
+ * `Console`
+ * `CSV` - reports periodiacally after X seconds into CSV files for every metrics
+ * `CSVSingle` - reports scenario CSV files containing the metrics results
+ * `PerfRepo` - creates test definitions and test executions, reports results to remote PerfRepo (requires JDK 1.8, see https://github.com/PerfRepo/PerfRepo)
 * Additional metrics
- * **MemoryUsage** - HEAP and pools usage (Eden, Old Gen, etc.)
- * **ThreadStates** - number of threads and their states (waited, runnable, new, blocked, etc.), deadlocks, ...
- * **FileDescriptors** - number of opened descriptors, percentage of usage
+ * `MemoryUsage` - HEAP and pools usage (Eden, Old Gen, etc.)
+ * `ThreadStates` - number of threads and their states (waited, runnable, new, blocked, etc.), deadlocks, ...
+ * `FileDescriptors` - number of opened descriptors, percentage of usage
+ * `CPUUsage` - histogram of cpu usage of the process/scenario (count, min, max, mean, median, ...) useful only when scenario iterations/duration takes longer than 300ms
  * Set any of the metrics above as a list into *measure* property
 
 ## Remote Workbench KIE-Performance-Kit Setup
