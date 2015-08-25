@@ -20,3 +20,5 @@ nbproject/
 bitronix-default-config.properties
 *.db
 
+# modules that don't exist here
+/performance-tests/
