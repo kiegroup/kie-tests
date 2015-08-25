@@ -1,6 +1,6 @@
 package org.kie.tests.wb.eap;
 
-import static org.kie.remote.tests.base.DeployUtil.*;
+import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
 import static org.kie.remote.tests.base.DeployUtil.replaceJars;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
@@ -22,21 +22,10 @@ public class KieWbWarJbossEapDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
-                { "org.kie.remote", "kie-remote-services" },
-                { "org.kie.remote", "kie-remote-jaxb" },
-                
-                { "org.drools", "drools-core" },
-                { "org.drools", "drools-persistence-jpa" },
-                
-                { "org.jbpm", "jbpm-audit" },
-                { "org.jbpm", "jbpm-flow" },
-                { "org.jbpm", "jbpm-human-task-core" },
-                { "org.jbpm", "jbpm-kie-services" },
-                
-                { "org.kie", "kie-internal" },
-                { "org.kie", "kie-api" }
         };
-        replaceJars(war, PROJECT_VERSION, jarsToReplace);
+        if( jarsToReplace.length > 0 ) { 
+            replaceJars(war, PROJECT_VERSION, jarsToReplace);
+        }
 
         boolean webXmlReplace = false;
         if( webXmlReplace ) {
