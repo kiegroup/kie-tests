@@ -262,9 +262,6 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         List<VariableInstanceLog> varLogs = new JPAAuditLogService(getEmf()).findVariableInstancesByName(varId, false);
         assertTrue(varLogs.size() > 0);
         assertEquals(varId, varLogs.get(0).getVariableId());
-
-        procInst = ksession.getProcessInstance(processInstanceId);
-        assertNull(procInst);
     } 
     
     @Test

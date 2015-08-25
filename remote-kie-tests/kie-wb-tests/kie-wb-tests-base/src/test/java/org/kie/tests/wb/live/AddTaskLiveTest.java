@@ -26,6 +26,8 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.kie.api.command.Command;
 import org.kie.api.task.model.Comment;
 import org.kie.api.task.model.Task;
@@ -46,11 +48,12 @@ import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.SerializationException;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
+import org.kie.tests.util.GetIgnoreRule;
+import org.kie.tests.util.GetIgnoreRule.IgnoreIfGetFails;
 import org.kie.tests.wb.base.util.TestConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class AddTaskLiveTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(AddTaskLiveTest.class);
@@ -65,10 +68,9 @@ public class AddTaskLiveTest {
 
     private final String url = "http://localhost:8080/kie-wb/";
 
-    public AddTaskLiveTest() {
-        setup();
-    }
-
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
+    
     private void setup() {
         URL serverUrl = null;
         try {
@@ -383,8 +385,10 @@ public class AddTaskLiveTest {
         return task;
     }
 
-    public static void main( String[] args ) throws Exception {
-        AddTaskLiveTest test = new AddTaskLiveTest();
+    @Test
+    @IgnoreIfGetFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    public void test() throws Exception { 
+        setup();
         String taskName = "New Task";
         String taskComment = "This is a new comment";
 
@@ -395,6 +399,27 @@ public class AddTaskLiveTest {
         String version = "version";
         int priority = 1;
         Date expirationTime = new Date();
+        doTest(this, taskName, taskComment, actorId, creatorId, version, priority, expirationTime);
+    }
+    
+    public static void main( String[] args ) throws Exception {
+        AddTaskLiveTest test = new AddTaskLiveTest();
+        test.setup();
+        String taskName = "New Task";
+        String taskComment = "This is a new comment";
+
+        List<String> actorId = new ArrayList<String>();
+        actorId.add("test");
+
+        String creatorId = "test";
+        String version = "version";
+        int priority = 1;
+        Date expirationTime = new Date();
+        
+    }
+    
+    private static void doTest(AddTaskLiveTest test, String taskName, String taskComment, List<String> actorId, String creatorId,
+            String version, int priority, Date expirationTime) throws Exception {
         org.kie.remote.jaxb.gen.Task task = test.createNewTask(taskName, taskComment, actorId, creatorId, version, priority, expirationTime);
         Long createdTaskId = test.addTask(task);
 

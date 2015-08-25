@@ -6,15 +6,19 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.kie.tests.util.GetIgnoreRule;
+import org.kie.tests.util.GetIgnoreRule.IgnoreIfGetFails;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
-//@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class RepositoryDeploymentUtilLiveTest {
 
     private static String user = "mary";
     private static String password = "mary123@";
-   
+  
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
     
     private static URL deploymentUrl;
     static { 
@@ -26,6 +30,7 @@ public class RepositoryDeploymentUtilLiveTest {
     }
     
     @Test
+    @IgnoreIfGetFails(getUrl="http://localhost:8080/business-central/rest/deployment")
     public void optimizedRepeatedCalls() { 
         // create repo if not present
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);

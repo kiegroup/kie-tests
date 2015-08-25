@@ -4,6 +4,7 @@ import java.net.URL;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.kie.tests.util.GetIgnoreRule.IgnoreIfGetFails;
 import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ public class CommandWebServiceLiveTest {
     }
     
     @Test
+    @IgnoreIfGetFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void wsTest() throws Exception { 
         KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods(); 
         wsTests.startSimpleProcess(deploymentUrl);

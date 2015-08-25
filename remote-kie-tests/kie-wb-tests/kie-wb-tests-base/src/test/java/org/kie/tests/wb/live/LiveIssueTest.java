@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,12 +13,15 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.tests.util.GetIgnoreRule;
+import org.kie.tests.util.GetIgnoreRule.IgnoreIfGetFails;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
@@ -32,7 +33,9 @@ public class LiveIssueTest {
     
     private static String user = "mary";
     private static String password = "mary123@";
-   
+  
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
     
     private static URL deploymentUrl;
     static { 
@@ -44,6 +47,7 @@ public class LiveIssueTest {
     }
     
     @Test
+    @IgnoreIfGetFails(getUrl="http://localhost:8080/kie-wb/business-central/deployment")
     public void issueTest() throws Exception { 
         
         // deploy
