@@ -6,12 +6,20 @@
   <!--
   <distributable/>
   -->
+  <listener>
+    <listener-class>org.uberfire.backend.server.io.DisposableShutdownService</listener-class>
+  </listener>
 
   <servlet-mapping>
     <servlet-name>javax.ws.rs.core.Application</servlet-name>
     <url-pattern>/rest/*</url-pattern>
   </servlet-mapping>
 
+   <context-param>
+      <param-name>resteasy.role.based.security</param-name>
+      <param-value>true</param-value>
+   </context-param>
+   
   <filter>
     <filter-name>request-capture</filter-name>
     <filter-class>org.uberfire.ext.security.server.SecurityIntegrationFilter</filter-class>
@@ -20,6 +28,36 @@
   <filter-mapping>
     <filter-name>request-capture</filter-name>
     <url-pattern>*</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>Avoid Host Page Cache</filter-name>
+    <filter-class>org.uberfire.ext.security.server.CacheHeadersFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>Avoid Host Page Cache</filter-name>
+    <url-pattern>/kie-wb.html</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>Host Page Patch</filter-name>
+    <filter-class>org.jboss.errai.security.server.servlet.UserHostPageFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>Host Page Patch</filter-name>
+    <url-pattern>/kie-wb.html</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>GWT Locale Filter</filter-name>
+    <filter-class>org.uberfire.server.locale.GWTLocaleHeaderFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>GWT Locale Filter</filter-name>
+    <url-pattern>/kie-wb.html</url-pattern>
   </filter-mapping>
 
   <filter>
@@ -171,6 +209,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>M2Servlet</servlet-name>
+    <url-pattern>/maven2wb/*</url-pattern>
     <url-pattern>/maven2/*</url-pattern>
   </servlet-mapping>
 
@@ -206,14 +245,6 @@ profile in pom.xml to use that. -->
 
   <!-- Designer -->
   <!-- Designer Injection Filter -->
-  <filter>
-    <filter-name>Designer Injection Filter</filter-name>
-    <filter-class>org.jbpm.designer.filter.DesignerInjectionFilter</filter-class>
-  </filter>
-  <filter-mapping>
-    <filter-name>Designer Injection Filter</filter-name>
-    <url-pattern>*.html</url-pattern>
-  </filter-mapping>
   <filter>
     <filter-name>Redirect Filter</filter-name>
     <filter-class>org.jbpm.designer.filter.DesignerResourcesRedirectFilter</filter-class>
@@ -515,7 +546,6 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
   <!-- end form-modeler-->
 
   <!-- security settings -->
-
   <security-constraint>
     <web-resource-collection>
       <web-resource-name>download</web-resource-name>
@@ -536,9 +566,8 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
     <web-resource-collection>
       <web-resource-name>console</web-resource-name>
       <url-pattern>/kie-wb.html</url-pattern>
-      <url-pattern>*.erraiBus</url-pattern>
       <url-pattern>/org.kie.workbench.KIEWebapp/*</url-pattern>
-      <url-pattern>/login</url-pattern>
+      <url-pattern>*.erraiBus</url-pattern>
       <url-pattern>/resourceList</url-pattern>
       <url-pattern>/editor</url-pattern>
       <url-pattern>/editor/*</url-pattern>
@@ -566,6 +595,7 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
       <url-pattern>/plugin/*</url-pattern>
       <url-pattern>/stencilset/*</url-pattern>
       <url-pattern>/plugins/*</url-pattern>
+      <url-pattern>/maven2wb/*</url-pattern>
     </web-resource-collection>
     <auth-constraint>
       <role-name>admin</role-name>
@@ -669,5 +699,4 @@ See http://www.w3.org/TR/SVG/intro.html#MIMEType. -->
     <servlet-name>CommandWebService</servlet-name>
     <url-pattern>/ws/CommandService</url-pattern>
   </servlet-mapping>
-
 </web-app>

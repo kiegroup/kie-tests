@@ -19,7 +19,7 @@ package org.kie.tests.wb.eap;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
@@ -96,7 +96,7 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-//        restTests.urlsProcessQueryOperationsTest(deploymentUrl, MARY_USER, MARY_PASSWORD); // test POST to query methods
-        restTests.urlsHumanTaskTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsJsonJaxbStartProcess(deploymentUrl, KRIS_USER, KRIS_PASSWORD);
+        restTests.urlsJsonJaxbStartProcess(deploymentUrl, SALA_USER, SALA_PASSWORD);
     }
 }

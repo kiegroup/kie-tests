@@ -37,7 +37,7 @@ import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
