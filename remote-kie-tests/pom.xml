@@ -12,7 +12,7 @@
   <artifactId>remote-kie-tests</artifactId>
   <packaging>pom</packaging>
 
-  <name>Remote KIE Tests</name>
+  <name>Remote KIE Tests :: Parent</name>
   <description>Integration tests involving remote interfaces</description>
 
   <modules>
