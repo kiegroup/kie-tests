@@ -10,7 +10,7 @@
 
   <packaging>jar</packaging>
   <artifactId>process-event-listeners-jar</artifactId>
-  <name>BPMS Process Event Listeners</name>
+  <name>Remote KIE Tests :: Process Event Listeners Jar</name>
 
   <dependencies>
     <dependency>

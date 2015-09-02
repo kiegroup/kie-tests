@@ -11,7 +11,7 @@
   <artifactId>remote-kie-tests-util</artifactId>
   <packaging>jar</packaging>
 
-  <name>Remote KIE Integration Tests :: Utility classes</name>
+  <name>Remote KIE Tests :: Utility classes</name>
 
   <dependencies>
     <dependency>
