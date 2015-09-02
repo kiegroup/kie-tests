@@ -17,12 +17,17 @@
  */
 package org.kie.tests.wb.tomcat;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
 
 import java.net.URL;
+import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -34,7 +39,19 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
+import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
+import org.kie.remote.tests.base.RestUtil;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
+import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,14 +85,77 @@ public class TomcatRemoteApiIssueTest {
     @Test
     public void issueTest() throws Exception { 
         printTestName();
+        String userName = MARY_USER;
+        String password = MARY_PASSWORD;
         
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML)
-                .build();
-       
         // deploy
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
+
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, userName, password, 5);
+        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "tests";
+        String project = "integration-tests";
+        String deploymentId = KJAR_DEPLOYMENT_ID;
+        String orgUnit = UUID.randomUUID().toString();
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+
+        int sleep = 2;
+        logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
+        Thread.sleep(sleep * 1000); 
+        
+        // Remote API setup
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(userName)
+                .addPassword(password);
+        // @formatter:on
+        RuntimeEngine engine = builder.build();
+        KieSession ksession = engine.getKieSession();
+        
+        // 1. start process
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+
+        // @formatter:off
+        TaskService taskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(userName)
+                .addDeploymentId(KJAR_DEPLOYMENT_ID)
+                .addPassword(password)
+                .build().getTaskService();
+        // @formatter:on
+     
+        // 2. find task (without deployment id)
+        long sameTaskId;
+        { 
+            List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+            assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
+            sameTaskId = taskIds.get(0);
+        }
+        
+        // 2b. Get the task instance itself
+        Task task = taskService.getTaskById(sameTaskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+        
+        TaskSummary taskSum = getTaskSummary(userName, password, procInstId, task.getTaskData().getStatus());
+        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
+        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
+
+        // 3. Start the task
+        taskService.start(sameTaskId, userName);
+    }
+    
+    private TaskSummary getTaskSummary( String user, String password, long processInstanceId, Status status ) throws Exception {
+        JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl, 
+                "rest/task/query?processInstanceId=" + processInstanceId, MediaType.APPLICATION_XML,
+                200, user, password,
+                JaxbTaskSummaryListResponse.class);
+        List<TaskSummary> taskSumList = taskSumListResp.getResult();
+        assertEquals("No task found with process instance id [" + processInstanceId + "] and status [" + status + "]", 1, taskSumList.size());
+        return taskSumList.get(0);
     }
 }

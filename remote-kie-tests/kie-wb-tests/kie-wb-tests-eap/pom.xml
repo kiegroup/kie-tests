@@ -38,6 +38,11 @@
       <artifactId>kie-wb-tests-base</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.kie.tests.remote</groupId>
+      <artifactId>process-event-listeners-jar</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.kie.remote</groupId>
@@ -120,8 +125,26 @@
       <artifactId>jboss-servlet-api_3.0_spec</artifactId>
       <scope>test</scope>
     </dependency>
+    
+    <!--  process event listener test -->
+    <dependency>
+      <groupId>org.custom</groupId>
+      <artifactId>process-event-listeners</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+    <dependency>
+      <groupId>org.custom</groupId>
+      <artifactId>process-event-listeners</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+    </dependencies>
+  </dependencyManagement>
   <build>
     <testResources>
       <testResource>

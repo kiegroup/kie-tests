@@ -22,6 +22,10 @@ public class KieWbWarJbossEapDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
+                // kie-remote
+                { "org.kie.remote", "kie-remote-services" },
+                
+                { "org.kie.tests.remote", "process-event-listeners-jar" }
         };
         if( jarsToReplace.length > 0 ) { 
             replaceJars(war, PROJECT_VERSION, jarsToReplace);

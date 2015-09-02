@@ -17,12 +17,15 @@ t  * JBoss, Home of Professional Open Source
  */
 package org.kie.tests.wb.eap;
 
+import static org.junit.Assert.*;
+import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
@@ -32,11 +35,22 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jbpm.services.task.impl.model.xml.JaxbTask;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.task.TaskService;
+import org.kie.api.task.model.Status;
+import org.kie.api.task.model.Task;
+import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
+import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
+import org.kie.remote.tests.base.RestUtil;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,12 +84,12 @@ public class JbossEapRemoteApiIssueTest {
     @Test
     public void issueTest() throws Exception { 
         printTestName();
-        String username = MARY_USER;
+        String userName = MARY_USER;
         String password = MARY_PASSWORD;
         
         // deploy
 
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, userName, password, 5);
         deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
@@ -89,13 +103,68 @@ public class JbossEapRemoteApiIssueTest {
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
         Thread.sleep(sleep * 1000); 
         
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML)
-                .setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE)
-                .setTimeoutInSecs(5)
-                .build();
-                
-        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        // Remote API setup
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(userName)
+                .addPassword(password);
+        // @formatter:on
+        RuntimeEngine engine = builder.build();
+        KieSession ksession = engine.getKieSession();
+        
+        // 1. start process
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+
+        // @formatter:off
+        TaskService taskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(userName)
+                .addDeploymentId(KJAR_DEPLOYMENT_ID)
+                .addPassword(password)
+                .build().getTaskService();
+        // @formatter:on
+     
+        // 2. find task (without deployment id)
+        long sameTaskId;
+        { 
+            List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+            assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
+            sameTaskId = taskIds.get(0);
+        }
+        
+        // 2b. Get the task instance itself
+        Task task = taskService.getTaskById(sameTaskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+        assertNotNull( "Null actual owner on actual task!", actualOwnerId );
+        assertEquals( "Incorrect task status ", Status.Reserved, task.getTaskData().getStatus() );
+        
+        JaxbTask jaxbTask = RestUtil.get(deploymentUrl, 
+                "rest/task/" + task.getId(), MediaType.APPLICATION_XML,
+                200, userName, password,
+                JaxbTask.class);
+        assertNotNull( "Null actual owner on actual task!", jaxbTask.getTaskData().getActualOwner() );
+        assertEquals( "Incorrect actual owner on JAXB task!", actualOwnerId, jaxbTask.getTaskData().getActualOwner().getId() );
+        assertEquals( "Incorrect task status ", Status.Reserved, task.getTaskData().getStatus() );
+
+        TaskSummary taskSum = getTaskSummary(SALA_USER, SALA_PASSWORD, task.getId());
+        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
+        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
+
+        // 3. Start the task
+        taskService.start(sameTaskId, userName);
+    }
+    
+    private TaskSummary getTaskSummary( String user, String password, long taskId) throws Exception {
+        JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl, 
+                "rest/task/query?taskId=" + taskId, MediaType.APPLICATION_XML,
+                200, user, password,
+                JaxbTaskSummaryListResponse.class);
+        List<TaskSummary> taskSumList = taskSumListResp.getResult();
+        assertEquals("No task found with task id [" + taskId + "]", 1, taskSumList.size());
+        return taskSumList.get(0);
     }
 }

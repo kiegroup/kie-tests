@@ -18,7 +18,9 @@ public class KieWbWarTomcatDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String [][] jarsToReplace = {
-                { "org.kie.remote", "kie-remote-services" }
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.kie.remote", "kie-remote-jaxb" },
+                { "org.kie", "kie-internal" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 

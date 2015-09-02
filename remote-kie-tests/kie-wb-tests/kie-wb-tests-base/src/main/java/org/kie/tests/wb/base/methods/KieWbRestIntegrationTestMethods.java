@@ -309,6 +309,10 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Incorrect task retrieved", taskId, task.getId().longValue());
         TaskData taskData = task.getTaskData();
         assertNotNull(taskData);
+        
+        assertNotNull("Null actual owner", taskData.getActualOwner());
+        String actualOwner = taskData.getActualOwner().getId();
+        assertNotNull("Null actual owner id", actualOwner);
     }
 
     private String getConnectionContent( Object content ) throws Exception {
@@ -559,6 +563,8 @@ public class KieWbRestIntegrationTestMethods {
      * @throws Exception
      */
     public void remoteApiHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Remote API setup
         // @formatter:off
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
@@ -609,6 +615,11 @@ public class KieWbRestIntegrationTestMethods {
         // 2b. Get the task instance itself
         Task task = nullDepIdTaskService.getTaskById(taskId);
         checkReturnedTask(task, taskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+        
+        TaskSummary taskSum = getTaskSummary(user, password, procInstId, task.getTaskData().getStatus());
+        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
+        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
 
         // 3. Start the task
         emptyDepIdTaskService.start(taskId, taskUserId);
