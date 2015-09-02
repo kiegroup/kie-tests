@@ -16,6 +16,7 @@
   <description>Integration tests involving remote interfaces</description>
 
   <modules>
+    <module>process-event-listeners-jar</module>
     <module>remote-kie-tests-util</module>
     <module>kie-wb-tests</module>
     <module>kie-drools-wb-tests</module>

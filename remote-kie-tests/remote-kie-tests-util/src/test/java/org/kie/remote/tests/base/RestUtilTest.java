@@ -30,7 +30,7 @@ import org.guvnor.rest.client.RepositoryResponse;
 import org.junit.Rule;
 import org.junit.Test;
 import org.kie.remote.tests.base.unit.GetIgnoreRule;
-import org.kie.remote.tests.base.unit.GetIgnoreRule.ConditionalIgnore;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 
 public class RestUtilTest {
 
@@ -52,7 +52,7 @@ public class RestUtilTest {
     public GetIgnoreRule liveServerRule = new GetIgnoreRule();
     
     @Test
-    @ConditionalIgnore(getUrl=urlString+"rest/deployment")
+    @IgnoreIfGETFails(getUrl=urlString+"rest/deployment")
     public void restMethods() throws Exception { 
        
         Collection<RepositoryResponse> repoList = 

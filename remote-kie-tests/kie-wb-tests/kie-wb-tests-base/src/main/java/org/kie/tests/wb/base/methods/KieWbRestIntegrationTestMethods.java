@@ -320,6 +320,10 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Incorrect task retrieved", taskId, task.getId().longValue());
         TaskData taskData = task.getTaskData();
         assertNotNull(taskData);
+        
+        assertNotNull("Null actual owner", taskData.getActualOwner());
+        String actualOwner = taskData.getActualOwner().getId();
+        assertNotNull("Null actual owner id", actualOwner);
     }
 
     private String getConnectionContent( Object content ) throws Exception {
@@ -429,9 +433,11 @@ public class KieWbRestIntegrationTestMethods {
     
         // complete task
         String georgeVal = "George";
-        resp = post("task/" + taskId + "/complete?map_outUserName=" + georgeVal, 200, JaxbGenericResponse.class); 
+        formParams.clear();
+        formParams.put("map_outUserName", georgeVal);
+        resp = post("task/" + taskId + "/complete", 200, JaxbGenericResponse.class); 
         
-        JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable", 200, JaxbHistoryLogList.class);
+        JaxbHistoryLogList histResp = get("history/instance/" + procInstId + "/variable/userName", 200, JaxbHistoryLogList.class);
         List<AbstractJaxbHistoryObject> histList = histResp.getHistoryLogList();
         boolean georgeFound = false;
         for( AbstractJaxbHistoryObject<VariableInstanceLog> absVarLog : histList ) {
@@ -571,6 +577,8 @@ public class KieWbRestIntegrationTestMethods {
      * @throws Exception
      */
     public void remoteApiHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
         // Remote API setup
         // @formatter:off
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
@@ -622,6 +630,11 @@ public class KieWbRestIntegrationTestMethods {
         // 2b. Get the task instance itself
         Task task = nullDepIdTaskService.getTaskById(taskId);
         checkReturnedTask(task, taskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+
+        TaskSummary taskSum = getTaskSummary(user, password, procInstId, task.getTaskData().getStatus());
+        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
+        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
 
         // 3. Start the task
         emptyDepIdTaskService.start(taskId, taskUserId);
@@ -1466,6 +1479,36 @@ public class KieWbRestIntegrationTestMethods {
         assertNull(procInst);
     }
     
+    public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        setRestInfo(deploymentUrl, user, password);
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        KieSession kieSession = runtimeEngine.getKieSession();
+
+        // start process
+        String businessKey = "taxes";
+        CorrelationKey corrKey = JaxbCorrelationKeyFactory.getInstance().newCorrelationKey(businessKey);
+        ProcessInstance procInst = ((CorrelationAwareProcessRuntime) kieSession).startProcess(HUMAN_TASK_PROCESS_ID, corrKey, null);
+        assertNotNull( "Could not start process instance by correlation key!", procInst );
+        long procInstId = procInst.getId();
+        
+        procInst = ((CorrelationAwareProcessRuntime) kieSession).getProcessInstance(corrKey);
+        assertNotNull( "Could not get process instance by correlation key!", procInst );
+        assertEquals( "Incorrect process instance retrieved", procInstId, procInst.getId());
+        
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                // Add correlation key property to builder!
+                .addCorrelationProperties(businessKey)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password);
+      
+        runtimeEngine = builder.build();
+
+        runtimeEngine.getKieSession().abortProcessInstance(procInstId);
+    }
+    
     public void remoteApiHumanTaskCommentTest( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
         setRestInfo(deploymentUrl, user, password);
@@ -1529,36 +1572,5 @@ public class KieWbRestIntegrationTestMethods {
            assertNotEquals("Deleted comment found", taskCommentId, kieComment.getId());
         }
     }
-   
-    
-    public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
-        // setup
-        setRestInfo(deploymentUrl, user, password);
-        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-        KieSession kieSession = runtimeEngine.getKieSession();
 
-        // start process
-        String businessKey = "taxes";
-        CorrelationKey corrKey = JaxbCorrelationKeyFactory.getInstance().newCorrelationKey(businessKey);
-        ProcessInstance procInst = ((CorrelationAwareProcessRuntime) kieSession).startProcess(HUMAN_TASK_PROCESS_ID, corrKey, null);
-        assertNotNull( "Could not start process instance by correlation key!", procInst );
-        long procInstId = procInst.getId();
-        
-        procInst = ((CorrelationAwareProcessRuntime) kieSession).getProcessInstance(corrKey);
-        assertNotNull( "Could not get process instance by correlation key!", procInst );
-        assertEquals( "Incorrect process instance retrieved", procInstId, procInst.getId());
-        
-        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(deploymentId)
-                // Add correlation key property to builder!
-                .addCorrelationProperties(businessKey)
-                .addUrl(deploymentUrl)
-                .addUserName(user)
-                .addPassword(password);
-      
-        runtimeEngine = builder.build();
-
-        runtimeEngine.getKieSession().abortProcessInstance(procInstId);
-    }
-    
 }

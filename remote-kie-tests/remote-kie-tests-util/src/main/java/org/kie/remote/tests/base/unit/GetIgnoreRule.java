@@ -31,7 +31,7 @@ public class GetIgnoreRule implements MethodRule {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.METHOD })
-    public @interface ConditionalIgnore {
+    public @interface IgnoreIfGETFails {
         String getUrl() default "";
     }
 
@@ -73,11 +73,11 @@ public class GetIgnoreRule implements MethodRule {
     }
 
     private boolean hasConditionalIgnoreAnnotation( FrameworkMethod method ) {
-        return method.getAnnotation(ConditionalIgnore.class) != null;
+        return method.getAnnotation(IgnoreIfGETFails.class) != null;
     }
 
     private String getGetUrl( Object instance, FrameworkMethod method ) {
-        ConditionalIgnore annotation = method.getAnnotation(ConditionalIgnore.class);
+        IgnoreIfGETFails annotation = method.getAnnotation(IgnoreIfGETFails.class);
         return annotation.getUrl();
     }
 

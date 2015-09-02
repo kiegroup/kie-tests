@@ -13,19 +13,20 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.remote.tests.base.RestUtil;
+import org.kie.remote.tests.base.unit.GetIgnoreRule;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class LiveIssueTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(LiveIssueTest.class);
@@ -33,6 +34,8 @@ public class LiveIssueTest {
     private static String user = "mary";
     private static String password = "mary123@";
    
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
     
     private static URL deploymentUrl;
     static { 
@@ -44,6 +47,7 @@ public class LiveIssueTest {
     }
     
     @Test
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/business-central/deployment")
     public void issueTest() throws Exception { 
         
         // deploy

@@ -15,22 +15,26 @@ import javax.jms.Queue;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.remote.client.api.RemoteJmsRuntimeEngineBuilder;
+import org.kie.remote.tests.base.unit.GetIgnoreRule;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class JmsGroupLiveTest {
 
    protected static final Logger logger = LoggerFactory.getLogger(JmsGroupLiveTest.class);
     
     private static boolean weblogic = false;
     
-    private URL deploymentUrl;
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
+    
+    private static URL deploymentUrl;
     {
         // Modify this string to match your kie-wb/BPMS installation
         String urlString;
@@ -82,6 +86,7 @@ public class JmsGroupLiveTest {
     }
     
     @Test
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void restIssueTest() throws Exception { 
         printTestName();
       
@@ -103,6 +108,7 @@ public class JmsGroupLiveTest {
     }
     
     @Test
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void jmsIssueTest() throws Exception { 
         RuntimeEngine engine = createRemoteJmsRuntimeEngine(MARY_USER, MARY_PASSWORD);
         RuntimeEngine johnEngine = createRemoteJmsRuntimeEngine(JOHN_USER, JOHN_PASSWORD);

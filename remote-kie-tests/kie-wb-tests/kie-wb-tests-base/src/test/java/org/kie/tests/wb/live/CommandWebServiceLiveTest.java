@@ -2,13 +2,12 @@ package org.kie.tests.wb.live;
 
 import java.net.URL;
 
-import org.junit.Ignore;
 import org.junit.Test;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Ignore // add Junit "Ping Succeed or Ignore" rule
 public class CommandWebServiceLiveTest {
 
    protected static final Logger logger = LoggerFactory.getLogger(CommandWebServiceLiveTest.class);
@@ -42,6 +41,7 @@ public class CommandWebServiceLiveTest {
     }
     
     @Test
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void wsTest() throws Exception { 
         KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods(); 
         wsTests.startSimpleProcess(deploymentUrl);
