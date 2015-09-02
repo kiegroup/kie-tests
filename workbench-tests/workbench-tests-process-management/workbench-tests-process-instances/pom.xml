@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.kie.tests</groupId>
     <artifactId>workbench-tests-process-management</artifactId>
-    <version>6.4.0-SNAPSHOT</version>
+    <version>6.3.0-SNAPSHOT</version>
   </parent>
   <artifactId>workbench-tests-process-instances</artifactId>
   <packaging>pom</packaging>
