@@ -2,7 +2,9 @@ package org.kie.tests.wb.live;
 
 import java.net.URL;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.kie.remote.tests.base.unit.GetIgnoreRule;
 import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.slf4j.Logger;
@@ -15,6 +17,9 @@ public class CommandWebServiceLiveTest {
     private final boolean weblogic;
     
     private URL deploymentUrl;
+
+    @Rule
+    public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
     
     public CommandWebServiceLiveTest() { 
         weblogic = false;
