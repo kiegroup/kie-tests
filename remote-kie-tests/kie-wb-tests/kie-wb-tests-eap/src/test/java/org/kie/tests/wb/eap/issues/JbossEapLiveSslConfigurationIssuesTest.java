@@ -1,4 +1,4 @@
-package org.kie.tests.wb.dummy;
+package org.kie.tests.wb.eap.issues;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,15 +28,20 @@ import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQJMSConnectionFactory;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
+import org.kie.remote.tests.base.unit.GetIgnoreRule;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 
-@Ignore
-public class LiveSslConfigurationIssuesTest {
+public class JbossEapLiveSslConfigurationIssuesTest {
 
+    @Rule
+    public GetIgnoreRule rule = new GetIgnoreRule();
+    
     private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
     
     private static final String KSESSION_QUEUE_NAME = "jms/queue/KIE.SESSION";
@@ -64,6 +69,7 @@ public class LiveSslConfigurationIssuesTest {
     }
 
     @Test
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void fixSsl() throws Exception {
         InitialContext remoteInitialContext = getRemoteInitialContext(MARY_USER, MARY_PASSWORD);
 

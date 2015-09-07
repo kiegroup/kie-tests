@@ -1,6 +1,6 @@
 package org.kie.tests.wb.eap;
 
-import static org.kie.remote.tests.base.DeployUtil.*;
+import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
 import static org.kie.remote.tests.base.DeployUtil.replaceJars;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
@@ -12,7 +12,7 @@ public class KieWbWarJbossEapDeploy {
 
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarJbossEapDeploy.class);
 
-    static WebArchive createTestWar() {
+    public static WebArchive createTestWar() {
         return createTestWar(null);
     }
 
@@ -24,11 +24,13 @@ public class KieWbWarJbossEapDeploy {
         String[][] jarsToReplace = {
                 // kie-remote
                 { "org.kie.remote", "kie-remote-services" },
-                { "org.kie.remote", "kie-remote-jaxb" }
+                { "org.kie.remote", "kie-remote-jaxb" },
+                
+                { "org.jbpm", "jbpm-kie-services" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
-        if( true ) {
+        if( false ) {
             replaceWebXmlForWebServices(war);
         }
 
