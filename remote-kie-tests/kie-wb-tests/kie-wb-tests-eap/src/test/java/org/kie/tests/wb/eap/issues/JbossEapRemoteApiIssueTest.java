@@ -15,7 +15,7 @@ t  * JBoss, Home of Professional Open Source
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.eap;
+package org.kie.tests.wb.eap.issues;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
@@ -33,9 +33,12 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule;
+import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule.IgnoreWhenInMavenBuild;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
@@ -43,14 +46,17 @@ import org.slf4j.LoggerFactory;
 
 @RunAsClient
 @RunWith(Arquillian.class)
-public class JbossEapRemoteApiIssueTaskCommentsTest {
+public class JbossEapRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
     public static Archive<?> createWar() {
         return createTestWar();
     }
- 
-    private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTaskCommentsTest.class);
+
+    @Rule
+    public MavenBuildIgnoreRule ignoreRule = new MavenBuildIgnoreRule();
+    
+    private static final Logger logger = LoggerFactory.getLogger(JbossEapRemoteApiIssueTest.class);
     
     @ArquillianResource
     URL deploymentUrl;
@@ -68,14 +74,16 @@ public class JbossEapRemoteApiIssueTaskCommentsTest {
     }
     
     @Test
+    @IgnoreWhenInMavenBuild
     public void issueTest() throws Exception { 
         printTestName();
-        String username = MARY_USER;
+        String user = MARY_USER;
         String password = MARY_PASSWORD;
         
         // deploy
 
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
+        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
@@ -95,6 +103,6 @@ public class JbossEapRemoteApiIssueTaskCommentsTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiHumanTaskComment(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.urlsVariableHistory(deploymentUrl, user, password);
     }
 }

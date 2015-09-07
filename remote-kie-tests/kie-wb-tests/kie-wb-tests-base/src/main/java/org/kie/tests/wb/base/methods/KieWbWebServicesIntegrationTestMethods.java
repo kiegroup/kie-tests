@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 
 import java.net.URL;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.services.client.serialization.jaxb.rest.JaxbExceptionResponse;
 import org.kie.tests.MyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +41,12 @@ public class KieWbWebServicesIntegrationTestMethods {
     private static Logger logger = LoggerFactory.getLogger(KieWbRestIntegrationTestMethods.class);
     
     public static void startSimpleProcess(URL deploymentUrl) throws Exception {
-        CommandWebService commandWebService = createDefaultClient(deploymentUrl); 
+        CommandWebService commandWebService = createDefaultClient(deploymentUrl, MARY_USER, MARY_PASSWORD); 
         
-        startSimpleProcess(commandWebService);
+        startSimpleProcess(commandWebService, MARY_USER);
     }
     
-    public static void startSimpleProcess(CommandWebService commandWebService ) throws Exception {
+    public static void startSimpleProcess(CommandWebService commandWebService, String user) throws Exception {
         // start process
         StartProcessCommand spc = new StartProcessCommand();
         spc.setProcessId(HUMAN_TASK_PROCESS_ID);
@@ -61,6 +64,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         // get task id
         GetTasksByProcessInstanceIdCommand gtbic = new GetTasksByProcessInstanceIdCommand();
         gtbic.setProcessInstanceId(procInstId);
+        gtbic.setUserId(user);
        
         // webservice
         JaxbLongListResponse jllr = doWebserviceRequest(commandWebService, gtbic, "get tasks by", JaxbLongListResponse.class );
@@ -72,8 +76,10 @@ public class KieWbWebServicesIntegrationTestMethods {
         // get task and task content
         GetTaskCommand gtc = new GetTaskCommand();
         gtc.setTaskId(taskId);
+        gtc.setUserId(user);
         GetTaskContentCommand gtcc = new GetTaskContentCommand();
         gtcc.setTaskId(taskId);
+        gtcc.setUserId(user);
         
         // webservice
         JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, gtc);
@@ -87,6 +93,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         // get content
         GetContentByIdCommand gcc = new GetContentByIdCommand();
         gcc.setContentId(task.getTaskData().getDocumentContentId());
+        gcc.setUserId(user);
        
         // webservice
         req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, gcc);
@@ -114,15 +121,18 @@ public class KieWbWebServicesIntegrationTestMethods {
         // check response
         JaxbCommandResponse<?> cmdResp = response.getResponses().get(0);
         assertNotNull( oper + ": null command response", cmdResp );
+        if( ! respClass.isAssignableFrom(cmdResp.getClass()) ) { 
+           if( cmdResp instanceof JaxbExceptionResponse ) { 
+               System.out.println( ((JaxbExceptionResponse) cmdResp).getMessage() );
+               System.out.println( ((JaxbExceptionResponse) cmdResp).getStackTrace() );
+           }
+        }
         assertTrue( oper + ": incorrect cmd response type: " + cmdResp.getClass(), respClass.isAssignableFrom(cmdResp.getClass()) );
         
         return (T) cmdResp;
     }
     
-    private static CommandWebService createDefaultClient(URL deploymentUrl) throws Exception {
-        final String user = "mary";
-        final String pwd = "mary123@";
- 
+    private static CommandWebService createDefaultClient(URL deploymentUrl, String user, String pwd) throws Exception {
         CommandWebService client =
         RemoteRuntimeEngineFactory.newCommandWebServiceClientBuilder()
             .addServerUrl(deploymentUrl)
