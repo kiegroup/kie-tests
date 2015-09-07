@@ -17,15 +17,16 @@
  */
 package org.kie.tests.wb.base.methods;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.kie.remote.tests.base.RestUtil.postEntity;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.CLASSPATH_ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
@@ -37,7 +38,7 @@ import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
-import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_PROCESS_ID;
@@ -70,6 +71,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.FileUtils;
 import org.drools.core.xml.jaxb.util.JaxbUnknownAdapter;
+import org.hamcrest.core.Is;
 import org.jboss.errai.common.client.util.Base64Util;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 import org.jbpm.services.task.utils.ContentMarshallerHelper;
@@ -90,9 +92,10 @@ import org.kie.internal.process.CorrelationKey;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.internal.task.api.InternalTaskService;
 import org.kie.remote.client.api.RemoteApiResponse;
+import org.kie.remote.client.api.RemoteApiResponse.RemoteOperationStatus;
+import org.kie.remote.client.api.RemoteJmsRuntimeEngineBuilder;
 import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.client.api.RemoteTaskService;
-import org.kie.remote.client.api.RemoteApiResponse.RemoteOperationStatus;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.ConversionUtil;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
@@ -100,16 +103,15 @@ import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
-import org.kie.remote.jaxb.gen.GetProcessInstanceByCorrelationKeyCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
-import org.kie.remote.jaxb.gen.StartCorrelatedProcessCommand;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
 import org.kie.remote.jaxb.gen.StartTaskCommand;
 import org.kie.remote.tests.base.RestUtil;
 import org.kie.services.client.api.RemoteRestRuntimeEngineFactory;
 import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.services.client.api.command.RemoteRuntimeEngine;
+import org.kie.services.client.api.command.exception.RemoteApiException;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
@@ -137,7 +139,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
-public class KieWbRestIntegrationTestMethods {
+public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
     private static Logger logger = LoggerFactory.getLogger(KieWbRestIntegrationTestMethods.class);
 
@@ -222,15 +224,13 @@ public class KieWbRestIntegrationTestMethods {
         }
     }
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
-
     private long restCallDurationLimit = 2;
 
     /**
      * Helper methods
      */
 
-    private RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password ) {
+    public RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password ) {
         // @formatter:off
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addDeploymentId(deploymentId)
@@ -288,12 +288,6 @@ public class KieWbRestIntegrationTestMethods {
         return responses.get(0);
     }
 
-    private JaxbCommandResponse<?> executeCommand( URL appUrl, String user, String password, String deploymentId, Long procInstId, Command<?>... command ) 
-        throws Exception {
-        List<JaxbCommandResponse<?>> responses = executeCommands(appUrl, user, password, deploymentId, procInstId, command) ;
-        return responses.get(0);
-    }
-
     private List<JaxbCommandResponse<?>> executeCommands( URL appUrl, String user, String password, String deploymentId, Long processInstanceId, 
             Command<?>... command )
             throws Exception {
@@ -302,17 +296,28 @@ public class KieWbRestIntegrationTestMethods {
         for( int i = 1; i < command.length; ++i ) { 
             req.getCommands().add(command[i]);
         }
+
+        JaxbCommandsResponse resp = implSpecificSendCommandRequest(req, user, password);
         
+        return resp.getResponses();
+    }
+    
+    public JaxbCommandsResponse implSpecificSendCommandRequest(JaxbCommandsRequest req, String user, String password) throws Exception {
+       return implSpecificSendCommandRequest(req, user, password, true);
+    }
+    
+    public JaxbCommandsResponse implSpecificSendCommandRequest(JaxbCommandsRequest req, String user, String password, boolean noop) 
+        throws Exception { 
         assertNotNull("Commands are null!", req.getCommands());
         assertTrue("Commands are empty!", req.getCommands().size() > 0);
     
-        JaxbCommandsResponse cmdsResp = postEntity(appUrl,
+        JaxbCommandsResponse cmdsResp = postEntity(deploymentUrl,
                 "rest/execute", MediaType.APPLICATION_XML,
                 200, user, password,
                 req, JaxbCommandsResponse.class);
         assertNotNull("Null commands response", cmdsResp);
     
-        return cmdsResp.getResponses();
+        return cmdsResp;
     }
 
     private void checkReturnedTask( Task task, long taskId ) {
@@ -394,7 +399,7 @@ public class KieWbRestIntegrationTestMethods {
         Thread.sleep(sleep * 1000);
     }
 
-    public void urlsHumanTaskTest( URL deploymentUrl, String user, String password ) throws Exception {
+    public void urlsHumanTask( URL deploymentUrl, String user, String password ) throws Exception {
         setRestInfo(deploymentUrl, user, password);
         
         // Start process
@@ -485,7 +490,7 @@ public class KieWbRestIntegrationTestMethods {
         processInstance = get("runtime/" + deploymentId + "/process/instance/" + procInstId, 200, JaxbProcessInstanceResponse.class);
     }
 
-    public void urlsHumanTaskGroupAssignmentTest( URL deploymentUrl ) throws Exception {
+    public void urlsHumanTaskGroupAssignment( URL deploymentUrl ) throws Exception {
         setRestInfo(deploymentUrl, user, password);
        
         // DOCS 1
@@ -566,167 +571,6 @@ public class KieWbRestIntegrationTestMethods {
     
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("userId", taskUserId);
-    }
-
-    /**
-     * Test Java Remote API for starting processes and managing tasks
-     * 
-     * @param deploymentUrl
-     * @param user
-     * @param password
-     * @throws Exception
-     */
-    public void remoteApiHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
-        setRestInfo(deploymentUrl, user, password);
-        
-        // Remote API setup
-        // @formatter:off
-        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(deploymentId)
-                .addUrl(deploymentUrl)
-                .addUserName(user)
-                .addPassword(password);
-        // @formatter:on
-        RuntimeEngine engine = builder.build();
-        KieSession ksession = engine.getKieSession();
-        
-        // 1. start process
-        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-        assertNotNull("Null ProcessInstance!", processInstance);
-        long procInstId = processInstance.getId();
-
-        // @formatter:off
-        TaskService nullDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addUrl(deploymentUrl)
-                .addUserName(user)
-                .addDeploymentId(null)
-                .addPassword(password)
-                .build().getTaskService();
-        // @formatter:on
-    
-        // @formatter:off
-        TaskService emptyDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addUrl(deploymentUrl)
-                .addUserName(user)
-                .addDeploymentId("")
-                .addPassword(password)
-                .build().getTaskService();
-        // @formatter:on
-     
-        // 2c. Another way to find the task
-        // (testing TaskQueryWhereCommand based operations. )
-        List<TaskSummary> tasks = nullDepIdTaskService.getTasksAssignedAsPotentialOwnerByProcessId(taskUserId, HUMAN_TASK_PROCESS_ID);
-        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
-        
-        // 2. find task (without deployment id)
-        long sameTaskId;
-        { 
-            List<Long> taskIds = nullDepIdTaskService.getTasksByProcessInstanceId(procInstId);
-            assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
-            sameTaskId = taskIds.get(0);
-        }
-        assertEquals( "Did not find the same task!", taskId, sameTaskId );
-        
-        // 2b. Get the task instance itself
-        Task task = nullDepIdTaskService.getTaskById(taskId);
-        checkReturnedTask(task, taskId);
-        String actualOwnerId = task.getTaskData().getActualOwner().getId();
-
-        TaskSummary taskSum = getTaskSummary(user, password, procInstId, task.getTaskData().getStatus());
-        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
-        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
-
-        // 3. Start the task
-        emptyDepIdTaskService.start(taskId, taskUserId);
-
-        // 4. configure remote api client with deployment id
-        // @formatter:off
-        TaskService depIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addUrl(deploymentUrl)
-                .addUserName(user)
-                .addDeploymentId(deploymentId) // set new deployment id in task
-                .addPassword(password).build().getTaskService();
-        // @formatter:on
-       
-        // 5. complete task with TaskService instance that *has a deployment id*
-        emptyDepIdTaskService.complete(taskId, taskUserId, null);
-       
-        // the second time should fail!
-        try {
-            depIdTaskService.complete(taskId, taskUserId, null);
-            fail("Should not be able to complete task " + taskId + " a second time.");
-        } catch( Throwable t ) {
-            logger.info("The above exception was an expected part of the test.");
-            // do nothing
-        }
-        
-        Map<String, Object> contentMap = nullDepIdTaskService.getTaskContent(taskId);
-        assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
-        
-        org.kie.api.task.model.Content content = nullDepIdTaskService.getContentById(task.getTaskData().getDocumentContentId());
-        if( content != null && content.getContent() != null ) {
-            Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
-            contentMap = (Map<String, Object>) contentMapObj;
-            assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
-        } else  {
-            assertNotNull("No task content found" , content);
-        }
-        
-        List<Status> statuses = new ArrayList<Status>();
-        statuses.add(Status.Reserved);
-        List<TaskSummary> taskSums = nullDepIdTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
-        assertEquals("Expected 2 tasks.", 2, taskSums.size());
-    }
-
-    public void remoteApiHumanTaskGroupIdTest( URL deploymentUrl ) {
-        RemoteRestRuntimeEngineBuilder runtimeEngineBuilder = RemoteRestRuntimeEngineFactory.newBuilder()
-                .addDeploymentId(deploymentId).addUrl(deploymentUrl);
-    
-        RuntimeEngine krisRemoteEngine = runtimeEngineBuilder.addUserName(KRIS_USER).addPassword(KRIS_PASSWORD).build();
-        RuntimeEngine maryRemoteEngine = runtimeEngineBuilder.addUserName(MARY_USER).addPassword(MARY_PASSWORD).build();
-        RuntimeEngine johnRemoteEngine = runtimeEngineBuilder.addUserName(JOHN_USER).addPassword(JOHN_PASSWORD).build();
-    
-        runHumanTaskGroupIdTest(krisRemoteEngine, johnRemoteEngine, maryRemoteEngine);
-    }
-
-    public void remoteApiHumanTaskGroupVarAssignTest( URL deploymentUrl ) {
-        // @formatter:off
-        RuntimeEngine runtimeEngine 
-            = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(deploymentId)
-                .addUserName(MARY_USER)
-                .addPassword(MARY_PASSWORD)
-                .addUrl(deploymentUrl)
-                .build();
-        // @formatter:on
-        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
-    }
-
-    public void remoteApiHumanTaskOwnTypeTest( URL deploymentUrl ) {
-        // @formatter:off
-        RuntimeEngine runtimeEngine 
-            = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(deploymentId)
-                .addUserName(JOHN_USER)
-                .addPassword(JOHN_PASSWORD)
-                .addUrl(deploymentUrl)
-                .addExtraJaxbClasses(MyType.class)
-                .build();
-        // @formatter:on
-    
-        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService());
-    }
-
-    public void remoteApiGroupAssignmentEngineeringTest( URL deploymentUrl ) throws Exception {
-        RuntimeEngine runtimeEngine 
-            = RemoteRestRuntimeEngineFactory.newBuilder()
-            .addDeploymentId(deploymentId)
-            .addUserName(MARY_USER)
-            .addPassword(MARY_PASSWORD)
-            .addUrl(deploymentUrl)
-            .build();
-        
-        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
     }
 
     /**
@@ -1099,7 +943,7 @@ public class KieWbRestIntegrationTestMethods {
         assertEquals("Byte [] from var doesn't match: ", origStr, retrievedStr);
     }
     
-    public void urlsWorkItemTest( URL deploymentUrl, String user, String password ) throws Exception {
+    public void urlsWorkItem( URL deploymentUrl, String user, String password ) throws Exception {
     
         JaxbWorkItemResponse workItemResp = get("runtime/" + deploymentId + "/workitem/200", 200, JaxbWorkItemResponse.class);
     }
@@ -1133,7 +977,7 @@ public class KieWbRestIntegrationTestMethods {
         assertTrue("Process instance should be larger than 0: " + procInstId, procInstId > 0);
     }
 
-    public void urlsGetProcessDefinitionInfo( URL deploymentUrl, String user, String password ) throws Exception {
+    public void urlsGetProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
         setRestInfo(deploymentUrl, user, password);
         
         // Start process
@@ -1178,7 +1022,7 @@ public class KieWbRestIntegrationTestMethods {
         }
     }
 
-    public void urlsProcessQueryOperationsTest( URL deploymentUrl, String user, String password ) throws Exception  { 
+    public void urlsProcessQueryOperations( URL deploymentUrl, String user, String password ) throws Exception  { 
         Map<String, String> queryParams = new HashMap<String, String>(1);
         queryParams.put("params", null);
         
@@ -1210,14 +1054,7 @@ public class KieWbRestIntegrationTestMethods {
         }
     }
 
-    private static long startScriptTaskVarProcess(KieSession ksession, String val) { 
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put( "x", val );
-        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
-        return procInst.getId();
-    }
-
-    public void urlsQueryProcessInstancesNotFilteringTest( URL deploymentUrl, String user, String password ) throws Exception  { 
+    public void urlsQueryProcessInstancesNotFiltering( URL deploymentUrl, String user, String password ) throws Exception  { 
         KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
     
         String prefix = random.nextInt(Integer.MAX_VALUE) + "-";
@@ -1265,114 +1102,7 @@ public class KieWbRestIntegrationTestMethods {
         return pids;
     }
 
-    public void remoteApiSerialization( URL deploymentUrl, String user, String password ) throws Exception {
-        // setup
-        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-        KieSession ksession = engine.getKieSession();
-    
-        // start process
-        ksession.startProcess(HUMAN_TASK_PROCESS_ID);
-    
-        // verify that there are proces instances
-        Collection<ProcessInstance> processInstances = ksession.getProcessInstances();
-        assertNotNull("Null process instance list!", processInstances);
-    }
-
-    public void remoteApiExtraJaxbClasses( URL deploymentUrl, String user, String password ) throws Exception {
-        runRemoteApiExtraJaxbClassesTest(deploymentId, deploymentUrl, user, password);
-    }
-
-    protected void runRemoteApiExtraJaxbClassesTest( String deploymentId, URL deploymentUrl, String user, String password )
-            throws Exception {
-        // Remote API setup
-        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-        // test
-        testExtraJaxbClassSerialization(engine);
-    }
-
-    public void remoteApiRuleTaskProcess( URL deploymentUrl, String user, String password ) {
-        // Remote API setup
-        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-    
-        // runTest
-        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditService());
-    }
-
-    public static void runRemoteApiHumanTaskOwnTypeTest( RuntimeEngine runtimeEngine, AuditService auditLogService ) {
-        MyType myType = new MyType("wacky", 123);
-    
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
-        assertNotNull(pi);
-        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
-    
-        TaskService taskService = runtimeEngine.getTaskService();
-        List<Long> taskIds = taskService.getTasksByProcessInstanceId(pi.getId());
-        assertFalse(taskIds.isEmpty());
-        long taskId = taskIds.get(0);
-    
-        taskService.start(taskId, JOHN_USER);
- 
-        Map<String, Object> contentMap = new HashMap<String, Object>(3);
-        contentMap.put("one",  UUID.randomUUID().toString());
-        contentMap.put("two",  new Integer(random.nextInt(1024)));
-        contentMap.put("thr",  new MyType("thr", 3));
-        
-        // BPMSPL-119 - add content
-        if( runtimeEngine instanceof RemoteRuntimeEngine ) { 
-            RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
-            RemoteApiResponse<Long> resp = remoteTaskService.addOutputContent(taskId, contentMap);
-            assertEquals( "Add Output Content operation: " + resp.getStatusDetails(),
-                    RemoteOperationStatus.SUCCESS, resp.getStatus());
-            assertTrue( "Empty content id", resp.getResult() != null && resp.getResult() > 0 );
-        } else { 
-           ((InternalTaskService) taskService).addOutputContentFromUser(taskId, JOHN_USER, contentMap);
-        }
-
-        Map<String, Object> retrievedMap;
-        if( runtimeEngine instanceof RemoteRuntimeEngine ) { 
-            RemoteTaskService remoteTaskService = ((RemoteRuntimeEngine) runtimeEngine).getRemoteTaskService();
-            RemoteApiResponse<Map<String, Object>> mapResp = remoteTaskService.getOutputContentMap(taskId);
-            assertEquals( "Get Output Content Map operations: " + mapResp.getStatusDetails(), 
-                    RemoteOperationStatus.SUCCESS, mapResp.getStatus());
-            retrievedMap = mapResp.getResult();
-        } else { 
-           retrievedMap = ((InternalTaskService) taskService).getOutputContentMapForUser(taskId, JOHN_USER);
-        }
-        assertNotNull( "Result Map<String, Object> is null!", retrievedMap);
-        assertEquals( "Retrieved Map<String, Object> size", contentMap.size(), retrievedMap.size());
-
-        boolean myTypeRetrieved = false;
-        for( Entry<String, Object> entry : contentMap.entrySet()  ) { 
-            String key = entry.getKey();
-            Object val = entry.getValue();
-            if( val instanceof MyType ) { 
-                MyType origType = (MyType) val;
-                MyType copyType =  (MyType) retrievedMap.get(key);
-                assertNotNull( "Entry: " + key, copyType );
-                assertEquals( "Entry: " + key, origType.getData(), copyType.getData());
-                assertEquals( "Entry: " + key, origType.getText(), copyType.getText());
-                myTypeRetrieved = true;
-            } else { 
-                assertEquals( "Entry: " + key, val, retrievedMap.get(key));
-            }
-        }
-        assertTrue( "Custom user object ('MyType') was not retrieved!", myTypeRetrieved );
-        
-        // the rest of this test..
-        Map<String, Object> data = new HashMap<String, Object>();
-        data.put("outMyObject", myType);
-        taskService.complete(taskId, JOHN_USER, data);
-    
-        Task task = taskService.getTaskById(taskId);
-        assertEquals(Status.Completed, task.getTaskData().getStatus());
-    
-        List<VariableInstanceLog> vill = (List<VariableInstanceLog>) auditLogService.findVariableInstances(pi.getId(), "myObject");
-        assertNotNull(vill);
-        assertFalse("Empty list of variable instance logs", vill.isEmpty());
-        assertEquals(myType.toString(), vill.get(0).getValue());
-    }
-
-    public void remoteApiDeploymentRedeployClassPathTest( URL deploymentUrl, String user, String password ) throws Exception {
+    public void urlsAndRemoteApiDeploymentRedeployClassPath( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
         KModuleDeploymentUnit kDepUnit = new KModuleDeploymentUnit(GROUP_ID, CLASSPATH_ARTIFACT_ID, VERSION);
         String classpathDeploymentId = kDepUnit.getIdentifier();
@@ -1422,36 +1152,246 @@ public class KieWbRestIntegrationTestMethods {
         runRemoteApiClassPathProcessTest(runtimeEngine);
     }
 
-    public void remoteApiFunnyCharacters( URL deploymentUrl, String user, String password ) throws Exception  { 
-        // verify that property is set on client side
-        Field field = JaxbUnknownAdapter.class.getDeclaredField("ENCODE_STRINGS");
-        field.setAccessible(true);
-        Object fieldObj = field.get(null);
-        assertTrue( "ENCODE_STRINGS field is a " + fieldObj.getClass().getName(), fieldObj instanceof Boolean );
-        Boolean encodeStringsBoolean = (Boolean) fieldObj;
-        assertTrue( "ENCODE_STRINGS is '" + encodeStringsBoolean, encodeStringsBoolean );
-        
+    public void remoteApiStartScriptProcess(URL deploymentUrl, String user, String password) {
+        // setup
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
         KieSession ksession = runtimeEngine.getKieSession();
-    
-        String [] vals = { 
-            "a long string containing spaces and other characters +ěš@#$%^*()_{}\\/.,",
-            "Ampersand in the string &.",
-            "\"quoted string\""
-        };
-        long [] procInstIds = new long[vals.length];
-        for( int i = 0; i < vals.length; ++i ) { 
-            procInstIds[i] = startScriptTaskVarProcess(ksession, vals[i]);
-        }
-    
-        for( int i = 0; i < vals.length; ++i ) { 
-            List<? extends VariableInstanceLog> varLogs = runtimeEngine.getAuditService().findVariableInstances(procInstIds[i]);
-            for( VariableInstanceLog log : varLogs ) { 
-               System.out.println( log.getVariableInstanceId() + ":"  + log.getVariableId() + ":["  + log.getValue() + "]" ); 
-            }
+
+        // start process
+        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
+        int procStatus = procInst.getState();
+
+        assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
+    }
+   
+    public void remoteApiExceptionNoDeployment(String user, String password) throws Exception {
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId("non-existing-deployment")
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password)
+                .build();
+
+        // create JMS request
+        KieSession ksession = engine.getKieSession();
+        try {
+            ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+            fail("startProcess should fail!");
+        } catch (RemoteApiException rae) {
+            String errMsg = rae.getMessage();
+            assertTrue("Incorrect error message: " + errMsg, errMsg.contains("No deployments"));
         }
     }
+   
+    public void remoteApiHistoryVariables(URL deploymentUrl) { 
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, JOHN_USER, JOHN_PASSWORD);
+        
+        runRemoteApiHistoryVariablesTest(runtimeEngine);
+    } 
+   
+    /**
+     * Test Java Remote API for starting processes and managing tasks
+     * 
+     * @param deploymentUrl
+     * @param user
+     * @param password
+     * @throws Exception
+     */
+    public void remoteApiHumanTaskProcess( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
+        
+        // Remote API setup
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addPassword(password);
+        // @formatter:on
+        RuntimeEngine engine = builder.build();
+        KieSession ksession = engine.getKieSession();
+        
+        // 1. start process
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+    
+        // @formatter:off
+        TaskService nullDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId(null)
+                .addPassword(password)
+                .build().getTaskService();
+        // @formatter:on
+    
+        // @formatter:off
+        TaskService emptyDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId("")
+                .addPassword(password)
+                .build().getTaskService();
+        // @formatter:on
+    
+        // 2c. Another way to find the task
+        // (testing TaskQueryWhereCommand based operations. )
+        List<TaskSummary> tasks = nullDepIdTaskService.getTasksAssignedAsPotentialOwnerByProcessId(taskUserId, HUMAN_TASK_PROCESS_ID);
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+        
+        // 2. find task (without deployment id)
+        long sameTaskId;
+        { 
+            List<Long> taskIds = nullDepIdTaskService.getTasksByProcessInstanceId(procInstId);
+            assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
+            sameTaskId = taskIds.get(0);
+        }
+        assertEquals( "Did not find the same task!", taskId, sameTaskId );
+        
+        // 2b. Get the task instance itself
+        Task task = nullDepIdTaskService.getTaskById(taskId);
+        checkReturnedTask(task, taskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+    
+        TaskSummary taskSum = getTaskSummary(user, password, procInstId, task.getTaskData().getStatus());
+        assertNotNull( "Empty actual owner user in task summary", taskSum.getActualOwner() );
+        assertEquals( "Incorrect actual owner user in task summary", actualOwnerId, taskSum.getActualOwner().getId() );
+    
+        // 3. Start the task
+        emptyDepIdTaskService.start(taskId, taskUserId);
+    
+        // 4. configure remote api client with deployment id
+        // @formatter:off
+        TaskService depIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
+                .addUserName(user)
+                .addDeploymentId(deploymentId) // set new deployment id in task
+                .addPassword(password).build().getTaskService();
+        // @formatter:on
+    
+        // 5. complete task with TaskService instance that *has a deployment id*
+        emptyDepIdTaskService.complete(taskId, taskUserId, null);
+    
+        // the second time should fail!
+        try {
+            depIdTaskService.complete(taskId, taskUserId, null);
+            fail("Should not be able to complete task " + taskId + " a second time.");
+        } catch( Throwable t ) {
+            logger.info("The above exception was an expected part of the test.");
+            // do nothing
+        }
+        
+        Map<String, Object> contentMap = nullDepIdTaskService.getTaskContent(taskId);
+        assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
+        
+        org.kie.api.task.model.Content content = nullDepIdTaskService.getContentById(task.getTaskData().getDocumentContentId());
+        if( content != null && content.getContent() != null ) {
+            Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
+            contentMap = (Map<String, Object>) contentMapObj;
+            assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
+        } else  {
+            assertNotNull("No task content found" , content);
+        }
+        
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.add(Status.Reserved);
+        List<TaskSummary> taskSums = nullDepIdTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        assertEquals("Expected 2 tasks.", 2, taskSums.size());
+    }
 
+    public void remoteApiHumanTaskGroupId( URL deploymentUrl ) {
+        RemoteRestRuntimeEngineBuilder runtimeEngineBuilder = RemoteRestRuntimeEngineFactory.newBuilder()
+                .addDeploymentId(deploymentId).addUrl(deploymentUrl);
+    
+        RuntimeEngine krisRemoteEngine = runtimeEngineBuilder.addUserName(KRIS_USER).addPassword(KRIS_PASSWORD).build();
+        RuntimeEngine maryRemoteEngine = runtimeEngineBuilder.addUserName(MARY_USER).addPassword(MARY_PASSWORD).build();
+        RuntimeEngine johnRemoteEngine = runtimeEngineBuilder.addUserName(JOHN_USER).addPassword(JOHN_PASSWORD).build();
+    
+        runHumanTaskGroupIdTest(krisRemoteEngine, johnRemoteEngine, maryRemoteEngine);
+    }
+
+    public void remoteApiHumanTaskGroupVarAssign( URL deploymentUrl ) {
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
+                .addUrl(deploymentUrl)
+                .build();
+        // @formatter:on
+        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
+    }
+
+    public void remoteApiHumanTaskOwnType( URL deploymentUrl ) {
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(JOHN_USER)
+                .addPassword(JOHN_PASSWORD)
+                .addUrl(deploymentUrl)
+                .addExtraJaxbClasses(MyType.class)
+                .build();
+        // @formatter:on
+    
+        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService());
+    }
+
+    public void remoteApiGroupAssignmentEngineering( URL deploymentUrl ) throws Exception {
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newRestBuilder()
+            .addDeploymentId(deploymentId)
+            .addUserName(MARY_USER)
+            .addPassword(MARY_PASSWORD)
+            .addUrl(deploymentUrl)
+            .build();
+        
+        runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, runtimeEngine);
+    }
+
+    public void remoteApiProcessInstances( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+
+        runRemoteApiProcessInstances(engine);
+    }
+
+    public void remoteApiExtraJaxbClasses( URL deploymentUrl, String user, String password ) throws Exception {
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        
+        testClassSerialization(engine, this); 
+    }
+
+    public void implSpecificTestParamSerialization(RuntimeEngine engine, Object obj) {
+        long procInstId = testParamSerialization(engine, obj); 
+        
+        Object retrievedObj = get(
+                "runtime/" + deploymentId + "/process/instance/" + procInstId + "/variable/" + PARAM_SERIALIZATION_PARAM_NAME,
+                200, obj.getClass());
+    
+        assertNotNull("Expected filled variable.", retrievedObj);
+        assertEquals("Object", obj, retrievedObj);
+        assertThat(retrievedObj, Is.is(obj));
+ 
+    }
+
+
+    public void remoteApiRuleTaskProcess( URL deploymentUrl, String user, String password ) {
+        // Remote API setup
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+    
+        // runTest
+        runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditService());
+    }
+
+
+    public void remoteApiFunnyCharacters( URL deploymentUrl, String user, String password ) throws Exception  { 
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        
+        runRemoteApiFunnyCharactersTest(runtimeEngine);
+    } 
+    
     protected void runRemoteApiClassPathProcessTest( RuntimeEngine runtimeEngine ) {
         KieSession ksession = runtimeEngine.getKieSession();
     
@@ -1482,95 +1422,30 @@ public class KieWbRestIntegrationTestMethods {
     public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
         setRestInfo(deploymentUrl, user, password);
-        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-        KieSession kieSession = runtimeEngine.getKieSession();
-
-        // start process
-        String businessKey = "taxes";
-        CorrelationKey corrKey = JaxbCorrelationKeyFactory.getInstance().newCorrelationKey(businessKey);
-        ProcessInstance procInst = ((CorrelationAwareProcessRuntime) kieSession).startProcess(HUMAN_TASK_PROCESS_ID, corrKey, null);
-        assertNotNull( "Could not start process instance by correlation key!", procInst );
-        long procInstId = procInst.getId();
-        
-        procInst = ((CorrelationAwareProcessRuntime) kieSession).getProcessInstance(corrKey);
-        assertNotNull( "Could not get process instance by correlation key!", procInst );
-        assertEquals( "Incorrect process instance retrieved", procInstId, procInst.getId());
-        
+     
+        runRemoteApiCorrelationKeyTest(deploymentUrl, user, password, this);
+    } 
+    
+    public RuntimeEngine getCorrelationPropertiesRemoteEngine(URL deploymentUrl, String deploymentId, String user, String password, String... businessKeys) { 
+        // @formatter:off
         RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addUrl(deploymentUrl)
                 .addDeploymentId(deploymentId)
                 // Add correlation key property to builder!
-                .addCorrelationProperties(businessKey)
-                .addUrl(deploymentUrl)
+                .addCorrelationProperties(businessKeys)
                 .addUserName(user)
-                .addPassword(password);
-      
-        runtimeEngine = builder.build();
-
-        runtimeEngine.getKieSession().abortProcessInstance(procInstId);
+                .addPassword(password); 
+        // @formatter:on
+        
+        return builder.build();
     }
-    
-    public void remoteApiHumanTaskCommentTest( URL deploymentUrl, String user, String password ) throws Exception {
+   
+    public void remoteApiHumanTaskComment( URL deploymentUrl, String user, String password ) throws Exception {
         // setup
         setRestInfo(deploymentUrl, user, password);
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
-               
-        // start process
-        ProcessInstance pi = runtimeEngine.getKieSession().startProcess(HUMAN_TASK_OWN_TYPE_ID);
-        assertNotNull(pi);
-        assertEquals(ProcessInstance.STATE_ACTIVE, pi.getState());
-   
-        // get task
-        TaskService taskService = runtimeEngine.getTaskService();
-        List<Long> taskIds = taskService.getTasksByProcessInstanceId(pi.getId());
-        assertFalse(taskIds.isEmpty());
-        long taskId = taskIds.get(0);
-    
-        taskService.start(taskId, JOHN_USER);
-  
-        // test add comment
-        String commentText = UUID.randomUUID().toString();
-        String commentUser = MARY_USER;
-        Long taskCommentId = taskService.addComment(taskId, commentUser, commentText);
-        assertNotNull("Null task comment id!", taskCommentId);
         
-        // test get comment
-        org.kie.api.task.model.Comment comment = taskService.getCommentById(taskCommentId);
-        assertEquals("Comment user", commentUser, comment.getAddedBy().getId());
-        assertEquals("Comment text", commentText, comment.getText());
-        Date commentDate = comment.getAddedAt();
-        GregorianCalendar fiveMinAgoCal = new GregorianCalendar();
-        fiveMinAgoCal.add(Calendar.MINUTE, -5);
-        Date fiveMinAgo = fiveMinAgoCal.getTime();
-        assertTrue( "Comment date: " + sdf.format(commentDate) + " [" + sdf.format(fiveMinAgo) + "]", fiveMinAgo.before(commentDate));
-
-        // test get all comments
-        String anotherCommentText = UUID.randomUUID().toString();
-        String anotherCommentUser = KRIS_USER;
-        Long anotherTaskCommentId = taskService.addComment(taskId, anotherCommentUser, anotherCommentText);
-
-        assertNotNull("Null task comment id!", taskCommentId);
-       
-        List<org.kie.api.task.model.Comment> commentList = taskService.getAllCommentsByTaskId(taskId);
-        for( org.kie.api.task.model.Comment kieComment : commentList ) { 
-           if( kieComment.getId() == anotherTaskCommentId ) { 
-               assertEquals("(Another) Comment user", anotherCommentUser, kieComment.getAddedBy().getId());
-               assertEquals("(Another) Comment text", anotherCommentText, kieComment.getText());
-           } else if( kieComment.getId() == taskCommentId ) { 
-               assertEquals("Comment user", commentUser, kieComment.getAddedBy().getId());
-               assertEquals("Comment text", commentText, kieComment.getText());
-           } else { 
-               fail( "Retrieved unknown comment for task! [task: " + taskId + "/comment: " + kieComment.getId() + "]" );
-           }
-        }
-        int origCommentListSize = commentList.size();
-        
-        // test delete comments
-        taskService.deleteComment(taskId, taskCommentId);
-        commentList = taskService.getAllCommentsByTaskId(taskId);
-        assertEquals( "Delete comment did not succeed", origCommentListSize-1, commentList.size());
-        for( org.kie.api.task.model.Comment kieComment : commentList ) { 
-           assertNotEquals("Deleted comment found", taskCommentId, kieComment.getId());
-        }
+        runRemoteApiHumanTaskCommentTest(runtimeEngine);
     }
 
 }

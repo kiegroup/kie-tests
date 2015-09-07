@@ -23,7 +23,8 @@ public class KieWbWarJbossEapDeploy {
 
         String[][] jarsToReplace = {
                 // kie-remote
-                { "org.kie.remote", "kie-remote-services" }
+                { "org.kie.remote", "kie-remote-services" },
+                { "org.kie.remote", "kie-remote-jaxb" }
         };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 

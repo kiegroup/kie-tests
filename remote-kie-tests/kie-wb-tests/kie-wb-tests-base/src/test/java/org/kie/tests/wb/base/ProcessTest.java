@@ -1,5 +1,6 @@
 package org.kie.tests.wb.base;
 
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.junit.Assert.assertTrue;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
@@ -51,6 +52,7 @@ import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.tests.MyBinaryType;
 import org.kie.tests.MyType;
+import org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbJmsIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.util.TestConstants;
@@ -226,7 +228,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
         KieWbJmsIntegrationTestMethods jmsTests = new KieWbJmsIntegrationTestMethods("blah", false, false);
-        jmsTests.remoteApiGroupAssignmentEngineeringTest(runtimeEngine);
+        jmsTests.remoteApiGroupAssignmentEngineering(runtimeEngine);
     }
     
     @Test
@@ -251,10 +253,7 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
         KModuleDeploymentUnit depUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
-        KieWbRestIntegrationTestMethods testMethods = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(depUnit.getIdentifier())
-                .build();
-        testMethods.runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService() );
+        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService() );
     }
 
     @Test
