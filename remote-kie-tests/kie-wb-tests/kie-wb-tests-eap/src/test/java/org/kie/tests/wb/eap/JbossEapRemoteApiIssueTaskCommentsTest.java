@@ -95,6 +95,6 @@ public class JbossEapRemoteApiIssueTaskCommentsTest {
                 .setTimeoutInSecs(5)
                 .build();
                
-        restTests.remoteApiHumanTaskCommentTest(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        restTests.remoteApiHumanTaskComment(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

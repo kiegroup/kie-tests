@@ -27,9 +27,15 @@ import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.f
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.logger;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiCorrelationKeyTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiFunnyCharactersTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiHumanTaskCommentTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiHumanTaskOwnTypeTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiProcessInstances;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testExtraJaxbClassSerialization;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.testClassSerialization;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.*;
 import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEYSTORE_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.CLIENT_KEY_TRUSTSTORE_LOCATION;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS_ID;
@@ -79,7 +85,6 @@ import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
 import org.kie.api.task.model.TaskSummary;
 import org.kie.remote.client.api.RemoteJmsRuntimeEngineBuilder;
-import org.kie.remote.client.api.RemoteJmsRuntimeEngineFactory;
 import org.kie.remote.client.jaxb.ClientJaxbSerializationProvider;
 import org.kie.remote.client.jaxb.JaxbCommandsRequest;
 import org.kie.remote.client.jaxb.JaxbCommandsResponse;
@@ -98,8 +103,9 @@ import org.kie.services.client.serialization.JaxbSerializationProvider;
 import org.kie.services.client.serialization.jaxb.impl.JaxbCommandResponse;
 import org.kie.services.client.serialization.jaxb.impl.JaxbLongListResponse;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
+import org.kie.tests.MyType;
 
-public class KieWbJmsIntegrationTestMethods {
+public class KieWbJmsIntegrationTestMethods implements IntegrationTestMethods {
 
     private static final String CONNECTION_FACTORY_NAME = "jms/RemoteConnectionFactory";
     private boolean useSsl = false;
@@ -172,8 +178,33 @@ public class KieWbJmsIntegrationTestMethods {
         }
     }
 
-    private JaxbCommandsResponse sendJmsJaxbCommandsRequest(String sendQueueName, JaxbCommandsRequest req, String USER,
-            String PASSWORD) throws Exception {
+    public RuntimeEngine getRemoteRuntimeEngine( URL deploymentUrl, String user, String password ) {
+        // @formatter:off
+        RemoteJmsRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newJmsBuilder()
+                .addDeploymentId(deploymentId)
+                .addRemoteInitialContext(remoteInitialContext)
+                .addUserName(user)
+                .addPassword(password);
+        // @formatter:on
+        return builder.build();
+    }
+   
+    public RuntimeEngine getCorrelationPropertiesRemoteEngine(URL deploymentUrl, String deploymentId, String user, String password, String... businessKeys) { 
+        // @formatter:off
+        RemoteJmsRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newJmsBuilder()
+                .addRemoteInitialContext(remoteInitialContext)
+                .addDeploymentId(deploymentId)
+                // Add correlation key property to builder!
+                .addCorrelationProperties(businessKeys)
+                .addUserName(user)
+                .addPassword(password); 
+        // @formatter:on
+        
+        return builder.build();
+    }
+    
+    public JaxbCommandsResponse implSpecificSendCommandRequest(JaxbCommandsRequest req, String USER,
+            String PASSWORD, boolean useKsessionQueue) throws Exception {
         ConnectionFactory factory;
         if( ! useSsl ) { 
             factory = (ConnectionFactory) remoteInitialContext.lookup(CONNECTION_FACTORY_NAME);
@@ -188,6 +219,12 @@ public class KieWbJmsIntegrationTestMethods {
       
             factory = new HornetQJMSConnectionFactory(false, 
                     new TransportConfiguration(NettyConnectorFactory.class.getName(), connParams));
+        }
+        String sendQueueName;
+        if( useKsessionQueue ) { 
+            sendQueueName = KSESSION_QUEUE_NAME;
+        } else { 
+            sendQueueName = TASK_QUEUE_NAME;
         }
         Queue jbpmQueue = (Queue) remoteInitialContext.lookup(sendQueueName);
         Queue responseQueue = (Queue) remoteInitialContext.lookup(RESPONSE_QUEUE_NAME);
@@ -241,28 +278,20 @@ public class KieWbJmsIntegrationTestMethods {
 
     // Tests ----------------------------------------------------------------------------------------------------------------------
 
-    public void sendEmptyRequest(String user, String password) throws Exception {
+    public void queueSendEmptyRequest(String user, String password) throws Exception {
         JaxbCommandsRequest req = new JaxbCommandsRequest();
         req.setDeploymentId(deploymentId);
-        sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+        implSpecificSendCommandRequest(req, user, password, true);
     }
     
-    public void commandsSimpleStartProcess(String user, String password) throws Exception {
-        // send cmd: start process
-        StartProcessCommand cmd = new StartProcessCommand();
-        cmd.setProcessId(SCRIPT_TASK_PROCESS_ID);
-        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-        sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
-    }
-    
-    public void commandsStartProcess(String user, String password) throws Exception {
+    public void queueCommandsStartProcess(String user, String password) throws Exception {
         // send cmd: start process
         JaxbCommandsResponse response;
         {
             StartProcessCommand cmd = new StartProcessCommand();
             cmd.setProcessId(HUMAN_TASK_PROCESS_ID);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, true);
         }
 
         // check response
@@ -280,7 +309,7 @@ public class KieWbJmsIntegrationTestMethods {
             GetTasksByProcessInstanceIdCommand cmd = new GetTasksByProcessInstanceIdCommand();
             cmd.setProcessInstanceId(procInstId);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -302,7 +331,7 @@ public class KieWbJmsIntegrationTestMethods {
             cmd2.setTaskId(taskId);
             cmd2.setUserId(SALA_USER);
             req.getCommands().add(cmd2);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -320,7 +349,7 @@ public class KieWbJmsIntegrationTestMethods {
             GetProcessInstanceCommand cmd3 = new GetProcessInstanceCommand();
             cmd3.setProcessInstanceId(procInstId);
             req.getCommands().add(cmd3);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         assertNotNull("response was null.", response);
@@ -404,7 +433,36 @@ public class KieWbJmsIntegrationTestMethods {
         assertEquals("Expected 2 tasks.", 2, taskIds.size());
     }
 
-    public void remoteApiException(String user, String password) throws Exception {
+    public void remoteApiHumanTaskGroupVarAssign() {
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newJmsBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
+                .addRemoteInitialContext(remoteInitialContext)
+                .build();
+        // @formatter:on
+        
+        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
+    }
+
+    public void remoteApiHumanTaskOwnType() {
+        // @formatter:off
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newJmsBuilder()
+                .addDeploymentId(deploymentId)
+                .addUserName(JOHN_USER)
+                .addPassword(JOHN_PASSWORD)
+                .addRemoteInitialContext(remoteInitialContext)
+                .addExtraJaxbClasses(MyType.class)
+                .build();
+        // @formatter:on
+    
+        runRemoteApiHumanTaskOwnTypeTest(runtimeEngine, runtimeEngine.getAuditService());
+    } 
+    
+    public void remoteApiExceptionNoDeployment(String user, String password) throws Exception {
         RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId("non-existing-deployment")
                 .addRemoteInitialContext(remoteInitialContext)
@@ -423,35 +481,11 @@ public class KieWbJmsIntegrationTestMethods {
         }
     }
 
-    public void remoteApiNoProcessInstanceFound(String user, String password) throws Exception {
-        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
-                .addDeploymentId(deploymentId)
-                .addRemoteInitialContext(remoteInitialContext)
-                .addUserName(user)
-                .addPassword(password)
-                .build();
-
-        // create JMS request
-        KieSession ksession = engine.getKieSession();
-        ProcessInstance processInstance = ksession.startProcess(SCRIPT_TASK_PROCESS_ID);
-        assertNotNull( "Null process instance!", processInstance);
-        
-        logger.debug("Started process instance: " + processInstance + " "
-                + (processInstance == null ? "" : processInstance.getId()));
-
-        GetProcessInstanceCommand cmd = new GetProcessInstanceCommand();
-        cmd.setProcessInstanceId(processInstance.getId());
-        JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-        JaxbCommandsResponse response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
-        assertNotNull("Response should not be null.", response);
-        assertEquals("Size of response list", response.getResponses().size(), 0);
-    }
-
-    public void remoteApiAndCommandsCompleteSimpleHumanTask(String user, String password) throws Exception {
+    public void queueAndRemoteApiCompleteSimpleHumanTask(String user, String password) throws Exception {
         // Via the remote api
 
         // setup
-        RuntimeEngine engine = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
@@ -491,7 +525,7 @@ public class KieWbJmsIntegrationTestMethods {
             StartProcessCommand cmd = new StartProcessCommand();
             cmd.setProcessId(SINGLE_HUMAN_TASK_PROCESS_ID);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(KSESSION_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, true);
         }
 
         // check response
@@ -509,7 +543,7 @@ public class KieWbJmsIntegrationTestMethods {
             GetTasksByProcessInstanceIdCommand cmd = new GetTasksByProcessInstanceIdCommand();
             cmd.setProcessInstanceId(procInstId);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -526,7 +560,7 @@ public class KieWbJmsIntegrationTestMethods {
             GetTaskCommand cmd = new GetTaskCommand();
             cmd.setTaskId(taskId);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -566,7 +600,7 @@ public class KieWbJmsIntegrationTestMethods {
             cmd2.setTaskId(taskId);
             cmd2.setUserId(userId);
             req.getCommands().add(cmd2);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -577,7 +611,7 @@ public class KieWbJmsIntegrationTestMethods {
             GetProcessInstanceCommand cmd = new GetProcessInstanceCommand();
             cmd.setProcessInstanceId(procInstId);
             JaxbCommandsRequest req = new JaxbCommandsRequest(deploymentId, cmd);
-            response = sendJmsJaxbCommandsRequest(TASK_QUEUE_NAME, req, user, password);
+            response = implSpecificSendCommandRequest(req, user, password, false);
         }
 
         // check response
@@ -586,16 +620,20 @@ public class KieWbJmsIntegrationTestMethods {
 
     public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
         // Remote API setup
-        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
+        RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addRemoteInitialContext(remoteInitialContext)
                 .addUserName(user)
                 .addPassword(password)
                 .build();
 
-        testExtraJaxbClassSerialization(runtimeEngine);
+        testClassSerialization(engine, this);
     }
-
+  
+    public void implSpecificTestParamSerialization(RuntimeEngine engine, Object obj) {
+        testParamSerialization(engine, obj); 
+    }
+    
     public void remoteApiRuleTaskProcess(String user, String password) {
         // setup
         RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
@@ -608,7 +646,7 @@ public class KieWbJmsIntegrationTestMethods {
         runRuleTaskProcess(runtimeEngine.getKieSession(), runtimeEngine.getAuditService());
     }
 
-    public void remoteApiInitiatorIdentityTest(String user, String password) {
+    public void remoteApiInitiatorIdentity(String user, String password) {
         // setup
         RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
@@ -639,15 +677,14 @@ public class KieWbJmsIntegrationTestMethods {
 
     public void remoteApiStartScriptProcess(String user, String password) {
         // setup
-        RemoteJmsRuntimeEngineFactory remoteSessionFactory 
-            = RemoteJmsRuntimeEngineFactory.newBuilder()
+        RuntimeEngine runtimeEngine 
+            = RemoteRuntimeEngineFactory.newJmsBuilder()
             .addDeploymentId(deploymentId)
             .addRemoteInitialContext(remoteInitialContext)
             .addUserName(user)
             .addPassword(password)
-            .buildFactory();
+            .build();
 
-        RuntimeEngine runtimeEngine = remoteSessionFactory.newRuntimeEngine();
         KieSession ksession = runtimeEngine.getKieSession();
 
         // start process
@@ -657,9 +694,9 @@ public class KieWbJmsIntegrationTestMethods {
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
     }
 
-    public void remoteApiHumanTaskGroupIdTest(URL deploymentUrl) {
+    public void remoteApiHumanTaskGroupId(URL deploymentUrl) {
         RemoteJmsRuntimeEngineBuilder jreBuilder 
-            = RemoteJmsRuntimeEngineFactory.newBuilder();
+            = RemoteRuntimeEngineFactory.newJmsBuilder();
 
             jreBuilder
                 .addDeploymentId(deploymentId)
@@ -699,7 +736,7 @@ public class KieWbJmsIntegrationTestMethods {
         runHumanTaskGroupIdTest(krisRuntimeEngine, johnRuntimeEngine, maryRuntimeEngine);
     }
 
-    public void remoteApiGroupAssignmentEngineeringTest(RuntimeEngine runtimeEngine) throws Exception {
+    public void remoteApiGroupAssignmentEngineering(RuntimeEngine runtimeEngine) throws Exception {
         KieSession ksession = runtimeEngine.getKieSession();
         TaskService taskService = runtimeEngine.getTaskService();
 
@@ -759,8 +796,8 @@ public class KieWbJmsIntegrationTestMethods {
         return result;
     }
     
-    public void remoteApiHistoryVariablesTest(URL deploymentUrl) { 
-        RemoteJmsRuntimeEngineBuilder jreBuilder = RemoteJmsRuntimeEngineFactory.newBuilder()
+    public void remoteApiHistoryVariables(URL deploymentUrl) { 
+        RemoteJmsRuntimeEngineBuilder jreBuilder = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
                 .addJbossServerHostName(deploymentUrl.getHost())
                 .useSsl(false)
@@ -768,20 +805,13 @@ public class KieWbJmsIntegrationTestMethods {
                 .addPassword(JOHN_PASSWORD);
         
         RuntimeEngine runtimeEngine = jreBuilder.build();
-      
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("myobject", 10l);
-        runtimeEngine.getKieSession().startProcess(OBJECT_VARIABLE_PROCESS_ID, params);
         
-        List<VariableInstanceLog> viLogs = (List<VariableInstanceLog>) runtimeEngine.getAuditService().findVariableInstancesByName("myobject", false);
-        assertNotNull( "Null variable instance log list", viLogs);
-        logger.info("vi logs: " + viLogs.size());
-        assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
-    }
-
-    public void remoteApiGroupAssignmentEngineeringTest(URL deploymentUrl) throws Exception {
+        runRemoteApiHistoryVariablesTest(runtimeEngine);
+    } 
+        
+    public void remoteApiGroupAssignmentEngineering(URL deploymentUrl) throws Exception {
         RuntimeEngine runtimeEngine 
-            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            = RemoteRuntimeEngineFactory.newJmsBuilder()
             .addJbossServerHostName(deploymentUrl.getHost())
             .addDeploymentId(KJAR_DEPLOYMENT_ID)
             .useSsl(true)
@@ -795,7 +825,7 @@ public class KieWbJmsIntegrationTestMethods {
             .build();
         
         RuntimeEngine johnRuntimeEngine 
-            = RemoteJmsRuntimeEngineFactory.newBuilder()
+            = RemoteRuntimeEngineFactory.newJmsBuilder()
             .addJbossServerHostName(deploymentUrl.getHost())
             .addDeploymentId(KJAR_DEPLOYMENT_ID)
             .useSsl(true)
@@ -811,16 +841,27 @@ public class KieWbJmsIntegrationTestMethods {
         runRemoteApiGroupAssignmentEngineeringTest(runtimeEngine, johnRuntimeEngine);
     }
     
-    public void remoteApiHumanTaskGroupVarAssignTest( URL deploymentUrl ) {
-        // @formatter:off
-        RuntimeEngine runtimeEngine 
-            = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(deploymentId)
-                .addUserName(MARY_USER)
-                .addPassword(MARY_PASSWORD)
-                .addUrl(deploymentUrl)
-                .build();
-        // @formatter:on
-        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
+    public void remoteApiFunnyCharacters( URL deploymentUrl, String user, String password ) throws Exception  { 
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        
+        runRemoteApiFunnyCharactersTest(runtimeEngine);
+    } 
+    
+    public void remoteApiCorrelationKeyOperations( URL deploymentUrl, String user, String password ) throws Exception {
+        runRemoteApiCorrelationKeyTest(deploymentUrl, user, password, this);
+    } 
+    
+    public void remoteApiProcessInstances( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        RuntimeEngine engine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+
+        runRemoteApiProcessInstances(engine);
+    }
+    
+    public void remoteApiHumanTaskComment( URL deploymentUrl, String user, String password ) throws Exception {
+        // setup
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
+        
+        runRemoteApiHumanTaskCommentTest(runtimeEngine);
     }
 }
