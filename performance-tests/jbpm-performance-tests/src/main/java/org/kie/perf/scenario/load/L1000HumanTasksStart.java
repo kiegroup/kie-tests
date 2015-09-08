@@ -40,13 +40,13 @@ public class L1000HumanTasksStart implements IPerfTest {
         jc.createRuntimeManager();
 
         taskService = jc.getRuntimeEngine().getTaskService();
-
-        taskIds = PrepareEngine.createNewTasks(false, 1000, taskService);
     }
 
     @Override
     public void initMetrics() {
         taskId = 0;
+        taskIds = PrepareEngine.createNewTasks(false, 1000, taskService);
+        
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
         taskStarted = metrics.meter(MetricRegistry.name(L1000HumanTasksStart.class, "scenario.task.started"));
     }

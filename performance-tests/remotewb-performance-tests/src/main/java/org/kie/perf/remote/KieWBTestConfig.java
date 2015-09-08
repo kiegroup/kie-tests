@@ -2,11 +2,14 @@ package org.kie.perf.remote;
 
 import java.util.Properties;
 
+import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.perf.TestConfig;
 
 public class KieWBTestConfig extends TestConfig {
 
     public static final String DEPLOYMENT_ID = "org.kie.perf:workbench-assets:1.0.0-SNAPSHOT";
+
+    protected String version = ProcessInstance.class.getPackage().getImplementationVersion();
 
     protected String username;
 
@@ -104,6 +107,9 @@ public class KieWBTestConfig extends TestConfig {
 
         keystorePassword = System.getProperty("workbench.jms.ssl.keystorePassword");
         properties.put("workbench.jms.ssl.keystorePassword", keystorePassword);
+        
+        properties.put("suite.version", version);
+        addTag(version);
 
         return properties;
     }

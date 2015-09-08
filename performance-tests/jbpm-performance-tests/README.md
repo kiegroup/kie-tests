@@ -15,6 +15,7 @@ All configuration goes into `pom.xml`
 * Select suite and scenario
  * Available suites = `LoadSuite, ConcurrentLoadSuite`
  * To run the whole suite, comment scenario property to be null and make sure that `startScriptLocation` is set correctly.
+ * Be aware that `ConcurrentLoadSuite` requires warm up when it is run with more than 1 thread and Runtime Manager Strategy set to PerProcessInstance or PerRequest
 * Select run type of the test suite
  * Available run types - `Duration, Iteration`
  * If Duration run type is chose, every scenario will run given given time according to time set into `duration` property (measured in seconds).
