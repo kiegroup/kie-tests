@@ -21,6 +21,8 @@ public class KieWBTestConfig extends TestConfig {
     protected String name;
 
     protected String remoteAPI;
+    
+    protected String runtimeManagerStrategy;
 
     protected boolean sslEnabled;
 
@@ -77,6 +79,10 @@ public class KieWBTestConfig extends TestConfig {
         remoteAPI = System.getProperty("remoteAPI");
         properties.put("remoteAPI", remoteAPI);
         addTag(remoteAPI);
+        
+        runtimeManagerStrategy = System.getProperty("jbpm.runtimeManagerStrategy");
+        properties.put("jbpm.runtimeManagerStrategy", runtimeManagerStrategy);
+        addTag(runtimeManagerStrategy);
 
         kieSessionQueue = System.getProperty("workbench.jms.queue.kieSession");
         properties.put("workbench.jms.queue.kieSession", kieSessionQueue);
@@ -140,6 +146,14 @@ public class KieWBTestConfig extends TestConfig {
 
     public void setRemoteAPI(String remoteAPI) {
         this.remoteAPI = remoteAPI;
+    }
+    
+    public String getRuntimeManagerStrategy() {
+        return runtimeManagerStrategy;
+    }
+    
+    public void setRuntimeManagerStrategy(String runtimeManagerStrategy) {
+        this.runtimeManagerStrategy = runtimeManagerStrategy;
     }
 
     public boolean isSslEnabled() {
