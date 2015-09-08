@@ -2,9 +2,12 @@ package org.kie.perf.jbpm;
 
 import java.util.Properties;
 
+import org.kie.api.runtime.process.ProcessInstance;
 import org.kie.perf.TestConfig;
 
 public class JBPMTestConfig extends TestConfig {
+    
+    protected String version = ProcessInstance.class.getPackage().getImplementationVersion();
 
     protected String runtimeManagerStrategy;
 
@@ -56,6 +59,9 @@ public class JBPMTestConfig extends TestConfig {
 
         humanTaskEager = Boolean.valueOf(System.getProperty("jbpm.ht.eager"));
         properties.put("jbpm.ht.eager", humanTaskEager);
+        
+        properties.put("suite.version", version);
+        addTag(version);
 
         return properties;
     }

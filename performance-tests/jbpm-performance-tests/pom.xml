@@ -25,16 +25,17 @@
     <startScriptLocation>./run.sh</startScriptLocation>
 
     <!-- Duration (in seconds), Iteration -->
-    <runType>Duration</runType>
+    <runType>Iteration</runType>
     <duration>120</duration>
     <iterations>1</iterations>
 
     <warmUp>false</warmUp>
-    <warmUpCount>3</warmUpCount>
+    <warmUpCount>1</warmUpCount>
     <auditLogging>true</auditLogging>
 
-    <!-- Properties applicable to concurrent testing -->
-    <threads>5</threads>
+    <!-- Properties applicable for concurrent testing, when more than 1, enable 
+      warmUp, see README for more details -->
+    <threads>4</threads>
 
     <!-- Reporting - Console, CSVSingle, PerfRepo, CSV, (periodicity in seconds) -->
 
@@ -54,7 +55,7 @@
     <!-- >>>>>>>>>>>>>>>> JBPM Test Configuration <<<<<<<<<<<<<<<<<<<< -->
 
     <!-- Strategy - Singleton, PerProcessInstance, PerRequest -->
-    <jbpm.runtimeManagerStrategy>Singleton</jbpm.runtimeManagerStrategy>
+    <jbpm.runtimeManagerStrategy>PerProcessInstance</jbpm.runtimeManagerStrategy>
     <jbpm.persistence>true</jbpm.persistence>
     <jbpm.concurrentUsersCount>2</jbpm.concurrentUsersCount>
 
@@ -214,20 +215,20 @@
             <argument>-Dperiodicity=${periodicity}</argument>
             <argument>-DreportDataLocation=${reportDataLocation}</argument>
             <argument>-Dmeasure=${measure}</argument>
-            
+
             <argument>-DperfRepo.host=${perfRepo.host}</argument>
             <argument>-DperfRepo.urlPath=${perfRepo.urlPath}</argument>
             <argument>-DperfRepo.username=${perfRepo.username}</argument>
             <argument>-DperfRepo.password=${perfRepo.password}</argument>
-            
+
             <argument>-DdatabaseName=${maven.jdbc.db.name}</argument>
-            
+
             <argument>-Djbpm.runtimeManagerStrategy=${jbpm.runtimeManagerStrategy}</argument>
             <argument>-Djbpm.persistence=${jbpm.persistence}</argument>
             <argument>-Djbpm.concurrentUsersCount=${jbpm.concurrentUsersCount}</argument>
             <argument>-Djbpm.locking=${jbpm.locking}</argument>
             <argument>-Djbpm.ht.eager=${jbpm.ht.eager}</argument>
-            
+
             <argument>-classpath</argument>
             <classpath />
             <argument>org.kie.perf.Executor</argument>

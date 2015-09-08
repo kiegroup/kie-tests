@@ -16,17 +16,15 @@ public class PrepareEngine {
         str += "peopleAssignments = (with ( new PeopleAssignments() ) { potentialOwners = [new User('" + UserStorage.PerfUser.getUserId()
                 + "')], businessAdministrators = [ new User('Administrator') ], }),";
         str += "names = [ new I18NText( 'en-UK', 'perf-sample-task')] })";
-        int tasksToBePrepared = count;
-        int totalTasks = tasksToBePrepared;
         List<Long> taskIds = new ArrayList<Long>();
-        while (tasksToBePrepared > 0) {
+        while (count > 0) {
             Task task = TaskFactory.evalTask(new StringReader(str));
-            taskIds.add(task.getId());
-            taskService.addTask(task, null);
+            long taskId = taskService.addTask(task, null);
+            taskIds.add(taskId);
             if (start) {
-                taskService.start(totalTasks - tasksToBePrepared + 1, UserStorage.PerfUser.getUserId());
+                taskService.start(taskId, UserStorage.PerfUser.getUserId());
             }
-            tasksToBePrepared--;
+            count--;
         }
         return taskIds;
     }
