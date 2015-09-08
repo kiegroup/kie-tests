@@ -14,6 +14,11 @@
   <artifactId>workbench-assets</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <name>workbench-assets</name>
+  
+  <properties>
+    <jbpm.runtimeManagerStrategy>PER_PROCESS_INSTANCE</jbpm.runtimeManagerStrategy>
+  </properties>
+  
   <build>
     <plugins>
       <plugin>
@@ -68,7 +73,7 @@
                 <argument>POST</argument>
                 <argument>-H</argument>
                 <argument>Authorization: Basic cGVyZlVzZXI6cGVyZlVzZXIxMjM0Ow==</argument>
-                <argument>http://localhost:8080/business-central/rest/deployment/org.kie.perf:workbench-assets:1.0.0-SNAPSHOT/deploy?strategy=SINGLETON</argument>
+                <argument>http://localhost:8080/business-central/rest/deployment/org.kie.perf:workbench-assets:1.0.0-SNAPSHOT/deploy?strategy=${jbpm.runtimeManagerStrategy}</argument>
               </arguments>
             </configuration>
           </execution>

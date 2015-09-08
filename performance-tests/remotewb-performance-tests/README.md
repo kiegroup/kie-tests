@@ -14,7 +14,8 @@ The tests should be executed via `run.sh` bash script since this script is by de
 2. Set system property JBOSS_HOME `export JBOSS_HOME=<EAP6 location>`
 3. Execute `mvn clean install` in remotewb-performance-tests to add application users
 3. Start the application server with deployed workbench
-4. Execute `mvn clean install deploy -s settings.xml` in workbench-assets module to build and deploy the kjar containing business processes and business rules for performance testing
+4. Configure workbench-assets module in pom.xml (e.g. to set the runtimeManagerStrategy)
+5. Execute `mvn clean install deploy -s settings.xml` in workbench-assets module to build and deploy the kjar containing business processes and business rules for performance testing
 
 ## KIE-Performance-Kit Setup
 
