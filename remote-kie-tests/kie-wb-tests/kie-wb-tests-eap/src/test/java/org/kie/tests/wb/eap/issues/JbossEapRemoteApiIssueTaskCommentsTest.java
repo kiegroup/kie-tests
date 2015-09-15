@@ -33,6 +33,8 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,9 +59,14 @@ public class JbossEapRemoteApiIssueTaskCommentsTest {
     
     @ArquillianResource
     URL deploymentUrl;
-   
+  
     @Rule
-    public MavenBuildIgnoreRule mavenBuildRule = new MavenBuildIgnoreRule();
+    public MavenBuildIgnoreRule rule = new MavenBuildIgnoreRule();
+    
+    @BeforeClass 
+    public static void ignoreIfMavenBuild() { 
+        Assume.assumeFalse(MavenBuildIgnoreRule.testIsRunByMavenBuild());
+    }
     
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {

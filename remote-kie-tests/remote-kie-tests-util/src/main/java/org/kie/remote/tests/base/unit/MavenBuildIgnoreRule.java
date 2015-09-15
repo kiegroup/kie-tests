@@ -39,22 +39,28 @@ public class MavenBuildIgnoreRule implements MethodRule {
     public Statement apply( Statement base, FrameworkMethod method, Object target ) {
         Statement result = base;
         if( hasConditionalIgnoreAnnotation(method) ) {
-            String message = "Ignored because run in Maven build";
-        
-            StackTraceElement [] ste = Thread.currentThread().getStackTrace();
-            for( int i = 0; i < 10; ++i ) { 
-               if( ste[i].getClassName().contains("org.apache.maven") )  { 
-                  return new IgnoreStatement(message);
-               }
-            }
-            Properties props = System.getProperties();
-            for( Object propKey : props.keySet() ) { 
-               if( propKey.toString().startsWith("surefire") )  { 
-                  return new IgnoreStatement(message);
-               }
+            if( testIsRunByMavenBuild() ) { 
+                return new IgnoreStatement("Ignored because run in Maven build");
             }
         }
         return result;
+    }
+
+    public static boolean testIsRunByMavenBuild() {
+        StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+        for( int i = 0; i < 10; ++i ) {
+            if( ste[i].getClassName().contains("org.apache.maven") ) {
+                return true;
+            }
+        }
+        Properties props = System.getProperties();
+        for( Object propKey : props.keySet() ) {
+            if( propKey.toString().startsWith("surefire") ) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private boolean hasConditionalIgnoreAnnotation( FrameworkMethod method ) {

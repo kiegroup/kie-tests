@@ -364,7 +364,7 @@
                       <overWrite>false</overWrite>
                     </artifactItem>
                   </artifactItems>
-                  <outputDirectory>${project.build.directory}/deployments</outputDirectory>
+                  <outputDirectory>${project.build.directory}/wars</outputDirectory>
                 </configuration>
               </execution>
             </executions>
