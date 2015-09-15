@@ -8,7 +8,7 @@ import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 
 public interface IntegrationTestMethods {
 
-    void implSpecificTestParamSerialization(RuntimeEngine engine, Object obj);
+    void implSpecificTestParamSerialization(URL deploymentUrl, String user, String password, RuntimeEngine engine, Object obj);
     
     JaxbCommandsResponse implSpecificSendCommandRequest(JaxbCommandsRequest req, String user, String password, boolean ksession) throws Exception;
     

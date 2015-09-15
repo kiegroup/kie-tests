@@ -618,7 +618,7 @@ public class KieWbJmsIntegrationTestMethods implements IntegrationTestMethods {
         assertEquals("Process instance did not complete..", 0, response.getResponses().size());
     }
 
-    public void remoteApiExtraJaxbClasses(String user, String password) throws Exception {
+    public void remoteApiExtraJaxbClasses(URL deploymentUrl, String user, String password) throws Exception {
         // Remote API setup
         RuntimeEngine engine = RemoteRuntimeEngineFactory.newJmsBuilder()
                 .addDeploymentId(deploymentId)
@@ -627,10 +627,11 @@ public class KieWbJmsIntegrationTestMethods implements IntegrationTestMethods {
                 .addPassword(password)
                 .build();
 
-        testClassSerialization(engine, this);
+        testClassSerialization(deploymentUrl, engine, user, password, this);
     }
-  
-    public void implSpecificTestParamSerialization(RuntimeEngine engine, Object obj) {
+ 
+    @Override
+    public void implSpecificTestParamSerialization(URL deploymentUrl, String user, String password, RuntimeEngine engine, Object obj) {
         testParamSerialization(engine, obj); 
     }
     

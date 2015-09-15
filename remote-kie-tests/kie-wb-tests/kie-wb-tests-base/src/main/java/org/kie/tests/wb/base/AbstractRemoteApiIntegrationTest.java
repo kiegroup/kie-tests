@@ -3,8 +3,6 @@ package org.kie.tests.wb.base;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.util.TestConstants.SALA_PASSWORD;
-import static org.kie.tests.wb.base.util.TestConstants.SALA_USER;
 
 import java.net.URL;
 
@@ -316,14 +314,6 @@ public abstract class AbstractRemoteApiIntegrationTest {
 
     @Test
     @InSequence(REST_SUCCEEDING)
-    public void testRestUrlsWorkItem() throws Exception {
-        Assume.assumeTrue(doRestTests());
-        printTestName();
-        restTests.urlsWorkItem(deploymentUrl, MARY_USER, MARY_PASSWORD);
-    }
-
-    @Test
-    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsStartScriptProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -425,7 +415,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public void testJmsRemoteApiExtraJaxbClasses() throws Exception {
         Assume.assumeTrue(jmsQueuesAvailable());
         printTestName();
-        jmsTests.remoteApiExtraJaxbClasses(MARY_USER, MARY_PASSWORD);
+        jmsTests.remoteApiExtraJaxbClasses(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
     
     @Test
