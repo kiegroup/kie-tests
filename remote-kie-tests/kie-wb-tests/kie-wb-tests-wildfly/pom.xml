@@ -244,7 +244,7 @@
         </configuration>
       </plugin>
 
-      <!-- testing with jboss AS 7 -->
+      <!-- testing with wildfly -->
       <!-- 1. install server in the build/target dir -->
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -266,6 +266,25 @@
                   <outputDirectory>${project.build.directory}</outputDirectory>
                 </artifactItem>
               </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>check-kie-wb-war</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.kie</groupId>
+                  <artifactId>kie-wb-distribution-wars</artifactId>
+                  <classifier>wildfly8</classifier>
+                  <type>war</type>
+                  <overWrite>false</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/wars</outputDirectory>
             </configuration>
           </execution>
         </executions>

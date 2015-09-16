@@ -408,6 +408,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
         String orgUnit = UUID.randomUUID().toString();
+        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
         int sleep = 5;
@@ -429,6 +430,16 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                  formParams,
                  JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
+
+        String getProcInsturl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/";
+
+        processInstance = RestUtil.get(deploymentUrl,
+                                       getProcInsturl, contentType,
+                                       200, user, password,
+                                       JaxbProcessInstanceResponse.class);
+
+        assertNotNull( "Null process instance using GET operation", processInstance );
+        assertEquals( "Process instance id", procInstId, processInstance.getId() );
 
         // query tasks for associated task Id
         Map<String, String> queryparams = new HashMap<String, String>();
@@ -580,6 +591,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         long processInstanceId = processInstance.getId();
         GetTasksByProcessInstanceIdCommand cmd = new GetTasksByProcessInstanceIdCommand();
         cmd.setProcessInstanceId(processInstanceId);
+        cmd.setUserId(user);
         JaxbCommandResponse<?> response = executeCommand(deploymentUrl, user, password, deploymentId, cmd);
 
         long taskId = ((JaxbLongListResponse) response).getResult().get(0);
@@ -618,9 +630,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
             cmd.setProcessInstanceId(procInstId);
             req = new JaxbCommandsRequest(deploymentId, cmd);
         }
-        cmdResponse = RestUtil.postEntity(deploymentUrl, "rest/execute", contentType,
-                200, user, password,
-                req, JaxbCommandsResponse.class);
+        cmdResponse = implSpecificSendCommandRequest(req, user, password);
         List<?> list = (List<?>) cmdResponse.getResponses().get(0).getResult();
         long taskId = (Long) list.get(0);
 
@@ -1008,12 +1018,13 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         String id = procDef.getId();
         assertFalse("Process def " + id + ": null deployment id", procDef.getDeploymentId() == null
                 || procDef.getDeploymentId().isEmpty());
-        assertFalse("Process def " + id + ": null name", procDef.getName() == null || procDef.getName().isEmpty());
+        assertFalse("Process def " + id + ": null name", procDef.getName() == null );
         assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty());
-        assertFalse("Process def " + id + ": null version", procDef.getVersion() == null || procDef.getVersion().isEmpty());
+        assertFalse("Process def " + id + ": null version", procDef.getVersion() != null );
     }
 
     public void urlsDeploymentProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
+        setRestInfo(deploymentUrl, user, password);
         JaxbProcessDefinitionList jaxbProcDefList = get("/deployment/processes", 200, JaxbProcessDefinitionList.class);
 
         assertTrue("Null response!", jaxbProcDefList != null);
@@ -1037,7 +1048,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         Map<String, String> queryParams = new HashMap<String, String>(1);
         queryParams.put("params", null);
 
-        RestUtil.getQuery(deploymentUrl, "/query/runtime/task", contentType, 400, user, password, queryParams);
+        RestUtil.getQuery(deploymentUrl, "query/runtime/task", contentType, 400, user, password, queryParams);
 
         KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
 
@@ -1175,7 +1186,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         assertEquals("Incorrect process status: " + procStatus, ProcessInstance.STATE_COMPLETED, procStatus);
     }
 
-    public void remoteApiExceptionNoDeployment(String user, String password) throws Exception {
+    public void remoteApiExceptionNoDeployment(URL deploymentUrl, String user, String password) throws Exception {
         RuntimeEngine engine = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addDeploymentId("non-existing-deployment")
                 .addUrl(deploymentUrl)

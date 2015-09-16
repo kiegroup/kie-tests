@@ -5,7 +5,7 @@
 
   <engine>
     <property name="maxTestClassesBeforeRestart">1</property>
-    <property name="deploymentExportPath">target/deployments</property>
+    <property name="deploymentExportPath">target/wars</property>
   </engine>
 
   <container qualifier="jboss" default="true">
@@ -14,7 +14,7 @@
       <property name="allowConnectingToRunningServer">false</property>
       <property name="serverConfig">${jboss.server.config.file.name:standalone-full.xml}</property>
       <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m</property>
-      <!-- arquillian
+      <!-- byteman
       <property name="javaVmArguments">-Xms512m -Xmx1024m -XX:MaxPermSize=512m
       -javaagent:target/byteman.jar=script:src/test/resources/byteman/PersistenceLogging.btm,boot:target/byteman.jar,boot:target/${jboss.server.name}/jboss-modules.jar 
       -Dorg.jboss.byteman.transform.all 

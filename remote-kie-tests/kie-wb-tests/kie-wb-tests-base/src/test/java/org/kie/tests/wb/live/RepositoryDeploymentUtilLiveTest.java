@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.Rule;
 import org.junit.Test;
 import org.kie.remote.tests.base.unit.GetIgnoreRule;
+import org.kie.remote.tests.base.unit.GetIgnoreRule.IgnoreIfGETFails;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
 public class RepositoryDeploymentUtilLiveTest {
@@ -29,15 +30,16 @@ public class RepositoryDeploymentUtilLiveTest {
     }
 
     @Test
-//    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
     public void optimizedRepeatedCalls() {
         // create repo if not present
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
         String project = "integration-tests";
-        String orgUnitName = UUID.randomUUID().toString();
+        String orgUnit = UUID.randomUUID().toString();
+        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
 
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, KJAR_DEPLOYMENT_ID, orgUnitName);
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, KJAR_DEPLOYMENT_ID, orgUnit);
     }
 }
