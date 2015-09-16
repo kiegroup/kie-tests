@@ -1,10 +1,10 @@
 /*
  * JBoss, Home of Professional Open Source
- * 
+ *
  * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,6 +23,7 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.wildfly.KieWbWarWildflyDeploy.createTestWar;
 
 import java.net.URL;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -34,7 +35,9 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,13 +49,13 @@ public class WildflyRemoteApiIssueTest {
     public static Archive<?> createWar() {
         return createTestWar();
     }
- 
+
     private static final Logger logger = LoggerFactory.getLogger(WildflyRemoteApiIssueTest.class);
-    
+
     @ArquillianResource
     URL deploymentUrl;
-   
-    
+
+
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
@@ -60,23 +63,40 @@ public class WildflyRemoteApiIssueTest {
         Thread.sleep(sleep);
     }
 
-    protected void printTestName() { 
+    protected void printTestName() {
         String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
         System.out.println( "-=> " + testName );
     }
-    
+
     @Test
-    public void issueTest() throws Exception { 
+    public void issueTest() throws Exception {
         printTestName();
-        
+        String user = MARY_USER;
+        String password = MARY_PASSWORD;
+
+        // deploy
+        boolean deployFixed = false;
+        if( deployFixed ) {
+            RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
+            deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+
+            String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+            String repositoryName = "tests";
+            String project = "integration-tests";
+            String deploymentId = KJAR_DEPLOYMENT_ID;
+            String orgUnit = UUID.randomUUID().toString();
+            orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+        }
+
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
+                .setStrategy(RuntimeStrategy.SINGLETON)
+                .setTimeoutInSecs(5)
                 .build();
-        
-        // deploy
-        restTests.urlsDeployModuleForOtherTests(deploymentUrl, MARY_USER, MARY_PASSWORD);
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, MARY_USER, MARY_PASSWORD);
+
+        restTests.urlsHumanTaskGroupAssignment(deploymentUrl);
     }
-    
+
 }

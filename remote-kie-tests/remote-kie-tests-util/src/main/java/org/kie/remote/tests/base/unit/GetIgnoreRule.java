@@ -12,12 +12,16 @@ package org.kie.remote.tests.base.unit;
  * Matt Morrissette - allow to use non-static inner IgnoreConditions
  ******************************************************************************/
 
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
@@ -33,25 +37,44 @@ public class GetIgnoreRule implements MethodRule {
     @Target({ ElementType.METHOD })
     public @interface IgnoreIfGETFails {
         String getUrl() default "";
+        String getUserName() default "";
+        String getPassword() default "";
     }
 
     @Override
     public Statement apply( Statement base, FrameworkMethod method, Object target ) {
         Statement result = base;
         if( hasConditionalIgnoreAnnotation(method) ) {
-            String urlString = getGetUrl(target, method);
+            IgnoreIfGETFails anno = method.getAnnotation(IgnoreIfGETFails.class);
+            String urlString = anno.getUrl();
             String message = "Ignored because [GET] " + urlString + " failed.";
             boolean liveServer = false;
             try {
-                URL getUrl = new URL(urlString);
+                new URL(urlString);
                 liveServer = true;
             } catch( MalformedURLException e ) {
                 liveServer = false;
                 message = "Ignored because [" + urlString + "] is not a valid URL.";
             }
+
+            if( anno.getUserName() == null || anno.getUserName().isEmpty() ) {
+                liveServer = false;
+                message = "Ignored because user name was empty or null.";
+            }
+
+            if( anno.getPassword() == null || anno.getPassword().isEmpty() ) {
+                liveServer = false;
+                message = "Ignored because password was empty or null.";
+            }
+
             if( liveServer ) {
                 try {
-                    Response response = Request.Get(urlString).execute();
+                    Response response = Request.Get(urlString)
+                            .addHeader(
+                                       HttpHeaders.AUTHORIZATION,
+                                       basicAuthenticationHeader(anno.getUserName(), anno.getPassword()))
+                            .execute();
+
                     int code = response.returnResponse().getStatusLine().getStatusCode();
                     if( code > 401 ) {
                         liveServer = false;
@@ -59,7 +82,7 @@ public class GetIgnoreRule implements MethodRule {
                     }
                 } catch( HttpHostConnectException hhce ) {
                     liveServer = false;
-                    message = "Ignored because server is not available: " + hhce.getMessage(); 
+                    message = "Ignored because server is not available: " + hhce.getMessage();
                 } catch( Exception e ) {
                     liveServer = false;
                     message = "Ignored because [GET] " + urlString + " threw: " + e.getMessage();
@@ -72,13 +95,17 @@ public class GetIgnoreRule implements MethodRule {
         return result;
     }
 
-    private boolean hasConditionalIgnoreAnnotation( FrameworkMethod method ) {
-        return method.getAnnotation(IgnoreIfGETFails.class) != null;
+    private static String basicAuthenticationHeader( String user, String password ) {
+        String token = user + ":" + password;
+        try {
+            return "BASIC " + DatatypeConverter.printBase64Binary(token.getBytes("UTF-8"));
+        } catch( UnsupportedEncodingException ex ) {
+            throw new IllegalStateException("Cannot encode with UTF-8", ex);
+        }
     }
 
-    private String getGetUrl( Object instance, FrameworkMethod method ) {
-        IgnoreIfGETFails annotation = method.getAnnotation(IgnoreIfGETFails.class);
-        return annotation.getUrl();
+    private boolean hasConditionalIgnoreAnnotation( FrameworkMethod method ) {
+        return method.getAnnotation(IgnoreIfGETFails.class) != null;
     }
 
     private static class IgnoreStatement extends Statement {

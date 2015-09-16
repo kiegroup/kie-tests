@@ -1,10 +1,10 @@
 /*
  * JBoss, Home of Professional Open Source
- * 
+ *
  * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -50,7 +50,7 @@ public class RestUtil {
     private static Logger logger = LoggerFactory.getLogger(RestUtil.class);
 
     // Helper methods -------------------------------------------------------------------------------------------------------------
-    
+
     private static String basicAuthenticationHeader( String user, String password ) {
         String token = user + ":" + password;
         try {
@@ -72,8 +72,8 @@ public class RestUtil {
         }
         return rh;
     }
-   
-    private static String createBaseUriString(URL deploymentUrl, String relativeUrl) { 
+
+    private static String createBaseUriString(URL deploymentUrl, String relativeUrl) {
         String uriStr = null;
         try {
             uriStr = deploymentUrl.toURI() + relativeUrl;
@@ -82,24 +82,24 @@ public class RestUtil {
         }
         return uriStr;
     }
-    
+
     private static void logOp(String op, String uri) {
        logger.debug( "[" + op + "] "  + uri);
     }
-    
+
     private static void logOp(String op, Object entity, String uri) {
        logger.debug( "[" + op + "] (" + entity.getClass().getSimpleName() + ") " + uri);
     }
-    
+
     // Public Helper methods ------------------------------------------------------------------------------------------------------
-    
+
     public static void logAndFail( String msg, Exception e ) {
         logger.error(msg, e);
         fail(msg + ": " + e.getMessage());
     }
 
     // REST methods -------------------------------------------------------------------------------------------------------------
-    
+
     public static <T, G> T get( URL deploymentUrl, String relativeUrl, String mediaType, int status, String user, String password,
             Class... responseTypes ) {
         String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
@@ -140,19 +140,19 @@ public class RestUtil {
             logAndFail("Invalid uri :" + deploymentUrl.toString(), urise);
         }
 
-        for( Entry<String, String> paramEntry: queryParams.entrySet() ) { 
+        for( Entry<String, String> paramEntry: queryParams.entrySet() ) {
            uriBuilder.addParameter(paramEntry.getKey(), paramEntry.getValue());
         }
-        
+
         URI uri = null;
         String uriStr = null;
-        try { 
+        try {
           uri = uriBuilder.build();
           uriStr = uri.toString();
-        } catch( URISyntaxException urise ) { 
+        } catch( URISyntaxException urise ) {
            logAndFail("Invalid uri!", urise);
         }
-        
+
         ResponseHandler<T> rh = createResponseHandler(mediaType, status, responseTypes);
 
         // @formatter:off
@@ -179,8 +179,8 @@ public class RestUtil {
         return null;
     }
 
-    public static <T> T postEntity( URL deploymentUrl, String relativeUrl, 
-            int status, String user, String password, 
+    public static <T> T postEntity( URL deploymentUrl, String relativeUrl,
+            int status, String user, String password,
             Class [] classes,
             Object entity, Class<T>... responseTypes ) {
 
@@ -192,7 +192,7 @@ public class RestUtil {
 
         xrh.addExtraJaxbClasses(classes);
         String entityStr = xrh.serialize(entity);
-        
+
         HttpEntity bodyEntity = null;
         try {
             bodyEntity = new StringEntity(entityStr);
@@ -225,7 +225,7 @@ public class RestUtil {
         // never happens
         return null;
     }
-    
+
     public static <T> T postEntity( URL deploymentUrl, String relativeUrl, String mediaType, int status, String user,
             String password, Object entity, Class<T>... responseTypes ) {
         String uriStr = createBaseUriString(deploymentUrl, relativeUrl);
@@ -301,7 +301,7 @@ public class RestUtil {
         }
 
         long duration = after - before;
-        assertTrue("Timeout exceeded " + timeoutInSecs + " secs: " + ((double) duration / 1000d) + " secs",
+        assertTrue("Timeout exceeded " + timeoutInSecs + " secs: " + (duration / 1000d) + " secs",
                 duration < timeoutInSecs * 1000);
 
         try {
@@ -340,7 +340,7 @@ public class RestUtil {
         }
 
         long duration = after - before;
-        assertTrue("Timeout exceeded " + timeoutInSecs + " secs: " + ((double) duration / 1000d) + " secs",
+        assertTrue("Timeout exceeded " + timeoutInSecs + " secs: " + (duration / 1000d) + " secs",
                 duration < timeoutInSecs * 1000);
 
         try {
@@ -391,13 +391,12 @@ public class RestUtil {
 
         // form content
         Form formContent = Form.form();
-        for( Entry<String, String> entry : formParams.entrySet() ) { 
+        for( Entry<String, String> entry : formParams.entrySet() ) {
            formContent.add(entry.getKey(), entry.getValue());
         }
 
         // @formatter:off
         Request request = Request.Post(uriStr)
-                .addHeader(HttpHeaders.CONTENT_TYPE, mediaType.toString())
                 .addHeader(HttpHeaders.ACCEPT, mediaType.toString())
                 .addHeader(HttpHeaders.AUTHORIZATION, basicAuthenticationHeader(user, password))
                 .bodyForm(formContent.build());

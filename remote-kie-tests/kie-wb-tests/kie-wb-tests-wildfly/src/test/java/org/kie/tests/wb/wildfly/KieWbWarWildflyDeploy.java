@@ -13,12 +13,18 @@ public class KieWbWarWildflyDeploy {
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarWildflyDeploy.class);
 
     private static final String classifier = "wildfly8";
-    
+
     static WebArchive createTestWar() {
         // Import kie-wb war
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
-        String[][] jarsToReplace = { 
+//        String[] jarsToDelete = {
+//                "jbpm-console-services"
+//                };
+//        deleteJars(war, jarsToDelete);
+
+        String[][] jarsToReplace = {
+                { "org.jbpm", "jbpm-console-ng-rest" },
                 { "org.kie.remote", "kie-remote-services" }
                 };
         replaceJars(war, PROJECT_VERSION, jarsToReplace);

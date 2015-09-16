@@ -83,6 +83,12 @@
       <artifactId>jsoup</artifactId>
     </dependency> 
     
+    <!-- base 64 --> 
+    <dependency>
+      <groupId>org.kie.remote</groupId>
+      <artifactId>kie-remote-common</artifactId>
+    </dependency> 
+    
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>

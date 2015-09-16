@@ -90,6 +90,7 @@ public class JbossEapRemoteApiIssueTest {
         String project = "integration-tests";
         String deploymentId = KJAR_DEPLOYMENT_ID;
         String orgUnit = UUID.randomUUID().toString();
+        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
         int sleep = 2;
@@ -103,6 +104,6 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
 
-        restTests.remoteApiHumanTaskProcess(deploymentUrl, user, password);
+        restTests.urlsStartScriptProcess(deploymentUrl, user, password);
     }
 }

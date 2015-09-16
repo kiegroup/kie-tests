@@ -30,26 +30,26 @@ import org.slf4j.LoggerFactory;
 public class LiveIssueTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(LiveIssueTest.class);
-    
+
     private static String user = "mary";
     private static String password = "mary123@";
-   
+
     @Rule
     public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
-    
+
     private static URL deploymentUrl;
-    static { 
+    static {
         try {
             deploymentUrl =  new URL("http://localhost:8080/business-central/");
         } catch( MalformedURLException e ) {
             // do nothing
         }
     }
-    
+
     @Test
     @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/business-central/deployment")
-    public void issueTest() throws Exception { 
-        
+    public void issueTest() throws Exception {
+
         // deploy
 
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
@@ -59,22 +59,23 @@ public class LiveIssueTest {
         String project = "integration-tests";
         String deploymentId = "org.test:kjar:1.0";
         String orgUnit = UUID.randomUUID().toString();
+        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
         deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
         int sleep = 2;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
-        Thread.sleep(sleep * 1000); 
-        
+        Thread.sleep(sleep * 1000);
+
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
                 .setStrategy(RuntimeStrategy.SINGLETON)
                 .setTimeoutInSecs(5)
                 .build();
-                
+
         // Start process
         String startProcessUrl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
-    
+
         Map<String, String> formParams = new HashMap<String, String>(1);
         formParams.put("map_userName", "John");
         JaxbProcessInstanceResponse processInstance = RestUtil.postForm(deploymentUrl,
@@ -83,35 +84,35 @@ public class LiveIssueTest {
                  formParams,
                  JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
-    
+
         // query tasks for associated task Id
         Map<String, String> queryparams = new HashMap<String, String>();
         queryparams.put("processInstanceId", String.valueOf(procInstId));
-        JaxbTaskSummaryListResponse taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
+        JaxbTaskSummaryListResponse taskSumlistResponse = RestUtil.getQuery( deploymentUrl,
                 "task/query", MediaType.APPLICATION_XML,
                 200, user, password,
                 queryparams, JaxbTaskSummaryListResponse.class);
-    
+
         TaskSummary taskSum = findTaskSummaryByProcessInstanceId(procInstId, taskSumlistResponse.getResult());
         long taskId = taskSum.getId();
-    
+
         // get task info
-        org.kie.remote.jaxb.gen.Task task = RestUtil.get(deploymentUrl, 
+        org.kie.remote.jaxb.gen.Task task = RestUtil.get(deploymentUrl,
                 "task/" + taskId, MediaType.APPLICATION_XML,
                 200, user, password,
                 org.kie.remote.jaxb.gen.Task.class);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
-        
+
         // query tasks for associated task Id
         queryparams = new HashMap<String, String>();
         queryparams.put("taskid", String.valueOf(taskId));
-        taskSumlistResponse = RestUtil.getQuery( deploymentUrl, 
+        taskSumlistResponse = RestUtil.getQuery( deploymentUrl,
                 "task/query", MediaType.APPLICATION_XML,
                 200, user, password,
                 queryparams, JaxbTaskSummaryListResponse.class);
-    
+
         assertEquals("Incorrect num tasks", 1, taskSumlistResponse.getResult().size() );
         taskSum = taskSumlistResponse.getResult().get(0);
         assertEquals("Incorrect task id", taskId, task.getId().longValue());
-    } 
+    }
 }
