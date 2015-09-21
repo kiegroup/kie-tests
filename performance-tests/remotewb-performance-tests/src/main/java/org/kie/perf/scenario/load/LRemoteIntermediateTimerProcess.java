@@ -31,7 +31,10 @@ public class LRemoteIntermediateTimerProcess implements IPerfTest {
 
     @Override
     public void execute() {
+
+        rc = rc.newPerProcessInstanceController(null);
         ProcessInstance pi = rc.startProcess(ProcessStorage.IntermediateTimer.getProcessDefinitionId());
+        rc = rc.newPerProcessInstanceController(pi.getId());
         long pid = pi.getId();
 
         long maxTime = System.currentTimeMillis() + 5000;

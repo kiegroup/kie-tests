@@ -46,9 +46,13 @@ public class LRemoteHumanTaskProcess implements IPerfTest {
     public void execute() {
         Timer.Context context;
 
+        rc = rc.newPerProcessInstanceController(null);
+        
         context = startProcess.time();
         ProcessInstance pi = rc.startProcess(ProcessStorage.HumanTask.getProcessDefinitionId());
         context.stop();
+
+        rc = rc.newPerProcessInstanceController(pi.getId());
 
         TaskService taskService = rc.getTaskService();
         List<Long> tasks = taskService.getTasksByProcessInstanceId(pi.getId());

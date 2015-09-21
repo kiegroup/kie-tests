@@ -31,7 +31,7 @@ public class L1000HumanTasksComplete implements IPerfTest {
 
         jc = JBPMController.getInstance();
 
-        jc.addTaskEventListener(new DefaultTaskEventListener() {
+        jc.setTaskEventListener(new DefaultTaskEventListener() {
             @Override
             public void afterTaskCompletedEvent(TaskEvent event) {
                 taskCompleted.mark();

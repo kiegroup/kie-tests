@@ -64,9 +64,9 @@ public class JBPMController {
     protected UserGroupCallback userGroupCallback = new JBossUserGroupCallbackImpl("classpath:/usergroups.properties");
 
     protected Map<String, WorkItemHandler> customHandlers = new HashMap<String, WorkItemHandler>();
-    protected List<ProcessEventListener> customProcessListeners = new ArrayList<ProcessEventListener>();
-    protected List<AgendaEventListener> customAgendaListeners = new ArrayList<AgendaEventListener>();
-    protected List<TaskLifeCycleEventListener> customTaskListeners = new ArrayList<TaskLifeCycleEventListener>();
+    protected ProcessEventListener customProcessListener;
+    protected AgendaEventListener customAgendaListener;
+    protected TaskLifeCycleEventListener customTaskListener;
     protected Map<String, Object> customEnvironmentEntries = new HashMap<String, Object>();
 
     private static JBPMController instance;
@@ -123,16 +123,16 @@ public class JBPMController {
         }
     }
 
-    public void addProcessEventListener(ProcessEventListener listener) {
-        customProcessListeners.add(listener);
+    public void setProcessEventListener(ProcessEventListener listener) {
+        customProcessListener = listener;
     }
 
-    public void addAgendaEventListener(AgendaEventListener listener) {
-        customAgendaListeners.add(listener);
+    public void setAgendaEventListener(AgendaEventListener listener) {
+        customAgendaListener = listener;
     }
 
-    public void addTaskEventListener(TaskLifeCycleEventListener listener) {
-        customTaskListeners.add(listener);
+    public void setTaskEventListener(TaskLifeCycleEventListener listener) {
+        customTaskListener = listener;
     }
 
     public void addWorkItemHandler(String name, WorkItemHandler handler) {
@@ -148,10 +148,10 @@ public class JBPMController {
     }
 
     public void clearCustomEntries() {
-        this.customAgendaListeners.clear();
+        this.customAgendaListener = null;
         this.customHandlers.clear();
-        this.customProcessListeners.clear();
-        this.customTaskListeners.clear();
+        this.customProcessListener = null;
+        this.customTaskListener = null;
         this.customEnvironmentEntries.clear();
         this.userGroupCallback = new JBossUserGroupCallbackImpl("classpath:/usergroups.properties");
     }
@@ -398,7 +398,7 @@ public class JBPMController {
      */
     protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources, String identifier) {
         if (manager != null) {
-            throw new IllegalStateException("There is already one RuntimeManager active");
+            return manager;
         }
 
         RuntimeEnvironmentBuilder builder = null;
@@ -417,21 +417,27 @@ public class JBPMController {
                         @Override
                         public List<ProcessEventListener> getProcessEventListeners(RuntimeEngine runtime) {
                             List<ProcessEventListener> listeners = super.getProcessEventListeners(runtime);
-                            listeners.addAll(customProcessListeners);
+                            if (customProcessListener != null) {
+                                listeners.add(customProcessListener);
+                            }
                             return listeners;
                         }
 
                         @Override
                         public List<AgendaEventListener> getAgendaEventListeners(RuntimeEngine runtime) {
                             List<AgendaEventListener> listeners = super.getAgendaEventListeners(runtime);
-                            listeners.addAll(customAgendaListeners);
+                            if (customAgendaListener != null) {
+                                listeners.add(customAgendaListener);
+                            }
                             return listeners;
                         }
 
                         @Override
                         public List<TaskLifeCycleEventListener> getTaskListeners() {
                             List<TaskLifeCycleEventListener> listeners = super.getTaskListeners();
-                            listeners.addAll(customTaskListeners);
+                            if (customTaskListener != null) {
+                                listeners.add(customTaskListener);
+                            }
                             return listeners;
                         }
 
@@ -451,21 +457,27 @@ public class JBPMController {
                         @Override
                         public List<ProcessEventListener> getProcessEventListeners(RuntimeEngine runtime) {
                             List<ProcessEventListener> listeners = super.getProcessEventListeners(runtime);
-                            listeners.addAll(customProcessListeners);
+                            if (customProcessListener != null) {
+                                listeners.add(customProcessListener);
+                            }
                             return listeners;
                         }
 
                         @Override
                         public List<AgendaEventListener> getAgendaEventListeners(RuntimeEngine runtime) {
                             List<AgendaEventListener> listeners = super.getAgendaEventListeners(runtime);
-                            listeners.addAll(customAgendaListeners);
+                            if (customAgendaListener != null) {
+                                listeners.add(customAgendaListener);
+                            }
                             return listeners;
                         }
 
                         @Override
                         public List<TaskLifeCycleEventListener> getTaskListeners() {
                             List<TaskLifeCycleEventListener> listeners = super.getTaskListeners();
-                            listeners.addAll(customTaskListeners);
+                            if (customTaskListener != null) {
+                                listeners.add(customTaskListener);
+                            }
                             return listeners;
                         }
 
@@ -508,7 +520,7 @@ public class JBPMController {
     protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources, RuntimeEnvironment environment,
             String identifier) {
         if (manager != null) {
-            throw new IllegalStateException("There is already one RuntimeManager active");
+            return manager;
         }
 
         this.strategy = strategy;
