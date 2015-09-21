@@ -22,7 +22,7 @@ public class LParallelGatewayTenTimesProcess implements IPerfTest {
     @Override
     public void init() {
         jc = JBPMController.getInstance();
-        jc.addProcessEventListener(new DefaultProcessEventListener() {
+        jc.setProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();

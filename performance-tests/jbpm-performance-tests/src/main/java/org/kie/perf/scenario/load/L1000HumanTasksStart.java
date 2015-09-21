@@ -30,7 +30,7 @@ public class L1000HumanTasksStart implements IPerfTest {
     public void init() {
         jc = JBPMController.getInstance();
 
-        jc.addTaskEventListener(new DefaultTaskEventListener() {
+        jc.setTaskEventListener(new DefaultTaskEventListener() {
             @Override
             public void afterTaskStartedEvent(TaskEvent event) {
                 taskStarted.mark();

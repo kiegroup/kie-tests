@@ -15,7 +15,7 @@ import org.kie.perf.scenario.IPerfTest;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
-public class LRuleTaskProcess implements IPerfTest {
+public class LRemoteRuleTaskProcess implements IPerfTest {
 
     private RemoteController rc;
 
@@ -29,7 +29,7 @@ public class LRuleTaskProcess implements IPerfTest {
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
-        completedProcess = metrics.meter(MetricRegistry.name(LRuleTaskProcess.class, "scenario.process.completed"));
+        completedProcess = metrics.meter(MetricRegistry.name(LRemoteRuleTaskProcess.class, "scenario.process.completed"));
     }
 
     @Override

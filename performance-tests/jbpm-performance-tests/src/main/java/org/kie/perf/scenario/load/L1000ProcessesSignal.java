@@ -5,6 +5,7 @@ import org.kie.api.event.process.ProcessCompletedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.perf.SharedMetricRegistry;
+import org.kie.perf.annotation.KPKConstraint;
 import org.kie.perf.jbpm.JBPMController;
 import org.kie.perf.jbpm.constant.ProcessStorage;
 import org.kie.perf.scenario.IPerfTest;
@@ -13,6 +14,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
+@KPKConstraint({ "jbpm.runtimeManagerStrategy!=PerRequest" })
 public class L1000ProcessesSignal implements IPerfTest {
 
     private JBPMController jc;
@@ -25,7 +27,7 @@ public class L1000ProcessesSignal implements IPerfTest {
     public void init() {
         jc = JBPMController.getInstance();
 
-        jc.addProcessEventListener(new DefaultProcessEventListener() {
+        jc.setProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
                 completedProcess.mark();
@@ -48,9 +50,10 @@ public class L1000ProcessesSignal implements IPerfTest {
         Timer.Context context;
 
         context = startProcess.time();
-        RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
-        KieSession ksession = runtimeEngine.getKieSession();
+        KieSession ksession = null;
         for (int i = 0; i < 1000; ++i) {
+            RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
+            ksession = runtimeEngine.getKieSession();
             ksession.startProcess(ProcessStorage.IntermediateSignal.getProcessDefinitionId());
         }
         context.stop();

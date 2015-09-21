@@ -1,20 +1,14 @@
 package org.kie.perf.scenario.load.parametrized;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.perf.SharedMetricRegistry;
 import org.kie.perf.remote.KieWBTestConfig;
 import org.kie.perf.remote.RemoteController;
 import org.kie.perf.remote.RemoteControllerProvider;
 import org.kie.perf.remote.constant.ProcessStorage;
 import org.kie.perf.scenario.IPerfTest;
-
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.MetricRegistry;
 
 /**
  * http://docs.jboss.org/jbpm/v6.2/userguide/jBPMAsyncExecution.html#d0e21825
