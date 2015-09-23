@@ -69,7 +69,7 @@ public class RestUtilTest {
     public GetIgnoreRule liveServerRule = new GetIgnoreRule();
     
     @Test
-    @IgnoreIfGETFails(getUrl=urlString+"rest/deployment")
+    @IgnoreIfGETFails(url=urlString+"rest/deployment")
     public void restMethods() throws Exception { 
        
         Collection<RepositoryResponse> repoList = 

@@ -24,6 +24,7 @@ import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.MediaType;
 
@@ -33,6 +34,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,29 +75,37 @@ public class JbossEapRemoteApiIssueTest {
         System.out.println( "-=> " + testName );
     }
 
+    private static final String USER_ID = MARY_USER;
+    private static final String PASSWORD = MARY_PASSWORD;
+
+    private static final AtomicBoolean deploymentDeployed = new AtomicBoolean(false);
+
+    @Before
+    public void deployTestDeployment() throws Exception {
+        if( deploymentDeployed.compareAndSet(false, true) ) {
+            // deploy
+            RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, USER_ID, PASSWORD, 5);
+            deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+
+            String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+            String repositoryName = "tests";
+            String project = "integration-tests";
+            String deploymentId = KJAR_DEPLOYMENT_ID;
+            String orgUnit = UUID.randomUUID().toString();
+            orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+
+            int sleep = 2;
+            logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
+            Thread.sleep(sleep * 1000);
+        }
+
+        printTestName();
+    }
+
     @Test
     @IgnoreWhenInMavenBuild
     public void issueTest() throws Exception {
-        printTestName();
-        String user = MARY_USER;
-        String password = MARY_PASSWORD;
-
-        // deploy
-
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
-        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
-
-        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-        String repositoryName = "tests";
-        String project = "integration-tests";
-        String deploymentId = KJAR_DEPLOYMENT_ID;
-        String orgUnit = UUID.randomUUID().toString();
-        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
-
-        int sleep = 2;
-        logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
-        Thread.sleep(sleep * 1000);
 
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
@@ -104,6 +114,6 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
 
-        restTests.urlsStartScriptProcess(deploymentUrl, user, password);
+        restTests.urlsProcessQueryOperations(deploymentUrl, USER_ID, PASSWORD);
     }
 }

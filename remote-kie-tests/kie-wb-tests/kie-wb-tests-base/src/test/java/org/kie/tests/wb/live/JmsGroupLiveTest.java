@@ -86,7 +86,7 @@ public class JmsGroupLiveTest {
     }
     
     @Test
-    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(url="http://localhost:8080/kie-wb/rest/deployment")
     public void restIssueTest() throws Exception { 
         printTestName();
       
@@ -108,7 +108,7 @@ public class JmsGroupLiveTest {
     }
     
     @Test
-    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(url="http://localhost:8080/kie-wb/rest/deployment")
     public void jmsIssueTest() throws Exception { 
         RuntimeEngine engine = createRemoteJmsRuntimeEngine(MARY_USER, MARY_PASSWORD);
         RuntimeEngine johnEngine = createRemoteJmsRuntimeEngine(JOHN_USER, JOHN_PASSWORD);

@@ -122,6 +122,21 @@
     </dependency>
   </dependencies>
 
+ <!--
+  <dependencyManagement>
+    <dependencies>
+        <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-wb-distribution-wars</artifactId>
+      <classifier>eap6_4</classifier>
+      <scope>test</scope>
+      <version>6.3.0.Final</version>
+       <type>war</type>
+    </dependency>
+    </dependencies>
+  </dependencyManagement>
+   -->
+  
   <build>
     <testResources>
       <testResource>

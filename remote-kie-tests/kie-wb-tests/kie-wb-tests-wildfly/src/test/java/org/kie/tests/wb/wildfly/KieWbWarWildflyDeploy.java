@@ -1,7 +1,6 @@
 package org.kie.tests.wb.wildfly;
 
 import static org.kie.remote.tests.base.DeployUtil.getWebArchive;
-import static org.kie.remote.tests.base.DeployUtil.replaceJars;
 import static org.kie.tests.wb.base.util.TestConstants.PROJECT_VERSION;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -27,7 +26,11 @@ public class KieWbWarWildflyDeploy {
                 { "org.jbpm", "jbpm-console-ng-rest" },
                 { "org.kie.remote", "kie-remote-services" }
                 };
-        replaceJars(war, PROJECT_VERSION, jarsToReplace);
+//        replaceJars(war, PROJECT_VERSION, jarsToReplace);
+
+        String deployStructFileName = "jboss-deployment-structure.xml";
+        war.delete("WEB-INF/" + deployStructFileName);
+        war.addAsWebInfResource(deployStructFileName);
 
         return war;
     }

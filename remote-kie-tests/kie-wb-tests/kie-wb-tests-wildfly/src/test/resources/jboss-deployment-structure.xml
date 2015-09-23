@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-deployment-structure>
+    <deployment>
+        <exclude-subsystems>
+            <subsystem name="jpa"/>
+        </exclude-subsystems>
+        <exclusions>
+            <module name="javaee.api"/>
+            <module name="javax.persistence.api"/>
+        </exclusions>
+        <dependencies>
+            <module name="javaee.api">
+                <imports>
+                    <exclude path="javax/persistence" />
+                </imports>
+            </module>
+        </dependencies>
+    </deployment>
+</jboss-deployment-structure>

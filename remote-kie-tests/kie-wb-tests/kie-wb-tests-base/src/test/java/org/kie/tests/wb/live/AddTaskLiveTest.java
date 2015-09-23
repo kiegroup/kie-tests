@@ -385,7 +385,7 @@ public class AddTaskLiveTest {
     }
 
     @Test
-    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(url="http://localhost:8080/kie-wb/rest/deployment")
     public void test() throws Exception { 
         setup();
         String taskName = "New Task";

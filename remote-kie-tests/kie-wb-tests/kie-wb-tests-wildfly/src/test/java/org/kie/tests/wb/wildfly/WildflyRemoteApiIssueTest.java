@@ -96,7 +96,7 @@ public class WildflyRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
 
-        restTests.urlsHumanTaskGroupAssignment(deploymentUrl);
+        restTests.urlsHumanTask(deploymentUrl, user, password);
     }
 
 }

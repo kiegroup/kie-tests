@@ -40,6 +40,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.kie.remote.tests.base.handler.AbstractResponseHandler;
 import org.kie.remote.tests.base.handler.JsonResponseHandler;
+import org.kie.remote.tests.base.handler.SvgResponseHandler;
 import org.kie.remote.tests.base.handler.XmlResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,8 @@ public class RestUtil {
             rh = new XmlResponseHandler(status, responseTypes);
         } else if( MediaType.APPLICATION_JSON.equals(mediaType) ) {
             rh = new JsonResponseHandler(status, responseTypes);
+        } else if( MediaType.APPLICATION_SVG_XML.equals(mediaType) ) {
+            rh = new SvgResponseHandler(status);
         } else {
             fail("Unexpected media type: " + mediaType);
         }

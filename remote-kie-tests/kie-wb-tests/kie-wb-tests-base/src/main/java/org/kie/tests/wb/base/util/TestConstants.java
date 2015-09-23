@@ -5,11 +5,11 @@ import java.util.Properties;
 import org.jbpm.kie.services.impl.KModuleDeploymentUnit;
 
 public class TestConstants {
-   
+
     /**
      * Process ids
      */
-    
+
     public static final String HUMAN_TASK_PROCESS_ID        = "org.test.kjar.writedocument";
     public static final String HUMAN_TASK_VAR_PROCESS_ID    = "org.test.kjar.HumanTaskWithForm";
     public static final String SCRIPT_TASK_PROCESS_ID       = "org.test.kjar.scripttask";
@@ -23,11 +23,12 @@ public class TestConstants {
     public static final String GROUP_ASSSIGN_VAR_PROCESS_ID = "org.test.kjar.groupAssign";
     public static final String HUMAN_TASK_OWN_TYPE_ID       = "org.test.kjar.HumanTaskWithOwnType";
     public static final String CLASSPATH_OBJECT_PROCESS_ID  = "org.test.kjar.classpath.process";
-   
+    public static final String IMAGE_PROCESS_ID             = "org.test.kjar.image";
+
     /**
      * User/password
      */
-    
+
     public static final String KRIS_USER = "krisv";
     public static final String KRIS_PASSWORD = "krisv123@";
     public static final String MARY_USER = "mary";
@@ -36,19 +37,19 @@ public class TestConstants {
     public static final String SALA_PASSWORD = "sala123@";
     public static final String JOHN_USER = "john";
     public static final String JOHN_PASSWORD = "john123@";
-   
+
     /**
      * SSL
      */
-    
+
     public static final String CLIENT_KEY_TRUSTSTORE_LOCATION = "ssl/client_keystore.jks";
     public static final String CLIENT_KEYSTORE_PASSWORD = "CLIENT_KEYSTORE_PASSWORD";
-    
+
     /**
      * Project version (arquillian jars)
      */
     public final static String PROJECT_VERSION;
-    static { 
+    static {
         Properties testProps = new Properties();
         try {
             testProps.load(TestConstants.class.getResourceAsStream("/test.properties"));
@@ -57,29 +58,29 @@ public class TestConstants {
         }
         PROJECT_VERSION = testProps.getProperty("project.version");
     }
-    
+
     /**
      * Vfs deployment
      */
-    
+
     public static final String VFS_DEPLOYMENT_ID = "test";
 
     /**
      * Kjar deployment
      */
-    
+
     public static final String GROUP_ID = "org.test";
     public static final String ARTIFACT_ID = "kjar";
     public static final String CLASSPATH_ARTIFACT_ID = "classpath-kjar";
     public static final String VERSION = "1.0";
     public static final String KBASE_NAME = "defaultKieBase";
     public static final String KSESSION_NAME = "defaultKieSession";
- 
+
     public static final String KJAR_DEPLOYMENT_ID;
-    static { 
+    static {
         KModuleDeploymentUnit deploymentUnit = new KModuleDeploymentUnit(GROUP_ID, ARTIFACT_ID, VERSION);
         KJAR_DEPLOYMENT_ID = deploymentUnit.getIdentifier();
     }
 
-    
+
 }

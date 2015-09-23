@@ -14,8 +14,8 @@ import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 
 public class RepositoryDeploymentUtilLiveTest {
 
-    private static String user = "mary";
-    private static String password = "mary123@";
+    private final static String USER_ID = "mary";
+    private final static String PASSWORD = "mary123@";
 
     @Rule
     public GetIgnoreRule getIgnoreRule = new GetIgnoreRule();
@@ -30,10 +30,10 @@ public class RepositoryDeploymentUtilLiveTest {
     }
 
     @Test
-    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(url="http://localhost:8080/kie-wb/rest/deployment", userName=USER_ID, password=PASSWORD)
     public void optimizedRepeatedCalls() {
         // create repo if not present
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, USER_ID, PASSWORD, 5);
         String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
         String repositoryName = "tests";
         String project = "integration-tests";

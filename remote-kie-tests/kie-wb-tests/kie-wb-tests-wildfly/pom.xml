@@ -23,7 +23,7 @@
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
 
-    <version.org.wildfly>8.2.0.Final</version.org.wildfly>
+    <version.org.wildfly>8.2.1.Final</version.org.wildfly>
     <wildfly.server.name>wildfly-${version.org.wildfly}</wildfly.server.name>
   </properties>
 

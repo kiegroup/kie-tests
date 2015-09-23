@@ -19,6 +19,7 @@ package org.kie.tests.wb.base.methods;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -47,8 +48,10 @@ import static org.kie.tests.wb.base.util.TestConstants.GROUP_ASSSIGNMENT_PROCESS
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.IMAGE_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.JOHN_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
+import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
@@ -90,7 +93,6 @@ import org.kie.api.runtime.manager.audit.AuditService;
 import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
 import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
@@ -105,6 +107,7 @@ import org.kie.remote.client.jaxb.JaxbCommandsResponse;
 import org.kie.remote.client.jaxb.JaxbTaskSummaryListResponse;
 import org.kie.remote.jaxb.gen.CompleteTaskCommand;
 import org.kie.remote.jaxb.gen.Content;
+import org.kie.remote.jaxb.gen.GetProcessIdsCommand;
 import org.kie.remote.jaxb.gen.GetTasksByProcessInstanceIdCommand;
 import org.kie.remote.jaxb.gen.JaxbStringObjectPairArray;
 import org.kie.remote.jaxb.gen.StartProcessCommand;
@@ -126,7 +129,6 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinitionList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbWorkItemResponse;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
@@ -431,16 +433,6 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                  JaxbProcessInstanceResponse.class);
         long procInstId = processInstance.getId();
 
-        String getProcInsturl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/";
-
-        processInstance = RestUtil.get(deploymentUrl,
-                                       getProcInsturl, contentType,
-                                       200, user, password,
-                                       JaxbProcessInstanceResponse.class);
-
-        assertNotNull( "Null process instance using GET operation", processInstance );
-        assertEquals( "Process instance id", procInstId, processInstance.getId() );
-
         // query tasks for associated task Id
         Map<String, String> queryparams = new HashMap<String, String>();
         queryparams.put("processInstanceId", String.valueOf(procInstId));
@@ -573,7 +565,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
     private TaskSummary getTaskSummary( String user, String password, long processInstanceId, Status status ) throws Exception {
         JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl,
-                "rest/task/query?processInstanceId=" + processInstanceId + "&status=" + status.toString(), contentType,
+                "rest/task/query?processInstanceId=" + processInstanceId + "&status=" + status.toString() + "&union=false", contentType,
                 200, user, password,
                 JaxbTaskSummaryListResponse.class);
         List<TaskSummary> taskSumList = taskSumListResp.getResult();
@@ -628,6 +620,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         {
             GetTasksByProcessInstanceIdCommand cmd = new GetTasksByProcessInstanceIdCommand();
             cmd.setProcessInstanceId(procInstId);
+            cmd.setUserId(taskUserId);
             req = new JaxbCommandsRequest(deploymentId, cmd);
         }
         cmdResponse = implSpecificSendCommandRequest(req, user, password);
@@ -1020,7 +1013,6 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                 || procDef.getDeploymentId().isEmpty());
         assertFalse("Process def " + id + ": null name", procDef.getName() == null );
         assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty());
-        assertFalse("Process def " + id + ": null version", procDef.getVersion() != null );
     }
 
     public void urlsDeploymentProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
@@ -1045,18 +1037,28 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
     }
 
     public void urlsProcessQueryOperations( URL deploymentUrl, String user, String password ) throws Exception  {
+        setRestInfo(deploymentUrl, user, password);
+
+        // Start process
+        String startProcessUrl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/start";
+
+        Map<String, String> formParams = new HashMap<String, String>(1);
+        formParams.put("map_userName", "John");
+        JaxbProcessInstanceResponse processInstance = RestUtil.postForm(deploymentUrl,
+                startProcessUrl, contentType,
+                 200, user, password,
+                 formParams,
+                 JaxbProcessInstanceResponse.class);
+        long procInstId = processInstance.getId();
+
         Map<String, String> queryParams = new HashMap<String, String>(1);
-        queryParams.put("params", null);
 
-        RestUtil.getQuery(deploymentUrl, "query/runtime/task", contentType, 400, user, password, queryParams);
+        RestUtil.getQuery(deploymentUrl, "rest/query/runtime/task", contentType, 400, user, password, queryParams);
 
-        KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
+        queryParams.clear();
+        queryParams.put("piid", "" + procInstId);
 
-        String val = UUID.randomUUID().toString();
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put( "x", val );
-        ProcessInstance procInst = ksession.startProcess(SCRIPT_TASK_VAR_PROCESS_ID, map);
-        long procInstId = procInst.getId();
+        JaxbTaskSummaryListResponse response = RestUtil.getQuery(deploymentUrl, "rest/query/runtime/task", contentType, 400, user, password, queryParams, JaxbTaskSummaryListResponse.class);
 
         queryParams.clear();
         queryParams.put("piid", "" + procInstId);
@@ -1174,6 +1176,81 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         runRemoteApiClassPathProcessTest(runtimeEngine);
     }
 
+    public void urlsProcessImage( URL deploymentUrl ) {
+        String svgImage = RestUtil.get(deploymentUrl,
+                                       "rest/runtime/" + KJAR_DEPLOYMENT_ID + "/process/" + IMAGE_PROCESS_ID + "/image",
+                                       MediaType.APPLICATION_SVG_XML, 200,
+                                       MARY_USER, MARY_PASSWORD,
+                                       String.class);
+
+        String sameSvgImage = RestUtil.get(deploymentUrl,
+                                           "rest/runtime/" + KJAR_DEPLOYMENT_ID + "/process/" + IMAGE_PROCESS_ID + "/image",
+                                           MediaType.APPLICATION_SVG_XML, 200,
+                                           MARY_USER, MARY_PASSWORD,
+                                           String.class);
+
+        assertEquals( "SVG response from identical basic image calls different!", svgImage, sameSvgImage );
+
+        // Start process
+        String startProcessUrl = "rest/runtime/" + KJAR_DEPLOYMENT_ID + "/process/" + IMAGE_PROCESS_ID + "/start";
+
+        JaxbProcessInstanceResponse processInstance = RestUtil.post(deploymentUrl,
+                                                                    startProcessUrl, MediaType.APPLICATION_XML,
+                                                                    200, MARY_USER, MARY_PASSWORD,
+                                                                    JaxbProcessInstanceResponse.class);
+        long procInstId = processInstance.getId();
+
+        String annotatedSvgImageUrl =
+                "rest/runtime/" + KJAR_DEPLOYMENT_ID + "/process/" + IMAGE_PROCESS_ID + "/image/" + procInstId;
+        String annotatedSvgImage = RestUtil.get(deploymentUrl,
+                                                annotatedSvgImageUrl,
+                                                MediaType.APPLICATION_SVG_XML, 200,
+                                                MARY_USER, MARY_PASSWORD,
+                                                String.class);
+
+        sameSvgImage = RestUtil.get(deploymentUrl,
+                                    annotatedSvgImageUrl,
+                                    MediaType.APPLICATION_SVG_XML, 200,
+                                    MARY_USER, MARY_PASSWORD,
+                                    String.class);
+
+        assertEquals( "SVG response from identical annotated image calls different!", annotatedSvgImage, sameSvgImage );
+
+        // find task
+        String taskQueryUrl = "rest/query/task?processInstanceId=" + procInstId;
+        JaxbTaskSummaryListResponse taskSumListResp = RestUtil.get(deploymentUrl,
+                                                                   taskQueryUrl, MediaType.APPLICATION_XML,
+                                                                   200, MARY_USER, MARY_PASSWORD,
+                                                                   JaxbTaskSummaryListResponse.class);
+        assertNotNull( "Null response from task query", taskSumListResp );
+        List<TaskSummary> taskSumList = taskSumListResp.getResult();
+        //                          assertEquals("Tasks found for process instance " + procInstId, 1, taskSumList.size());
+        long taskId = taskSumList.get(0).getId();
+
+        // start and complete task
+        String taskUrl = "rest/task/" + taskId + "/";
+
+        RestUtil.post(deploymentUrl,
+                      taskUrl + "start",
+                      MediaType.APPLICATION_XML,
+                      200, MARY_USER, MARY_PASSWORD);
+
+        RestUtil.post(deploymentUrl,
+                      taskUrl + "complete",
+                      MediaType.APPLICATION_XML,
+                      200, MARY_USER, MARY_PASSWORD);
+
+        String updatedAnnotatedSvgImage = RestUtil.get(deploymentUrl,
+                                                       annotatedSvgImageUrl,
+                                                       MediaType.APPLICATION_SVG_XML, 200,
+                                                       MARY_USER, MARY_PASSWORD,
+                                                       String.class);
+
+        assertNotEquals("SVG response for annotated image of updated process instance the same!",
+                        annotatedSvgImage, updatedAnnotatedSvgImage );
+    }
+
+    // REMOTE API tests
     public void remoteApiStartScriptProcess(URL deploymentUrl, String user, String password) {
         // setup
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
@@ -1237,15 +1314,6 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
         assertNotNull("Null ProcessInstance!", processInstance);
         long procInstId = processInstance.getId();
-
-
-        JaxbLongListResponse response = get("runtime/" + deploymentId + "/workitem/", 200, JaxbLongListResponse.class);
-
-        long workItemId = response.getResult().get(0);
-        JaxbWorkItemResponse workItemResp = get("runtime/" + deploymentId + "/workitem/" + workItemId, 200, JaxbWorkItemResponse.class);
-        assertNotNull( "Null response", workItemResp );
-        WorkItem workItem = workItemResp.getResult();
-        assertNotNull( "Null work item result", workItemResp.getResult() );
 
         // @formatter:off
         TaskService nullDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
@@ -1351,7 +1419,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                 .addUrl(deploymentUrl)
                 .build();
         // @formatter:on
-        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR");
+        runHumanTaskGroupVarAssignTest(runtimeEngine, MARY_USER, "HR", new GetProcessIdsCommand());
     }
 
     public void remoteApiHumanTaskOwnType( URL deploymentUrl ) {
@@ -1522,4 +1590,5 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         runRemoteApiHumanTaskCommentTest(runtimeEngine);
     }
 
+    public void url
 }

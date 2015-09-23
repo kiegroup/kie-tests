@@ -36,9 +36,9 @@ public class GetIgnoreRule implements MethodRule {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.METHOD })
     public @interface IgnoreIfGETFails {
-        String getUrl() default "";
-        String getUserName() default "";
-        String getPassword() default "";
+        String url() default "";
+        String userName() default "";
+        String password() default "";
     }
 
     @Override
@@ -46,7 +46,7 @@ public class GetIgnoreRule implements MethodRule {
         Statement result = base;
         if( hasConditionalIgnoreAnnotation(method) ) {
             IgnoreIfGETFails anno = method.getAnnotation(IgnoreIfGETFails.class);
-            String urlString = anno.getUrl();
+            String urlString = anno.url();
             String message = "Ignored because [GET] " + urlString + " failed.";
             boolean liveServer = false;
             try {
@@ -57,12 +57,12 @@ public class GetIgnoreRule implements MethodRule {
                 message = "Ignored because [" + urlString + "] is not a valid URL.";
             }
 
-            if( anno.getUserName() == null || anno.getUserName().isEmpty() ) {
+            if( anno.userName() == null || anno.userName().isEmpty() ) {
                 liveServer = false;
                 message = "Ignored because user name was empty or null.";
             }
 
-            if( anno.getPassword() == null || anno.getPassword().isEmpty() ) {
+            if( anno.password() == null || anno.password().isEmpty() ) {
                 liveServer = false;
                 message = "Ignored because password was empty or null.";
             }
@@ -72,7 +72,7 @@ public class GetIgnoreRule implements MethodRule {
                     Response response = Request.Get(urlString)
                             .addHeader(
                                        HttpHeaders.AUTHORIZATION,
-                                       basicAuthenticationHeader(anno.getUserName(), anno.getPassword()))
+                                       basicAuthenticationHeader(anno.userName(), anno.password()))
                             .execute();
 
                     int code = response.returnResponse().getStatusLine().getStatusCode();

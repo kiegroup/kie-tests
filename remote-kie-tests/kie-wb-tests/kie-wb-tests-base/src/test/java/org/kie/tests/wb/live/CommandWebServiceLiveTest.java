@@ -46,7 +46,7 @@ public class CommandWebServiceLiveTest {
     }
     
     @Test
-    @IgnoreIfGETFails(getUrl="http://localhost:8080/kie-wb/rest/deployment")
+    @IgnoreIfGETFails(url="http://localhost:8080/kie-wb/rest/deployment")
     public void wsTest() throws Exception { 
         KieWbWebServicesIntegrationTestMethods wsTests = new KieWbWebServicesIntegrationTestMethods(); 
         wsTests.startSimpleProcess(deploymentUrl);

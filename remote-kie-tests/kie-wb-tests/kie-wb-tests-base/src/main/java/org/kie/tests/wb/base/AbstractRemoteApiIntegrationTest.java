@@ -368,6 +368,15 @@ public abstract class AbstractRemoteApiIntegrationTest {
         restTests.urlsProcessQueryOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
+
+    @Test
+    @InSequence(REST_SUCCEEDING)
+    public void testRestUrlsProcessImage() throws Exception {
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.urlsProcessImage(deploymentUrl);
+    }
+
     // JMS ------------------------------------------------------------------------------------------------------------------------
 
     @Test
