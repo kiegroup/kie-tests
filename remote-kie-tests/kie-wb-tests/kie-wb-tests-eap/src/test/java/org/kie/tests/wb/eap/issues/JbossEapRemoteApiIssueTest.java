@@ -17,12 +17,18 @@ t  * JBoss, Home of Professional Open Source
  */
 package org.kie.tests.wb.eap.issues;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
+import static org.kie.tests.wb.base.util.TestConstants.REASSIGNMENT_PROCESS_ID;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -38,9 +44,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
+import org.kie.api.runtime.process.ProcessInstance;
+import org.kie.api.task.TaskService;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
+import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule.IgnoreWhenInMavenBuild;
+import org.kie.services.client.api.RemoteRuntimeEngineFactory;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
@@ -63,29 +75,22 @@ public class JbossEapRemoteApiIssueTest {
     @Rule
     public MavenBuildIgnoreRule rule = new MavenBuildIgnoreRule();
 
-    @AfterClass
-    public static void waitForTxOnServer() throws InterruptedException {
-        long sleep = 1000;
-        logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
-        Thread.sleep(sleep);
-    }
+    private static final String USER_ID = MARY_USER;
+    private static final String PASSWORD = MARY_PASSWORD;
+
+    private static final AtomicBoolean deploymentDeployed = new AtomicBoolean(false);
 
     protected void printTestName() {
         String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
         System.out.println( "-=> " + testName );
     }
 
-    private static final String USER_ID = MARY_USER;
-    private static final String PASSWORD = MARY_PASSWORD;
-
-    private static final AtomicBoolean deploymentDeployed = new AtomicBoolean(false);
-
     @Before
     public void deployTestDeployment() throws Exception {
         if( deploymentDeployed.compareAndSet(false, true) ) {
             // deploy
             RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, USER_ID, PASSWORD, 5);
-            deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+            deployUtil.setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE);
 
             String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
             String repositoryName = "tests";
@@ -100,20 +105,68 @@ public class JbossEapRemoteApiIssueTest {
             Thread.sleep(sleep * 1000);
         }
 
-        printTestName();
+    }
+
+    @AfterClass
+    public static void waitForTxOnServer() throws InterruptedException {
+        long sleep = 1000;
+        logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
+        Thread.sleep(sleep);
     }
 
     @Test
     @IgnoreWhenInMavenBuild
     public void issueTest() throws Exception {
+        printTestName();
 
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML)
-                .setStrategy(RuntimeStrategy.SINGLETON)
-                .setTimeoutInSecs(5)
+        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(KJAR_DEPLOYMENT_ID)
+                .addUrl(deploymentUrl)
+                .addUserName(MARY_USER)
+                .addPassword(MARY_PASSWORD)
                 .build();
 
-        restTests.urlsProcessQueryOperations(deploymentUrl, USER_ID, PASSWORD);
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
+        // test
+        ProcessInstance procInst = ksession.startProcess(REASSIGNMENT_PROCESS_ID);
+        long startTime = System.currentTimeMillis();
+
+        assertNotNull( "Null process instance", procInst );
+        assertEquals( "Process instance state", ProcessInstance.STATE_ACTIVE, procInst.getState() );
+        long procInstId = procInst.getId();
+
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+        assertFalse( "No task ids found", taskIds.isEmpty() );
+        assertEquals( "Task ids for this process instance", 1,  taskIds.size() );
+
+        long taskId = taskIds.get(0);
+
+        taskService.start(taskId, MARY_USER);
+        taskService.complete(taskId, MARY_USER, null);
+
+        float timePassedSecs = ((float) (System.currentTimeMillis()-startTime))/1000;
+        System.out.println( "Time passed: " + timePassedSecs);
+        long waitPeriods = 8;
+        long sleepPeriod = 2;
+        while( timePassedSecs > sleepPeriod ) {
+           timePassedSecs -= sleepPeriod;
+           waitPeriods--;
+        }
+
+        int i = 0;
+        float firstSleep = ((sleepPeriod*1000)-(timePassedSecs*1000))/1000;
+        System.out.println("Sleeping " + firstSleep + " secs");
+        Thread.currentThread().sleep((long) (firstSleep*1000));
+        i++;
+
+        for( ; i < waitPeriods; ++i ) {
+            Thread.currentThread().sleep(sleepPeriod*1000);
+            System.out.println( ".. " + (i+1)*sleepPeriod );
+        }
+
+        procInst = ksession.getProcessInstance(procInstId);
+        assertTrue( "Process instance has not completed!", procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED );
     }
 }

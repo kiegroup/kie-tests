@@ -16,6 +16,7 @@ import static org.kie.tests.wb.base.util.TestConstants.JOHN_USER;
 import static org.kie.tests.wb.base.util.TestConstants.KRIS_USER;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.base.util.TestConstants.OBJECT_VARIABLE_PROCESS_ID;
+import static org.kie.tests.wb.base.util.TestConstants.REASSIGNMENT_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.SCRIPT_TASK_VAR_PROCESS_ID;
 
 import java.net.URL;
@@ -587,5 +588,50 @@ public class KieWbGeneralIntegrationTestMethods {
         assertNotNull( "Null variable instance log list", viLogs);
         logger.info("vi logs: " + viLogs.size());
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
+    }
+
+    public static void runReassignmentTaskTes(RuntimeEngine runtimeEngine) throws Exception {
+        KieSession ksession = runtimeEngine.getKieSession();
+        TaskService taskService = runtimeEngine.getTaskService();
+
+        // test
+        ProcessInstance procInst = ksession.startProcess(REASSIGNMENT_PROCESS_ID);
+        long startTime = System.currentTimeMillis();
+
+        assertNotNull( "Null process instance", procInst );
+        assertEquals( "Process instance state", ProcessInstance.STATE_ACTIVE, procInst.getState() );
+        long procInstId = procInst.getId();
+
+        List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+        assertFalse( "No task ids found", taskIds.isEmpty() );
+        assertEquals( "Task ids for this process instance", 1,  taskIds.size() );
+
+        long taskId = taskIds.get(0);
+
+        taskService.start(taskId, MARY_USER);
+        taskService.complete(taskId, MARY_USER, null);
+
+        procInst = ksession.getProcessInstance(procInstId);
+        assertTrue( "Process instance has not completed!", procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED );
+
+        float timePassedSecs = ((float) (System.currentTimeMillis()-startTime))/1000;
+        System.out.println( "Time passed: " + timePassedSecs);
+        long waitPeriods = 10;
+        long sleepPeriod = 2;
+        while( timePassedSecs > sleepPeriod ) {
+           timePassedSecs -= sleepPeriod;
+           waitPeriods--;
+        }
+
+        int i = 0;
+        float firstSleep = ((sleepPeriod*1000)-(timePassedSecs*1000))/1000;
+        System.out.println("Sleeping " + firstSleep + " secs");
+        Thread.currentThread().sleep((long) (firstSleep*1000));
+        i++;
+
+        for( ; i < waitPeriods; ++i ) {
+            Thread.currentThread().sleep(sleepPeriod*1000);
+            System.out.println( ".. " + (i+1)*sleepPeriod );
+        }
     }
 }

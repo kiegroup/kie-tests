@@ -27,6 +27,7 @@ import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.f
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.logger;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runReassignmentTaskTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiCorrelationKeyTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiFunnyCharactersTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
@@ -867,5 +868,12 @@ public class KieWbJmsIntegrationTestMethods implements IntegrationTestMethods {
         RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, user, password);
 
         runRemoteApiHumanTaskCommentTest(runtimeEngine);
+    }
+
+    public void remoteApiReassignmentTask( URL deploymentUrl) throws Exception {
+        // setup
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, MARY_USER, MARY_PASSWORD);
+
+        runReassignmentTaskTest(runtimeEngine);
     }
 }

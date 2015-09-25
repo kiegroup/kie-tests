@@ -368,13 +368,20 @@ public abstract class AbstractRemoteApiIntegrationTest {
         restTests.urlsProcessQueryOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
-
     @Test
     @InSequence(REST_SUCCEEDING)
     public void testRestUrlsProcessImage() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
         restTests.urlsProcessImage(deploymentUrl);
+    }
+
+    @Test
+    @InSequence(REST_SUCCEEDING)
+    public void testRemotApiReassignmentTest() throws Exception {
+        Assume.assumeTrue(doRestTests());
+        printTestName();
+        restTests.remoteApiReassignmentTask(deploymentUrl);
     }
 
     // JMS ------------------------------------------------------------------------------------------------------------------------
@@ -474,4 +481,13 @@ public abstract class AbstractRemoteApiIntegrationTest {
         printTestName();
         jmsTests.queueSendEmptyRequest(MARY_USER, MARY_PASSWORD);
     }
+
+    @Test
+    @InSequence(REST_SUCCEEDING)
+    public void testJmsRemotApiReassignmentTest() throws Exception {
+        Assume.assumeTrue(jmsQueuesAvailable());
+        printTestName();
+        jmsTests.remoteApiReassignmentTask(deploymentUrl);
+    }
+
 }

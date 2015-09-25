@@ -6,7 +6,7 @@ import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.r
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiHumanTaskOwnTypeTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.IMAGE_PROCESS_ID;
@@ -430,5 +430,19 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         procInst = ksession.getProcessInstance(procInstId);
         assertTrue( "Process instance has not completed!", procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED );
     }
+
+    @Test
+    public void runReassignmentTest() throws Exception {
+        // setup
+        Map<String, ResourceType> resources = new HashMap<String, ResourceType>();
+        resources.put("repo/test/reassignmentTask.bpmn2", ResourceType.BPMN2);
+        RuntimeManager runtimeManager = createRuntimeManager(resources);
+        RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
+
+        reassignmentTaskTest(runtimeEngine);
+    }
+
+
+
 
 }

@@ -24,6 +24,7 @@ public class TestConstants {
     public static final String HUMAN_TASK_OWN_TYPE_ID       = "org.test.kjar.HumanTaskWithOwnType";
     public static final String CLASSPATH_OBJECT_PROCESS_ID  = "org.test.kjar.classpath.process";
     public static final String IMAGE_PROCESS_ID             = "org.test.kjar.image";
+    public static final String REASSIGNMENT_PROCESS_ID      = "org.test.kjar.reassignment";
 
     /**
      * User/password

@@ -31,6 +31,7 @@ import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.f
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskSummaryByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runReassignmentTaskTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiCorrelationKeyTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiFunnyCharactersTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
@@ -1590,5 +1591,11 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         runRemoteApiHumanTaskCommentTest(runtimeEngine);
     }
 
-    public void url
+    public void remoteApiReassignmentTask( URL deploymentUrl) throws Exception {
+        // setup
+        setRestInfo(deploymentUrl, MARY_USER, MARY_PASSWORD);
+        RuntimeEngine runtimeEngine = getRemoteRuntimeEngine(deploymentUrl, MARY_USER, MARY_PASSWORD);
+
+        runReassignmentTaskTest(runtimeEngine);
+    }
 }
