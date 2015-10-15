@@ -83,6 +83,7 @@ public class JBPMController {
                 ex.printStackTrace();
             }
         }
+        instance.clearCustomEntries();
         return instance;
     }
 
