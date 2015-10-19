@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +85,6 @@ public class JBPMController {
                 ex.printStackTrace();
             }
         }
-        instance.clearCustomEntries();
         return instance;
     }
 
@@ -91,6 +92,36 @@ public class JBPMController {
         if (persistence) {
             ds = setupPoolingDataSource();
             emf = Persistence.createEntityManagerFactory(persistenceUnitName);
+            if (JBPMTestConfig.getInstance().getDatabaseName().equals("perfdb")) {
+                // clear tables in OracleDB
+                try {
+                    Connection conn = ds.getConnection();
+                    conn.setAutoCommit(false);
+
+                    Statement stmt = null;
+                    try {
+                        stmt = conn.createStatement();
+                        stmt.execute(
+                                "declare   begin  for c1 in (select table_name, constraint_name from user_constraints) loop     begin   "
+                                        + "execute immediate (\'alter table \'||c1.table_name||\' disable constraint \'||c1.constraint_name);   "
+                                        + "  end; end loop;  for t1 in (select table_name from user_tables) loop     begin         execute immediate "
+                                        + "(\'truncate table \'||t1.table_name);     end; end loop;  for c2 in (select table_name, constraint_name "
+                                        + "from user_constraints) loop     begin         execute immediate (\'alter table \'||c2.table_name||\' "
+                                        + "enable constraint \'||c2.constraint_name);     end; end loop;  end; ");
+                    } finally {
+                        if (stmt != null) {
+                            try {
+                                stmt.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    conn.commit();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
         cleanupSingletonSessionId();
 
@@ -112,7 +143,8 @@ public class JBPMController {
             }
             try {
                 InitialContext context = new InitialContext();
-                UserTransaction ut = (UserTransaction) context.lookup(JtaTransactionManager.DEFAULT_USER_TRANSACTION_NAME);
+                UserTransaction ut = (UserTransaction) context.lookup(
+                        JtaTransactionManager.DEFAULT_USER_TRANSACTION_NAME);
                 if (ut.getStatus() != Status.STATUS_NO_TRANSACTION) {
                     ut.setRollbackOnly();
                     ut.rollback();
@@ -178,8 +210,8 @@ public class JBPMController {
      */
     protected static Properties getDefaultProperties() {
         Properties defaultProperties;
-        String[] keyArr = { "serverName", "portNumber", "databaseName", "url", "user", "password", "driverClassName", "className", "maxPoolSize",
-                "allowLocalTransactions" };
+        String[] keyArr = { "serverName", "portNumber", "databaseName", "url", "user", "password", "driverClassName",
+                "className", "maxPoolSize", "allowLocalTransactions" };
         String[] defaultPropArr = { "", "", "", "jdbc:h2:mem:test;MVCC=true", "sa", "", "org.h2.Driver",
                 "bitronix.tm.resource.jdbc.lrc.LrcXADataSource", "16", "true" };
         if (keyArr.length != defaultPropArr.length) {
@@ -304,7 +336,8 @@ public class JBPMController {
      * @return new instance of RuntimeManager
      */
     public RuntimeManager createRuntimeManager(String... process) {
-        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy().toUpperCase()), null, process);
+        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy()
+                .toUpperCase()), null, process);
     }
 
     /**
@@ -343,7 +376,8 @@ public class JBPMController {
      * @return new instance of RuntimeManager
      */
     public RuntimeManager createRuntimeManager(Map<String, ResourceType> resources) {
-        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy().toUpperCase()), resources, null);
+        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy()
+                .toUpperCase()), resources, null);
     }
 
     /**
@@ -361,7 +395,8 @@ public class JBPMController {
      * @return new instance of RuntimeManager
      */
     protected RuntimeManager createRuntimeManager(Map<String, ResourceType> resources, String identifier) {
-        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy().toUpperCase()), resources, identifier);
+        return createRuntimeManager(Strategy.valueOf(JBPMTestConfig.getInstance().getRuntimeManagerStrategy()
+                .toUpperCase()), resources, identifier);
     }
 
     /**
@@ -396,7 +431,8 @@ public class JBPMController {
      *            - identifies the runtime manager
      * @return new instance of RuntimeManager
      */
-    protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources, String identifier) {
+    protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources,
+            String identifier) {
         if (manager != null) {
             return manager;
         }
@@ -443,8 +479,8 @@ public class JBPMController {
 
                     });
         } else {
-            builder = RuntimeEnvironmentBuilder.Factory.get().newDefaultInMemoryBuilder()
-                    .registerableItemsFactory(new DefaultRegisterableItemsFactory() {
+            builder = RuntimeEnvironmentBuilder.Factory.get().newDefaultInMemoryBuilder().registerableItemsFactory(
+                    new DefaultRegisterableItemsFactory() {
 
                         @Override
                         public Map<String, WorkItemHandler> getWorkItemHandlers(RuntimeEngine runtime) {
@@ -484,7 +520,8 @@ public class JBPMController {
                     });
         }
 
-        builder.addEnvironmentEntry(EnvironmentName.USE_PESSIMISTIC_LOCKING, JBPMTestConfig.getInstance().isPessimisticLocking());
+        builder.addEnvironmentEntry(EnvironmentName.USE_PESSIMISTIC_LOCKING, JBPMTestConfig.getInstance()
+                .isPessimisticLocking());
         builder.userGroupCallback(userGroupCallback);
 
         for (Entry<String, Object> envEntry : customEnvironmentEntries.entrySet()) {
@@ -517,8 +554,8 @@ public class JBPMController {
      *            - identifies the runtime manager
      * @return new instance of RuntimeManager
      */
-    protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources, RuntimeEnvironment environment,
-            String identifier) {
+    protected RuntimeManager createRuntimeManager(Strategy strategy, Map<String, ResourceType> resources,
+            RuntimeEnvironment environment, String identifier) {
         if (manager != null) {
             return manager;
         }

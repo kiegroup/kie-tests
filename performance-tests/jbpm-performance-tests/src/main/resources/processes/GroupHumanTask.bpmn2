@@ -6,11 +6,6 @@
       <bpmn2:outgoing>_238EE188-9791-441B-99CD-C273F7416113</bpmn2:outgoing>
     </bpmn2:startEvent>
     <bpmn2:userTask id="_FBC7AA37-AC05-434A-98B3-C2CDB1BA1267" drools:selectable="true" drools:scriptFormat="http://www.java.com/java" color:background-color="#fafad2" color:border-color="#000000" color:color="#000000" name="Task for group engineering">
-      <bpmn2:extensionElements>
-        <drools:metaData drools:name="elementname">
-          <drools:metaValue><![CDATA[Task1]]></drools:metaValue>
-        </drools:metaData>
-      </bpmn2:extensionElements>
       <bpmn2:incoming>_238EE188-9791-441B-99CD-C273F7416113</bpmn2:incoming>
       <bpmn2:outgoing>_F15B511A-1099-4E26-96A9-00FA2860E7A6</bpmn2:outgoing>
       <bpmn2:ioSpecification id="_hfUoIDFMEeWFeaTLgP02Qw">
