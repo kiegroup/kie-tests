@@ -1020,7 +1020,6 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                 || procDef.getDeploymentId().isEmpty());
         assertFalse("Process def " + id + ": null name", procDef.getName() == null );
         assertFalse("Process def " + id + ": null pkg name", procDef.getPackageName() == null || procDef.getPackageName().isEmpty());
-        assertFalse("Process def " + id + ": null version", procDef.getVersion() != null );
     }
 
     public void urlsDeploymentProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
@@ -1048,7 +1047,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         Map<String, String> queryParams = new HashMap<String, String>(1);
         queryParams.put("params", null);
 
-        RestUtil.getQuery(deploymentUrl, "query/runtime/task", contentType, 400, user, password, queryParams);
+        RestUtil.getQuery(deploymentUrl, "rest/query/runtime/task", contentType, 400, user, password, queryParams);
 
         KieSession ksession = getRemoteRuntimeEngine(deploymentUrl, user, password).getKieSession();
 

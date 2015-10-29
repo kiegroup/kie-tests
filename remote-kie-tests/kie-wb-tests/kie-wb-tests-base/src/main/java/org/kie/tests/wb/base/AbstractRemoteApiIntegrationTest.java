@@ -120,7 +120,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsHistoryLogs() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -169,7 +169,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsHttpURLConnectionAcceptHeaderIsFixed() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -185,7 +185,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiExtraJaxbClasses() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -193,7 +193,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiRuleTaskProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -201,7 +201,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsVariableHistory() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -209,7 +209,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsGetRealProcessVariable() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -241,7 +241,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestRemoteApiHumanTaskOwnType() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -257,7 +257,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_ERROR)
+    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsCreateMemoryLeakOnTomcat() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -289,7 +289,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_SUCCEEDING)
+    @InSequence(REST_ERROR)
     public void testRestRemoteApiCorrelationKeyOperations() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();

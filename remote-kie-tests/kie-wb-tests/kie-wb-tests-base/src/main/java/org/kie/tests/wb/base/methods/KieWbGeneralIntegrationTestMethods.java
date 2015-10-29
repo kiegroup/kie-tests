@@ -453,14 +453,6 @@ public class KieWbGeneralIntegrationTestMethods {
     public static void runRemoteApiFunnyCharactersTest(RuntimeEngine runtimeEngine) throws Exception {
         KieSession ksession = runtimeEngine.getKieSession();
 
-        // verify that property is set on client side
-        Field field = JaxbUnknownAdapter.class.getDeclaredField("ENCODE_STRINGS");
-        field.setAccessible(true);
-        Object fieldObj = field.get(null);
-        assertTrue( "ENCODE_STRINGS field is a " + fieldObj.getClass().getName(), fieldObj instanceof Boolean );
-        Boolean encodeStringsBoolean = (Boolean) fieldObj;
-        assertTrue( "ENCODE_STRINGS is '" + encodeStringsBoolean, encodeStringsBoolean );
-
         String [] vals = {
             "a long string containing spaces and other characters +ěš@#$%^*()_{}\\/.,",
             "Ampersand in the string &.",

@@ -22,11 +22,6 @@ public class KieWbWarJbossEapDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
-                // data services NPE?
-                { "org.jbpm", "jbpm-kie-services" },
-                // map / set serialization
-                { "org.drools", "drools-core" },
-
                 // kie-remote
                 { "org.kie.remote", "kie-remote-jaxb" },
                 { "org.kie.remote", "kie-remote-services" }
