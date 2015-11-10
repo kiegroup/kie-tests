@@ -590,7 +590,7 @@ public class KieWbGeneralIntegrationTestMethods {
         assertTrue( "Variable instance log list is empty", ! viLogs.isEmpty() );
     }
 
-    public static void runReassignmentTaskTes(RuntimeEngine runtimeEngine) throws Exception {
+    public static void runReassignmentTaskTest(RuntimeEngine runtimeEngine) throws Exception {
         KieSession ksession = runtimeEngine.getKieSession();
         TaskService taskService = runtimeEngine.getTaskService();
 
