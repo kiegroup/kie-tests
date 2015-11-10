@@ -17,22 +17,13 @@ t  * JBoss, Home of Professional Open Source
  */
 package org.kie.tests.wb.eap.issues;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
-import static org.kie.tests.wb.base.util.TestConstants.REASSIGNMENT_PROCESS_ID;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
 import java.net.URL;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.ws.rs.core.MediaType;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -40,20 +31,13 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kie.api.runtime.KieSession;
-import org.kie.api.runtime.manager.RuntimeEngine;
-import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.task.TaskService;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
-import org.kie.remote.client.api.RemoteRestRuntimeEngineBuilder;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule.IgnoreWhenInMavenBuild;
-import org.kie.services.client.api.RemoteRuntimeEngineFactory;
-import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,38 +59,6 @@ public class JbossEapRemoteApiIssueTest {
     @Rule
     public MavenBuildIgnoreRule rule = new MavenBuildIgnoreRule();
 
-    private static final String USER_ID = MARY_USER;
-    private static final String PASSWORD = MARY_PASSWORD;
-
-    private static final AtomicBoolean deploymentDeployed = new AtomicBoolean(false);
-
-    protected void printTestName() {
-        String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
-        System.out.println( "-=> " + testName );
-    }
-
-    @Before
-    public void deployTestDeployment() throws Exception {
-        if( deploymentDeployed.compareAndSet(false, true) ) {
-            // deploy
-            RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, USER_ID, PASSWORD, 5);
-            deployUtil.setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE);
-
-            String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-            String repositoryName = "tests";
-            String project = "integration-tests";
-            String deploymentId = KJAR_DEPLOYMENT_ID;
-            String orgUnit = UUID.randomUUID().toString();
-            orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
-            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
-
-            int sleep = 2;
-            logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
-            Thread.sleep(sleep * 1000);
-        }
-
-    }
-
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
@@ -114,59 +66,44 @@ public class JbossEapRemoteApiIssueTest {
         Thread.sleep(sleep);
     }
 
+    protected void printTestName() {
+        String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
+        System.out.println( "-=> " + testName );
+    }
+
     @Test
     @IgnoreWhenInMavenBuild
     public void issueTest() throws Exception {
         printTestName();
+        String user = MARY_USER;
+        String password = MARY_PASSWORD;
 
-        RuntimeEngine runtimeEngine = RemoteRuntimeEngineFactory.newRestBuilder()
-                .addDeploymentId(KJAR_DEPLOYMENT_ID)
-                .addUrl(deploymentUrl)
-                .addUserName(MARY_USER)
-                .addPassword(MARY_PASSWORD)
+        // deploy
+
+        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
+        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+
+        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+        String repositoryName = "tests";
+        String project = "integration-tests";
+        String deploymentId = KJAR_DEPLOYMENT_ID;
+        String orgUnit = UUID.randomUUID().toString();
+        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
+        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+
+        int sleep = 2;
+        logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
+        Thread.sleep(sleep * 1000);
+
+        /**
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                .setMediaType(MediaType.APPLICATION_XML)
+                .setStrategy(RuntimeStrategy.SINGLETON)
+                .setTimeoutInSecs(5)
                 .build();
+                **/
 
-        KieSession ksession = runtimeEngine.getKieSession();
-        TaskService taskService = runtimeEngine.getTaskService();
-
-        // test
-        ProcessInstance procInst = ksession.startProcess(REASSIGNMENT_PROCESS_ID);
-        long startTime = System.currentTimeMillis();
-
-        assertNotNull( "Null process instance", procInst );
-        assertEquals( "Process instance state", ProcessInstance.STATE_ACTIVE, procInst.getState() );
-        long procInstId = procInst.getId();
-
-        List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
-        assertFalse( "No task ids found", taskIds.isEmpty() );
-        assertEquals( "Task ids for this process instance", 1,  taskIds.size() );
-
-        long taskId = taskIds.get(0);
-
-        taskService.start(taskId, MARY_USER);
-        taskService.complete(taskId, MARY_USER, null);
-
-        float timePassedSecs = ((float) (System.currentTimeMillis()-startTime))/1000;
-        System.out.println( "Time passed: " + timePassedSecs);
-        long waitPeriods = 8;
-        long sleepPeriod = 2;
-        while( timePassedSecs > sleepPeriod ) {
-           timePassedSecs -= sleepPeriod;
-           waitPeriods--;
-        }
-
-        int i = 0;
-        float firstSleep = ((sleepPeriod*1000)-(timePassedSecs*1000))/1000;
-        System.out.println("Sleeping " + firstSleep + " secs");
-        Thread.currentThread().sleep((long) (firstSleep*1000));
-        i++;
-
-        for( ; i < waitPeriods; ++i ) {
-            Thread.currentThread().sleep(sleepPeriod*1000);
-            System.out.println( ".. " + (i+1)*sleepPeriod );
-        }
-
-        procInst = ksession.getProcessInstance(procInstId);
-        assertTrue( "Process instance has not completed!", procInst == null || procInst.getState() == ProcessInstance.STATE_COMPLETED );
+        new KieWbWebServicesIntegrationTestMethods().startSimpleProcess(deploymentUrl);
     }
 }

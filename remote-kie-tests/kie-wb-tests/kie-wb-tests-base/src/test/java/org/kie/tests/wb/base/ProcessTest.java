@@ -3,10 +3,11 @@ package org.kie.tests.wb.base;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.findTaskIdByProcessInstanceId;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupIdTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runHumanTaskGroupVarAssignTest;
+import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runReassignmentTaskTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiGroupAssignmentEngineeringTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRemoteApiHumanTaskOwnTypeTest;
 import static org.kie.tests.wb.base.methods.KieWbGeneralIntegrationTestMethods.runRuleTaskProcess;
-import static org.kie.tests.wb.base.util.TestConstants.*;
+import static org.kie.tests.wb.base.util.TestConstants.ARTIFACT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.GROUP_ID;
 import static org.kie.tests.wb.base.util.TestConstants.HUMAN_TASK_VAR_PROCESS_ID;
 import static org.kie.tests.wb.base.util.TestConstants.IMAGE_PROCESS_ID;
@@ -439,10 +440,8 @@ public class ProcessTest extends JbpmJUnitBaseTestCase {
         RuntimeManager runtimeManager = createRuntimeManager(resources);
         RuntimeEngine runtimeEngine = runtimeManager.getRuntimeEngine(null);
 
-        reassignmentTaskTest(runtimeEngine);
+        runReassignmentTaskTest(runtimeEngine);
     }
-
-
 
 
 }
