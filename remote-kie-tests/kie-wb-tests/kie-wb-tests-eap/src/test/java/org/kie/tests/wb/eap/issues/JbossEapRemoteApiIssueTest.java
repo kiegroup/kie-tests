@@ -22,6 +22,7 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -40,12 +41,13 @@ import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule;
 import org.kie.remote.tests.base.unit.MavenBuildIgnoreRule.IgnoreWhenInMavenBuild;
 import org.kie.tests.wb.base.methods.KieWbRestIntegrationTestMethods;
+import org.kie.tests.wb.base.methods.KieWbWebServicesIntegrationTestMethods;
 import org.kie.tests.wb.base.methods.RepositoryDeploymentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunAsClient
-@RunWith(Arquillian.class)
+//@RunAsClient
+//@RunWith(Arquillian.class)
 public class JbossEapRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
@@ -57,6 +59,13 @@ public class JbossEapRemoteApiIssueTest {
 
     @ArquillianResource
     URL deploymentUrl;
+    {
+        try {
+            deploymentUrl = new URL("http://localhost:8080/business-central/");
+        } catch( MalformedURLException murle ) {
+            throw new IllegalStateException("Unable to create URL: " + murle.getMessage(), murle);
+        }
+    }
 
     @Rule
     public MavenBuildIgnoreRule rule = new MavenBuildIgnoreRule();
@@ -81,7 +90,10 @@ public class JbossEapRemoteApiIssueTest {
         String password = MARY_PASSWORD;
 
         // deploy
+        System.setProperty("http.maxDirects", "2");
 
+        boolean deploy = false;
+        if( deploy ) {
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
         deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
@@ -96,14 +108,17 @@ public class JbossEapRemoteApiIssueTest {
         int sleep = 2;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
         Thread.sleep(sleep * 1000);
+        }
 
-        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-                .setMediaType(MediaType.APPLICATION_XML)
-                .setStrategy(RuntimeStrategy.SINGLETON)
-                .setTimeoutInSecs(5)
-                .build();
+//        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+//                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+//                .setMediaType(MediaType.APPLICATION_XML)
+//                .setStrategy(RuntimeStrategy.SINGLETON)
+//                .setTimeoutInSecs(5)
+//                .build();
 
-        restTests.urlsStartScriptProcess(deploymentUrl, user, password);
+        KieWbWebServicesIntegrationTestMethods webserviceTests = new KieWbWebServicesIntegrationTestMethods();
+
+//        webserviceTests.startSimpleProcess(deploymentUrl);
     }
 }
