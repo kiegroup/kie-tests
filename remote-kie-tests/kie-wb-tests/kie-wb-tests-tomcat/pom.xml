@@ -14,7 +14,7 @@
   <name>KIE Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <tomcat.home>${project.build.directory}/tomcat-${version.org.apache.tomcat}</tomcat.home>
+    <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
 
   <dependencies>

@@ -22,6 +22,7 @@ import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -81,7 +82,10 @@ public class JbossEapRemoteApiIssueTest {
         String password = MARY_PASSWORD;
 
         // deploy
+        System.setProperty("http.maxDirects", "2");
 
+        boolean deploy = false;
+        if( deploy ) {
         RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
         deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
@@ -96,6 +100,7 @@ public class JbossEapRemoteApiIssueTest {
         int sleep = 2;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
         Thread.sleep(sleep * 1000);
+        }
 
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
@@ -104,6 +109,5 @@ public class JbossEapRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
 
-        restTests.urlsStartScriptProcess(deploymentUrl, user, password);
     }
 }
