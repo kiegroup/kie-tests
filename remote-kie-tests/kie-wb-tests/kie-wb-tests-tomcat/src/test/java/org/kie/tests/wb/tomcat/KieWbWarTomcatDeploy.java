@@ -12,8 +12,8 @@ public class KieWbWarTomcatDeploy {
     protected static final Logger logger = LoggerFactory.getLogger(KieWbWarTomcatDeploy.class);
 
     private static final String classifier = "tomcat7";
-    
-    static WebArchive createTestWar() {
+
+    public static WebArchive createTestWar() {
         // Import kie-wb war
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
@@ -23,17 +23,17 @@ public class KieWbWarTomcatDeploy {
         replaceJars(war, PROJECT_VERSION, jarsToReplace);
 
         boolean replaceWebXml = false;
-        if( replaceWebXml ) { 
+        if( replaceWebXml ) {
           war.delete("WEB-INF/web.xml");
           war.addAsWebResource("war/web.xml");
         }
-        
+
         return war;
     }
 
-    protected void printTestName() { 
+    protected void printTestName() {
         StackTraceElement ste = new Throwable().getStackTrace()[1];
         logger.info( "] Starting " + ste.getMethodName());
     }
-    
+
 }

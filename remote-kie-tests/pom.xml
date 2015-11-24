@@ -246,8 +246,8 @@
       <id>integration-tests</id>
       <properties>
         <!--  eap -->
-        <override.version.org.jboss.as>7.5.2.Final-redhat-2</override.version.org.jboss.as>
-        <version.org.jboss.as.dist>7.5.2.Final-redhat-2</version.org.jboss.as.dist>
+        <override.version.org.jboss.as>7.5.4.Final-redhat-3</override.version.org.jboss.as>
+        <version.org.jboss.as.dist>${override.version.org.jboss.as}</version.org.jboss.as.dist>
         <jboss.server.name>jboss-eap-6.4</jboss.server.name> 
       </properties>
     </profile>

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.tests.wb.tomcat;
+package org.kie.tests.wb.tomcat.issues;
 
 import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
