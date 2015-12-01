@@ -1054,7 +1054,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
         Map<String, String> queryParams = new HashMap<String, String>(1);
 
-        RestUtil.getQuery(deploymentUrl, "rest/query/runtime/task", contentType, 400, user, password, queryParams);
+        RestUtil.getQuery(deploymentUrl, "rest/query/runtime/task", contentType, 200, user, password, queryParams);
 
         queryParams.clear();
         queryParams.put("piid", "" + procInstId);
