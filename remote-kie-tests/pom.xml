@@ -23,19 +23,10 @@
   </modules>
 
   <properties>
-    <shrinkwrap.resolver.version>2.1.1</shrinkwrap.resolver.version> 
-    <arquillian.version>1.1.5.Final</arquillian.version> 
-    
-    <!-- aether/maven, mostly for arquillian/shrinkwrap-->
-    <override.version.org.apache.maven>3.1.1</override.version.org.apache.maven>
-    <override.version.org.eclipse.aether>0.9.0.M2</override.version.org.eclipse.aether>
-    
     <!-- tomcat 7.0.32 + arq-tomcat 1.0.0.CR6 is the magic combination that works.. :/ -->
-    <version.org.apache.tomcat>7.0.55</version.org.apache.tomcat>
+    <version.org.apache.tomcat>7.0.65</version.org.apache.tomcat>
     <version.org.jboss.arquillian.container.tomcat>1.0.0.CR7</version.org.jboss.arquillian.container.tomcat>
     
-    <!-- jetty -->    
-    <version.org.mortbay.jetty>6.1.12</version.org.mortbay.jetty>
   </properties>
 
   <dependencyManagement>
@@ -80,86 +71,8 @@
         <version>${project.version}</version>
         <classifier>sources</classifier>
       </dependency>
-      
-      <!-- apache maven--> 
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-model</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-model-builder</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-repository-metadata</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-settings</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-settings-builder</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-aether-provider</artifactId>
-        <version>${override.version.org.apache.maven}</version>
-        <scope>test</scope>
-      </dependency>
 
-      <!-- eclipse aether -->
-      <dependency>
-       <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-api</artifactId>
-        <version>${override.version.org.eclipse.aether}</version>
-      </dependency>
-      <dependency>
-       <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-spi</artifactId>
-        <version>${override.version.org.eclipse.aether}</version>
-      </dependency>
-      <dependency>
-       <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-impl</artifactId>
-        <version>${override.version.org.eclipse.aether}</version>
-      </dependency>
-      <dependency>
-       <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-util</artifactId>
-        <version>${override.version.org.eclipse.aether}</version>
-      </dependency>
-
-      <!-- arquillian -->
-      <!-- Override dependency resolver with test version. This must go *BEFORE* the Arquillian BOM. -->
-      <dependency>
-        <groupId>org.jboss.shrinkwrap.resolver</groupId>
-        <artifactId>shrinkwrap-resolver-bom</artifactId>
-        <version>${shrinkwrap.resolver.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-      <!-- arquillian: contains all versions for specific arquillian artifacts -->
-      <dependency>
-        <groupId>org.jboss.arquillian</groupId>
-        <artifactId>arquillian-bom</artifactId>
-        <version>${arquillian.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
-     <!--  tomcat -->
+      <!--  tomcat -->
       <dependency>
         <groupId>org.jboss.arquillian.container</groupId>
         <artifactId>arquillian-tomcat-managed-7</artifactId>
@@ -173,14 +86,7 @@
         <type>zip</type>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <!-- ARQ-1456 -->
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.6</version>
-        <scope>test</scope>
-      </dependency>
-      
+
       <!-- jboss as/eap -->
       <dependency>
         <groupId>org.jboss.as</groupId>
@@ -189,29 +95,14 @@
         <type>zip</type>
       </dependency>
       
-      <!-- jetty -->
-     <dependency>
-        <groupId>org.jboss.arquillian.container</groupId>
-        <artifactId>arquillian-jetty-embedded-6.1</artifactId>
-        <version>1.0.0.CR2</version>
-        <scope>test</scope>
-      </dependency>
-      
       <!--  wildfly -->
       <dependency>
         <groupId>org.wildfly</groupId>
         <artifactId>wildfly-arquillian-container-managed</artifactId>
-        <version>8.1.0.Final</version>
+        <version>8.2.1.Final</version>
         <scope>test</scope>
       </dependency>
      
-      <!-- httpcomponents -->
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>fluent-hc</artifactId>
-        <version>${version.org.apache.httpcomponents.httpclient}</version>
-      </dependency>
-
       <dependency>
         <groupId>io.fastjson</groupId>
         <artifactId>boon</artifactId>
@@ -226,18 +117,6 @@
         <version>1.4.0.Final</version>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>org.jboss.byteman</groupId>
-        <artifactId>byteman-bmunit</artifactId>
-        <version>2.2.0.1</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.180</version>
-        <scope>test</scope>
-      </dependency> 
     </dependencies>
   </dependencyManagement>
 
@@ -246,8 +125,8 @@
       <id>integration-tests</id>
       <properties>
         <!--  eap -->
-        <override.version.org.jboss.as>7.5.2.Final-redhat-2</override.version.org.jboss.as>
-        <version.org.jboss.as.dist>7.5.2.Final-redhat-2</version.org.jboss.as.dist>
+        <override.version.org.jboss.as>7.5.4.Final-redhat-3</override.version.org.jboss.as>
+        <version.org.jboss.as.dist>7.5.4.Final-redhat-3</version.org.jboss.as.dist>
         <jboss.server.name>jboss-eap-6.4</jboss.server.name> 
       </properties>
     </profile>

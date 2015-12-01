@@ -14,7 +14,7 @@
   <name>KIE Workbench Integration Tests :: Tomcat 7</name>
 
   <properties>
-    <tomcat.home>${project.build.directory}/tomcat-${version.org.apache.tomcat}</tomcat.home>
+    <tomcat.home>${project.build.directory}/apache-tomcat-${version.org.apache.tomcat}</tomcat.home>
   </properties>
 
   <dependencies>
@@ -290,7 +290,7 @@
         <artifactId>replacer</artifactId>
         <executions>
           <execution>
-            <id>fix-jboss-standalone-xml</id>
+            <id>fix-server-xml</id>
             <phase>process-test-resources</phase>
             <goals>
               <goal>replace</goal>

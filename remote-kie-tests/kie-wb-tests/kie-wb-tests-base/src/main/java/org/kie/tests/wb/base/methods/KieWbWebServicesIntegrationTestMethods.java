@@ -52,6 +52,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         assertTrue( "No exception thrown when unauthorized client was created!", exceptionThrown);
 
         CommandWebService commandWebService = createDefaultClient(deploymentUrl, MARY_USER, MARY_PASSWORD);
+
         startSimpleProcess(commandWebService, deploymentUrl, MARY_USER);
     }
 
@@ -60,6 +61,8 @@ public class KieWbWebServicesIntegrationTestMethods {
         StartProcessCommand spc = new StartProcessCommand();
         spc.setProcessId(HUMAN_TASK_PROCESS_ID);
         JaxbStringObjectPairArray map = new JaxbStringObjectPairArray();
+        spc.setParameter(map);
+
         JaxbStringObjectPair keyValue = new JaxbStringObjectPair();
         keyValue.setKey("myobject");
         keyValue.setValue(new MyType("variable", 29));
@@ -83,6 +86,8 @@ public class KieWbWebServicesIntegrationTestMethods {
         GetTasksByProcessInstanceIdCommand gtbic = new GetTasksByProcessInstanceIdCommand();
         gtbic.setProcessInstanceId(procInstId);
         gtbic.setUserId(user);
+
+        commandWebService = createDefaultClient(deploymentUrl, "Nemo", "Underwater");
 
         // webservice
         JaxbLongListResponse jllr = doWebserviceRequest(commandWebService, gtbic, "get tasks by", JaxbLongListResponse.class );
@@ -145,6 +150,7 @@ public class KieWbWebServicesIntegrationTestMethods {
         assertTrue( "Unauthorized webservice actions should not have succeeded! [" + unauthClientCreated + "/" + unauthClientCallSucceeded + "]",
                 ! unauthClientCreated && ! unauthClientCallSucceeded );
     }
+
     private static <T> T doWebserviceRequest(CommandWebService service, Command<?> cmd, String oper, Class<T> respClass) throws Exception {
         // Get a response from the WebService
         JaxbCommandsRequest req = new JaxbCommandsRequest(KJAR_DEPLOYMENT_ID, cmd);

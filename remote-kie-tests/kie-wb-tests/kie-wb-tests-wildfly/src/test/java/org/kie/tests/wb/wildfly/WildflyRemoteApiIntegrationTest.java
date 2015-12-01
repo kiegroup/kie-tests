@@ -40,7 +40,7 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
 
     @Override
     public boolean doDeploy() {
-        return false;
+        return true;
     }
 
     @Override
@@ -65,6 +65,6 @@ public class WildflyRemoteApiIntegrationTest extends AbstractRemoteApiIntegratio
 
     @Override
     public int getTimeoutInSecs() {
-        return 7*1000;
+        return 5*1000;
     }
 }
