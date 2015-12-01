@@ -1,10 +1,10 @@
 /*
  * JBoss, Home of Professional Open Source
- * 
+ *
  * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,12 +39,12 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     public static Archive<?> createWar() {
         return createTestWar();
     }
- 
-    public boolean doDeploy() { 
+
+    public boolean doDeploy() {
         return true;
     }
- 
-    public String getContentType() { 
+
+    public String getContentType() {
         return MediaType.APPLICATION_XML;
     }
 
@@ -62,18 +62,18 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     public RuntimeStrategy getStrategy() {
         return RuntimeStrategy.SINGLETON;
     }
-   
+
     @Override
     public int getTimeoutInSecs() {
         return 4;
     }
-    
-    public void noLiveSetDeploymentUrl() { 
+
+    public void noLiveSetDeploymentUrl() {
         // Modify this string to match your kie-wb/BPMS installation
         String urlString = "http://localhost:8080/business-central/";
-        try { 
+        try {
             this.deploymentUrl = new URL(urlString);
-        } catch( Exception e ) { 
+        } catch( Exception e ) {
             System.err.println( "The following URL is not a valid URL: '" + urlString + "'");
             e.printStackTrace();
         }

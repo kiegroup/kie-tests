@@ -23,7 +23,7 @@
   <properties>
     <!-- DO NOT TOUCH THESE PROPERTIES -->
 
-    <version.org.wildfly>8.2.0.Final</version.org.wildfly>
+    <version.org.wildfly>8.2.1.Final</version.org.wildfly>
     <wildfly.server.name>wildfly-${version.org.wildfly}</wildfly.server.name>
   </properties>
 
@@ -131,11 +131,6 @@
         <artifactId>xnio-api</artifactId>
         <version>3.2.2.Final</version>
       </dependency>
-      <dependency>
-       <groupId>org.jboss.xnio</groupId>
-       <artifactId>xnio-nio</artifactId>
-       <version>3.2.2.Final</version>
-     </dependency>
     </dependencies>
   </dependencyManagement>
   

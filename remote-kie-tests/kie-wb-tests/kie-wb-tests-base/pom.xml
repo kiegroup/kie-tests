@@ -17,8 +17,8 @@
     <dependency>
       <groupId>org.kie.tests.remote</groupId>
       <artifactId>remote-kie-tests-util</artifactId>
-     </dependency>
-     
+    </dependency>
+
     <dependency>
       <groupId>org.kie</groupId>
       <artifactId>kie-api</artifactId>
@@ -27,7 +27,7 @@
       <groupId>org.kie</groupId>
       <artifactId>kie-internal</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.kie.remote</groupId>
       <artifactId>kie-remote-client</artifactId>
@@ -44,11 +44,11 @@
       <groupId>org.guvnor</groupId>
       <artifactId>guvnor-rest-client</artifactId>
     </dependency>
-   
+
     <dependency>
       <groupId>org.drools</groupId>
       <artifactId>drools-core</artifactId>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-flow</artifactId>
@@ -61,8 +61,8 @@
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-human-task-core</artifactId>
     </dependency>
-    
-    <!-- KModuleDeploymentUnit --> 
+
+    <!-- KModuleDeploymentUnit -->
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-kie-services</artifactId>
@@ -99,7 +99,7 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>fluent-hc</artifactId>
     </dependency>
-    
+
     <!-- JMS -->
     <dependency>
       <groupId>org.hornetq</groupId>
@@ -109,7 +109,7 @@
       <groupId>org.hornetq</groupId>
       <artifactId>hornetq-jms-client</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-core</artifactId>
@@ -123,7 +123,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
-  
+
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -132,23 +132,23 @@
 
     <!-- other -->
     <dependency>
-      <groupId>commons-io</groupId> 
+      <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
 
-    <!-- main: testing -->    
+    <!-- main: testing -->
     <dependency>
-      <groupId>org.hamcrest</groupId> 
+      <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-core</artifactId>
     </dependency>
-    
+
     <!-- TEST -->
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-test</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- TEST: persistence -->
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -165,24 +165,16 @@
       <artifactId>btm</artifactId>
       <scope>test</scope>
     </dependency>
-    
-    <!--  TEST: remote initial context -->
-    <!-- jboss
-     -->
+
+    <!-- TEST: remote initial context -->
+    <!-- jboss -->
     <dependency>
       <groupId>org.jboss.as</groupId>
       <artifactId>jboss-as-naming</artifactId>
     </dependency>
-    <!-- weblogic 
-    <dependency>
-      <groupId>weblogic</groupId>
-      <artifactId>weblogic-server</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>/opt/java/oracle/inventory/wlserver/server/lib/wlthint3client.jar</systemPath>
-    </dependency>
-    -->
-    
+    <!-- weblogic <dependency> <groupId>weblogic</groupId> <artifactId>weblogic-server</artifactId> <version>1.0</version> <scope>system</scope> 
+      <systemPath>/opt/java/oracle/inventory/wlserver/server/lib/wlthint3client.jar</systemPath> </dependency> -->
+
     <!-- TEST: fake integration test -->
     <dependency>
       <groupId>org.simpleframework</groupId>
@@ -200,15 +192,32 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <build>
     <testResources>
-        <testResource>
-            <directory>src/test/resources</directory>
-            <filtering>true</filtering>
-        </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
     </testResources>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.7</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.shared</groupId>
+              <artifactId>maven-filtering</artifactId>
+              <version>1.3</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
-  
+
 </project>
 

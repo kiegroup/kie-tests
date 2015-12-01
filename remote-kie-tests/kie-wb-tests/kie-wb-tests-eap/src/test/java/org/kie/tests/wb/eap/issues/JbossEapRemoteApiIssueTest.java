@@ -47,7 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 //@RunAsClient
-//@RunWith(Arquillian.class)
+@RunWith(Arquillian.class)
 public class JbossEapRemoteApiIssueTest {
 
     @Deployment(testable = false, name = "kie-wb-eap")
@@ -92,33 +92,33 @@ public class JbossEapRemoteApiIssueTest {
         // deploy
         System.setProperty("http.maxDirects", "2");
 
-        boolean deploy = false;
+        boolean deploy = true;
         if( deploy ) {
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
-        deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
+          RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, user, password, 5);
+          deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
-        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-        String repositoryName = "tests";
-        String project = "integration-tests";
-        String deploymentId = KJAR_DEPLOYMENT_ID;
-        String orgUnit = UUID.randomUUID().toString();
-        orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+          String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+          String repositoryName = "tests";
+          String project = "integration-tests";
+          String deploymentId = KJAR_DEPLOYMENT_ID;
+          String orgUnit = UUID.randomUUID().toString();
+          orgUnit = orgUnit.substring(0, orgUnit.indexOf("-"));
+          deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
 
-        int sleep = 2;
-        logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
-        Thread.sleep(sleep * 1000);
+          int sleep = 2;
+          logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
+          Thread.sleep(sleep * 1000);
         }
 
-//        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
-//                .setDeploymentId(KJAR_DEPLOYMENT_ID)
-//                .setMediaType(MediaType.APPLICATION_XML)
-//                .setStrategy(RuntimeStrategy.SINGLETON)
-//                .setTimeoutInSecs(5)
-//                .build();
+        /**
+        KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
+                .setDeploymentId(KJAR_DEPLOYMENT_ID)
+                .setMediaType(MediaType.APPLICATION_XML)
+                .setStrategy(RuntimeStrategy.SINGLETON)
+                .setTimeoutInSecs(5)
+                .build();
+                **/
 
-        KieWbWebServicesIntegrationTestMethods webserviceTests = new KieWbWebServicesIntegrationTestMethods();
-
-//        webserviceTests.startSimpleProcess(deploymentUrl);
+        KieWbWebServicesIntegrationTestMethods.startSimpleProcess(deploymentUrl);
     }
 }
