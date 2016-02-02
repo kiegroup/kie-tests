@@ -29,8 +29,8 @@ public abstract class AbstractLRemoteCallActivityJMSMultiInstanceSubProcesses im
 
     @Override
     public void init() {
-        // start of process may take a lot of time -> 30s timeout
-        rc = RemoteControllerProvider.getRemoteController(KieWBTestConfig.DEPLOYMENT_ID, 30);
+        // start of process may take a lot of time -> 60s timeout
+        rc = RemoteControllerProvider.getRemoteController(KieWBTestConfig.DEPLOYMENT_ID, 60);
     }
 
     @Override
