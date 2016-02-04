@@ -20,14 +20,15 @@
     <!-- >>>>>>>>>>>>>>>> Performance configuration <<<<<<<<<<<<<<<<<<<< -->
 
     <projectName>BPM Suite</projectName>
-    <suite>LoadSuite</suite>
+    <suite>SoakSuite</suite>
     <scenario></scenario>
     <startScriptLocation>./run.sh</startScriptLocation>
 
     <!-- Duration (in seconds), Iteration -->
     <runType>Iteration</runType>
-    <duration>120</duration>
+    <duration>300</duration>
     <iterations>1</iterations>
+    <expectedRate>30</expectedRate>
 
     <warmUp>false</warmUp>
     <warmUpCount>1</warmUpCount>
@@ -130,6 +131,10 @@
     </dependency>
     <dependency>
       <groupId>org.jbpm</groupId>
+      <artifactId>jbpm-human-task-audit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jbpm</groupId>
       <artifactId>jbpm-runtime-manager</artifactId>
     </dependency>
     <dependency>
@@ -143,6 +148,10 @@
     <dependency>
       <groupId>org.jbpm</groupId>
       <artifactId>jbpm-flow</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-workbench-models-guided-dtable</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -207,6 +216,7 @@
             <argument>-DrunType=${runType}</argument>
             <argument>-Dduration=${duration}</argument>
             <argument>-Diterations=${iterations}</argument>
+            <argument>-DexpectedRate=${expectedRate}</argument>
             <argument>-DwarmUp=${warmUp}</argument>
             <argument>-DwarmUpCount=${warmUpCount}</argument>
             <argument>-DauditLogging=${auditLogging}</argument>

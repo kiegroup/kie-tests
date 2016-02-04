@@ -35,6 +35,11 @@ then
   PARAMS="$PARAMS -Diterations=$iterations"
 fi
 
+if [ -n "$expectedRate" ]
+then
+  PARAMS="$PARAMS -DexpectedRate=$expectedRate"
+fi
+
 if [ -n "$warmUp" ]
 then
   PARAMS="$PARAMS -DwarmUp=$warmUp"

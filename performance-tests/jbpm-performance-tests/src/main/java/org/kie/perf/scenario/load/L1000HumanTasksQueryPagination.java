@@ -3,8 +3,13 @@ package org.kie.perf.scenario.load;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jbpm.services.task.audit.TaskAuditServiceFactory;
+import org.jbpm.services.task.audit.service.TaskAuditService;
+import org.jbpm.services.task.audit.service.TaskAuditServiceImpl;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.TaskSummary;
+import org.kie.internal.query.QueryFilter;
+import org.kie.internal.task.api.AuditTask;
 import org.kie.internal.task.api.InternalTaskService;
 import org.kie.perf.SharedMetricRegistry;
 import org.kie.perf.annotation.KPKLimit;
@@ -23,7 +28,7 @@ public class L1000HumanTasksQueryPagination implements IPerfTest {
 
     private TaskService taskService;
 
-    private List<TaskSummary> tasks = new ArrayList<TaskSummary>();
+    private List<AuditTask> tasks = new ArrayList<AuditTask>();
 
     @Override
     public void init() {
@@ -48,7 +53,8 @@ public class L1000HumanTasksQueryPagination implements IPerfTest {
 
     @Override
     public void execute() {
-        tasks = ((InternalTaskService) taskService).taskQuery(UserStorage.PerfUser.getUserId()).intersect().maxResults(100).build().getResultList();
+        TaskAuditService taskAuditService = TaskAuditServiceFactory.newTaskAuditServiceConfigurator().setTaskService(taskService).getTaskAuditService();
+        tasks = taskAuditService.getAllAuditTasksByUser(UserStorage.PerfUser.getUserId(), new QueryFilter(0, 100));
     }
 
     @Override

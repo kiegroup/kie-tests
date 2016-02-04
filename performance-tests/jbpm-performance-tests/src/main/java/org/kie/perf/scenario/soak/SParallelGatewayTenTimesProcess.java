@@ -1,4 +1,4 @@
-package org.kie.perf.scenario.load;
+package org.kie.perf.scenario.soak;
 
 import org.kie.api.event.process.DefaultProcessEventListener;
 import org.kie.api.event.process.ProcessCompletedEvent;
@@ -12,7 +12,7 @@ import org.kie.perf.scenario.IPerfTest;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
-public class LParallelGatewayTenTimesProcess implements IPerfTest {
+public class SParallelGatewayTenTimesProcess implements IPerfTest {
 
     private JBPMController jc;
 
@@ -21,6 +21,7 @@ public class LParallelGatewayTenTimesProcess implements IPerfTest {
     @Override
     public void init() {
         jc = JBPMController.getInstance();
+        jc.clear();
         jc.setProcessEventListener(new DefaultProcessEventListener() {
             @Override
             public void afterProcessCompleted(ProcessCompletedEvent event) {
@@ -34,7 +35,7 @@ public class LParallelGatewayTenTimesProcess implements IPerfTest {
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
-        completedProcess = metrics.meter(MetricRegistry.name(LParallelGatewayTenTimesProcess.class, "scenario.process.completed"));
+        completedProcess = metrics.meter(MetricRegistry.name(SParallelGatewayTenTimesProcess.class, "scenario.process.completed"));
     }
 
     @Override

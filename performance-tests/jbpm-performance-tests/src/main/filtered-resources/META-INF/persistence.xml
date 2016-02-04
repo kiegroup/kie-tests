@@ -13,22 +13,21 @@
     <mapping-file>META-INF/JBPMorm.xml</mapping-file>
     <mapping-file>META-INF/Taskorm.xml</mapping-file>
     <mapping-file>META-INF/TaskAuditorm.xml</mapping-file>
-    <mapping-file>META-INF/Servicesorm.xml</mapping-file>
 
     <class>org.jbpm.executor.entities.ErrorInfo</class>
     <class>org.jbpm.executor.entities.RequestInfo</class>
 
-    <class>org.jbpm.persistence.processinstance.ProcessInstanceInfo</class>
     <class>org.drools.persistence.info.SessionInfo</class>
+    <class>org.jbpm.persistence.processinstance.ProcessInstanceInfo</class>
     <class>org.drools.persistence.info.WorkItemInfo</class>
+    <class>org.jbpm.persistence.correlation.CorrelationKeyInfo</class>
+    <class>org.jbpm.persistence.correlation.CorrelationPropertyInfo</class>
 
     <class>org.jbpm.process.audit.ProcessInstanceLog</class>
     <class>org.jbpm.process.audit.NodeInstanceLog</class>
     <class>org.jbpm.process.audit.VariableInstanceLog</class>
 
-    <class>org.jbpm.persistence.correlation.CorrelationKeyInfo</class>
-    <class>org.jbpm.persistence.correlation.CorrelationPropertyInfo</class>
-
+    <!-- manager -->
     <class>org.jbpm.runtime.manager.impl.jpa.ContextMappingInfo</class>
 
     <class>org.jbpm.services.task.impl.model.AttachmentImpl</class>
@@ -58,8 +57,9 @@
 
     <!-- Task Audit Classes -->
     <class>org.jbpm.services.task.audit.impl.model.AuditTaskImpl</class>
+    <class>org.jbpm.services.task.audit.impl.model.TaskVariableImpl</class>
 
-    <class>org.jbpm.kie.services.impl.store.DeploymentStoreEntry</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
     <properties>
       <property name="hibernate.max_fetch_depth" value="3" />

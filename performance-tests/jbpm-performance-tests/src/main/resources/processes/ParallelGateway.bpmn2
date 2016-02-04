@@ -11,22 +11,20 @@
       <bpmn2:outgoing>SequenceFlow_4</bpmn2:outgoing>
     </bpmn2:parallelGateway>
     <bpmn2:sequenceFlow id="SequenceFlow_2" drools:priority="1" name="" sourceRef="StartEvent_1" targetRef="ParallelGateway_1"/>
-    <bpmn2:sequenceFlow id="SequenceFlow_3" drools:priority="1" name="" sourceRef="ParallelGateway_1" targetRef="ManualTask_1"/>
-    <bpmn2:manualTask id="ManualTask_1" name="Manual Task 1">
+    <bpmn2:sequenceFlow id="SequenceFlow_3" drools:priority="1" name="" sourceRef="ParallelGateway_1" targetRef="scriptTask_1"/>
+    <bpmn2:scriptTask id="scriptTask_1" name="Manual Task 1">
       <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
       <bpmn2:outgoing>SequenceFlow_5</bpmn2:outgoing>
-    </bpmn2:manualTask>
-    <bpmn2:sequenceFlow id="SequenceFlow_4" drools:priority="1" name="" sourceRef="ParallelGateway_1" targetRef="ManualTask_2"/>
-    <bpmn2:manualTask id="ManualTask_2" name="Manual Task 2">
-      <bpmn2:extensionElements>
-        <drools:onEntry-script scriptFormat="http://www.java.com/java"/>
-        <drools:onExit-script scriptFormat="http://www.java.com/java"/>
-      </bpmn2:extensionElements>
+      <bpmn2:script> </bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_4" drools:priority="1" name="" sourceRef="ParallelGateway_1" targetRef="scriptTask_2"/>
+    <bpmn2:scriptTask id="scriptTask_2" name="Manual Task 2">
       <bpmn2:incoming>SequenceFlow_4</bpmn2:incoming>
       <bpmn2:outgoing>SequenceFlow_6</bpmn2:outgoing>
-    </bpmn2:manualTask>
-    <bpmn2:sequenceFlow id="SequenceFlow_5" drools:priority="1" name="" sourceRef="ManualTask_1" targetRef="ParallelGateway_2"/>
-    <bpmn2:sequenceFlow id="SequenceFlow_6" drools:priority="1" name="" sourceRef="ManualTask_2" targetRef="ParallelGateway_2"/>
+      <bpmn2:script> </bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_5" drools:priority="1" name="" sourceRef="scriptTask_1" targetRef="ParallelGateway_2"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_6" drools:priority="1" name="" sourceRef="scriptTask_2" targetRef="ParallelGateway_2"/>
     <bpmn2:parallelGateway id="ParallelGateway_2" name="" gatewayDirection="Converging">
       <bpmn2:incoming>SequenceFlow_5</bpmn2:incoming>
       <bpmn2:incoming>SequenceFlow_6</bpmn2:incoming>
@@ -47,13 +45,13 @@
         <dc:Bounds height="50.0" width="50.0" x="211.0" y="93.0"/>
         <bpmndi:BPMNLabel/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_ManualTask_1" bpmnElement="ManualTask_1">
+      <bpmndi:BPMNShape id="BPMNShape_scriptTask_1" bpmnElement="scriptTask_1">
         <dc:Bounds height="74.0" width="101.0" x="300.0" y="0.0"/>
         <bpmndi:BPMNLabel>
           <dc:Bounds height="14.0" width="79.0" x="311.0" y="30.0"/>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_ManualTask_2" bpmnElement="ManualTask_2">
+      <bpmndi:BPMNShape id="BPMNShape_scriptTask_2" bpmnElement="scriptTask_2">
         <dc:Bounds height="81.0" width="101.0" x="300.0" y="160.0"/>
         <bpmndi:BPMNLabel>
           <dc:Bounds height="14.0" width="79.0" x="311.0" y="193.0"/>
@@ -74,25 +72,25 @@
         <di:waypoint xsi:type="dc:Point" x="211.0" y="118.0"/>
         <bpmndi:BPMNLabel/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_3" sourceElement="BPMNShape_ParallelGateway_1" targetElement="BPMNShape_ManualTask_1">
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_3" sourceElement="BPMNShape_ParallelGateway_1" targetElement="BPMNShape_scriptTask_1">
         <di:waypoint xsi:type="dc:Point" x="236.0" y="93.0"/>
         <di:waypoint xsi:type="dc:Point" x="236.0" y="37.0"/>
         <di:waypoint xsi:type="dc:Point" x="300.0" y="37.0"/>
         <bpmndi:BPMNLabel/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_4" sourceElement="BPMNShape_ParallelGateway_1" targetElement="BPMNShape_ManualTask_2">
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_4" sourceElement="BPMNShape_ParallelGateway_1" targetElement="BPMNShape_scriptTask_2">
         <di:waypoint xsi:type="dc:Point" x="236.0" y="143.0"/>
         <di:waypoint xsi:type="dc:Point" x="236.0" y="200.0"/>
         <di:waypoint xsi:type="dc:Point" x="300.0" y="200.0"/>
         <bpmndi:BPMNLabel/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="SequenceFlow_5" sourceElement="BPMNShape_ManualTask_1" targetElement="BPMNShape_ParallelGateway_2">
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="SequenceFlow_5" sourceElement="BPMNShape_scriptTask_1" targetElement="BPMNShape_ParallelGateway_2">
         <di:waypoint xsi:type="dc:Point" x="401.0" y="37.0"/>
         <di:waypoint xsi:type="dc:Point" x="465.0" y="37.0"/>
         <di:waypoint xsi:type="dc:Point" x="465.0" y="93.0"/>
         <bpmndi:BPMNLabel/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_6" bpmnElement="SequenceFlow_6" sourceElement="BPMNShape_ManualTask_2" targetElement="BPMNShape_ParallelGateway_2">
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_6" bpmnElement="SequenceFlow_6" sourceElement="BPMNShape_scriptTask_2" targetElement="BPMNShape_ParallelGateway_2">
         <di:waypoint xsi:type="dc:Point" x="401.0" y="200.0"/>
         <di:waypoint xsi:type="dc:Point" x="465.0" y="200.0"/>
         <di:waypoint xsi:type="dc:Point" x="465.0" y="143.0"/>

@@ -7,7 +7,6 @@ import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.perf.SharedMetricRegistry;
 import org.kie.perf.jbpm.JBPMController;
 import org.kie.perf.jbpm.constant.ProcessStorage;
-import org.kie.perf.jbpm.wih.ManualTaskWorkItemHandler;
 import org.kie.perf.scenario.IPerfTest;
 
 import com.codahale.metrics.Meter;
@@ -28,7 +27,6 @@ public class LParallelGatewayProcess implements IPerfTest {
                 completedProcess.mark();
             }
         });
-        jc.addWorkItemHandler("Manual Task", new ManualTaskWorkItemHandler());
 
         jc.createRuntimeManager(ProcessStorage.ParallelGateway.getPath());
     }

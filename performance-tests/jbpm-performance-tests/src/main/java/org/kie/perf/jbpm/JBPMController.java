@@ -126,10 +126,14 @@ public class JBPMController {
         cleanupSingletonSessionId();
 
     }
-
-    public void tearDown() {
+    
+    public void clear() {
         clearCustomEntries();
         disposeRuntimeManager();
+    }
+
+    public void tearDown() {
+        clear();
         if (persistence) {
             if (emf != null) {
                 emf.close();
