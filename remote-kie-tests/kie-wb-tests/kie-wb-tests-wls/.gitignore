@@ -1,0 +1,7 @@
+# build files
+/target
+/bin
+
+# core dumps (WTF, Oracle?)
+/hs_err*
+/target
