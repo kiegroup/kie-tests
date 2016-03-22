@@ -74,14 +74,14 @@ public abstract class AbstractRemoteApiIntegrationTest {
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
         logger.info("Waiting " + sleep / 1000 + " secs for tx's on server to close.");
-        Thread.sleep(sleep);
+//        Thread.sleep(sleep);
     }
 
     @BeforeClass
     public static void waitForDeployedKmodulesToLoad() throws InterruptedException {
         long sleep = 2000;
         logger.info("Waiting " + sleep / 1000 + " secs for server to finish starting up.");
-        Thread.sleep(sleep);
+//        Thread.sleep(sleep);
     }
 
     protected void printTestName() {
@@ -256,8 +256,8 @@ public abstract class AbstractRemoteApiIntegrationTest {
         restTests.urlsGetProcessDefinitions(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 
-    @Test
-    @InSequence(REST_SUCCEEDING)
+//    @Test
+//    @InSequence(REST_SUCCEEDING)
     public void testRestUrlsCreateMemoryLeakOnTomcat() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();

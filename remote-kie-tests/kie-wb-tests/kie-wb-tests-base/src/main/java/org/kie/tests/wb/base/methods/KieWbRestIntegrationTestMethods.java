@@ -1237,15 +1237,6 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         assertNotNull("Null ProcessInstance!", processInstance);
         long procInstId = processInstance.getId();
 
-
-        JaxbLongListResponse response = get("runtime/" + deploymentId + "/workitem/", 200, JaxbLongListResponse.class);
-
-        long workItemId = response.getResult().get(0);
-        JaxbWorkItemResponse workItemResp = get("runtime/" + deploymentId + "/workitem/" + workItemId, 200, JaxbWorkItemResponse.class);
-        assertNotNull( "Null response", workItemResp );
-        WorkItem workItem = workItemResp.getResult();
-        assertNotNull( "Null work item result", workItemResp.getResult() );
-
         // @formatter:off
         TaskService nullDepIdTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
                 .addUrl(deploymentUrl)
@@ -1289,6 +1280,26 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
         // 3. Start the task
         emptyDepIdTaskService.start(taskId, taskUserId);
+
+        // 3a.
+        TaskService otherUserTaskService = RemoteRuntimeEngineFactory.newRestBuilder()
+            .addUrl(deploymentUrl)
+            .addUserName(KRIS_USER)
+            .addPassword(KRIS_PASSWORD)
+            .addDeploymentId(deploymentId)
+            .disableTaskSecurity()
+            .build().getTaskService();
+
+        List<TaskSummary> userTaskSums = otherUserTaskService.getTasksOwned(user, "en-UK");
+
+        boolean found = false;
+        for( TaskSummary userTaskSum : userTaskSums ) {
+           if( userTaskSum.getId().equals(taskSum.getId()) )  {
+               found = true;
+               break;
+           }
+        }
+        assertTrue( "Insecure task retrieval failed!", found);
 
         // 4. configure remote api client with deployment id
         // @formatter:off

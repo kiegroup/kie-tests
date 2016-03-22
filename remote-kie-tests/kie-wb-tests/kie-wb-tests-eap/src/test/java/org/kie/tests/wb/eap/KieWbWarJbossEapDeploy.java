@@ -22,7 +22,7 @@ public class KieWbWarJbossEapDeploy {
         WebArchive war = getWebArchive("org.kie", "kie-wb-distribution-wars", classifier, PROJECT_VERSION);
 
         String[][] jarsToReplace = {
-                { "org.drools", "drools-compiler" },
+//                { "org.drools", "drools-compiler" },
 
                 // kie-remote
                 { "org.kie.remote", "kie-remote-services" }

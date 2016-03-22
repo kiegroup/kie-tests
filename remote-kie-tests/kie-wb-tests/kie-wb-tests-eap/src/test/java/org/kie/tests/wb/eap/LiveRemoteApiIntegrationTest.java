@@ -17,31 +17,28 @@
  */
 package org.kie.tests.wb.eap;
 
-import static org.kie.tests.wb.eap.KieWbWarJbossEapDeploy.createTestWar;
-
 import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
-import org.junit.runner.RunWith;
 import org.kie.internal.runtime.conf.RuntimeStrategy;
 import org.kie.tests.wb.base.AbstractRemoteApiIntegrationTest;
 
-//@RunAsClient
-//@RunWith(Arquillian.class)
-public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
+public class LiveRemoteApiIntegrationTest extends AbstractRemoteApiIntegrationTest {
 
-//    @Deployment(testable = false, name = "kie-wb-eap")
-//    public static Archive<?> createWar() {
-//        return createTestWar();
-//    }
+    public void liveSetDeploymentUrl() {
+        // Modify this string to match your kie-wb/BPMS installation
+        String urlString = "http://localhost:9080/kie-wb/";
+        try {
+            this.deploymentUrl = new URL(urlString);
+        } catch( Exception e ) {
+            System.err.println( "The following URL is not a valid URL: '" + urlString + "'");
+            e.printStackTrace();
+        }
+    }
 
     public boolean doDeploy() {
-        return true;
+        return false;
     }
 
     public String getContentType() {
@@ -66,16 +63,5 @@ public class JbossEapRemoteApiIntegrationTest extends AbstractRemoteApiIntegrati
     @Override
     public int getTimeoutInSecs() {
         return 4;
-    }
-
-    public void liveSetDeploymentUrl() {
-        // Modify this string to match your kie-wb/BPMS installation
-        String urlString = "http://localhost:7001/business-central/";
-        try {
-            this.deploymentUrl = new URL(urlString);
-        } catch( Exception e ) {
-            System.err.println( "The following URL is not a valid URL: '" + urlString + "'");
-            e.printStackTrace();
-        }
     }
 }

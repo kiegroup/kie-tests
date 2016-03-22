@@ -310,6 +310,7 @@
           <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
+              <!--
               <execution>
                 <id>unpack-jboss</id>
                 <phase>generate-test-resources</phase>
@@ -348,6 +349,7 @@
                   </artifactItems>
                 </configuration>
               </execution>
+              -->
               <execution>
                 <id>check-kie-wb-war</id>
                 <phase>generate-test-resources</phase>
