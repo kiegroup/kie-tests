@@ -1021,7 +1021,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
     public void urlsDeploymentProcessDefinitions( URL deploymentUrl, String user, String password ) throws Exception {
         setRestInfo(deploymentUrl, user, password);
-        JaxbProcessDefinitionList jaxbProcDefList = get("/deployment/processes", 200, JaxbProcessDefinitionList.class);
+        JaxbProcessDefinitionList jaxbProcDefList = get("deployment/processes", 200, JaxbProcessDefinitionList.class);
 
         assertTrue("Null response!", jaxbProcDefList != null);
         List<JaxbProcessDefinition> procDefList = jaxbProcDefList.getProcessDefinitionList();
@@ -1041,6 +1041,8 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
     }
 
     public void urlsProcessQueryOperations( URL deploymentUrl, String user, String password ) throws Exception  {
+        setRestInfo(deploymentUrl, user, password);
+
         Map<String, String> queryParams = new HashMap<String, String>(1);
         queryParams.put("params", null);
 
@@ -1057,7 +1059,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         queryParams.clear();
         queryParams.put("piid", "" + procInstId);
 
-        JaxbQueryProcessInstanceResult queryResult = get("/query/runtime/process", 200, queryParams, JaxbQueryProcessInstanceResult.class);
+        JaxbQueryProcessInstanceResult queryResult = get("query/runtime/process", 200, queryParams, JaxbQueryProcessInstanceResult.class);
 
         assertNotNull("Null query result", queryResult);
         List<JaxbQueryProcessInstanceInfo> procInstInfoList = queryResult.getProcessInstanceInfoList();

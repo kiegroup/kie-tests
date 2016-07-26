@@ -100,6 +100,6 @@ public class TomcatRemoteApiIssueTest {
                 .setTimeoutInSecs(5)
                 .build();
 
-        restTests.remoteApiInsecureHumanTaskProcess(deploymentUrl);
+        restTests.urlsProcessQueryOperations(deploymentUrl, MARY_USER, MARY_PASSWORD);
     }
 }

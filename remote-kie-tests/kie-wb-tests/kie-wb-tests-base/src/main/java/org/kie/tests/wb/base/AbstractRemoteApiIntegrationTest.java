@@ -129,7 +129,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_ERROR)
     public void testRestUrlsCommandsStartProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -137,7 +137,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_FAILING)
+    @InSequence(REST_ERROR)
     public void testRestRemoteApiHumanTaskProcess() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -273,7 +273,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_SUCCEEDING)
+    @InSequence(REST_ERROR)
     public void testRestRemoteApiGroupAssignmentEngineering() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
@@ -281,7 +281,7 @@ public abstract class AbstractRemoteApiIntegrationTest {
     }
 
     @Test
-    @InSequence(REST_SUCCEEDING)
+    @InSequence(REST_ERROR)
     public void testRestRemoteApiHumanTaskComment() throws Exception {
         Assume.assumeTrue(doRestTests());
         printTestName();
