@@ -90,7 +90,6 @@ import org.kie.api.runtime.manager.audit.AuditService;
 import org.kie.api.runtime.manager.audit.ProcessInstanceLog;
 import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.api.runtime.process.ProcessInstance;
-import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Status;
 import org.kie.api.task.model.Task;
@@ -126,7 +125,6 @@ import org.kie.services.client.serialization.jaxb.impl.deploy.JaxbDeploymentUnit
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinition;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessDefinitionList;
 import org.kie.services.client.serialization.jaxb.impl.process.JaxbProcessInstanceResponse;
-import org.kie.services.client.serialization.jaxb.impl.process.JaxbWorkItemResponse;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceInfo;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbQueryProcessInstanceResult;
 import org.kie.services.client.serialization.jaxb.impl.query.JaxbVariableInfo;
@@ -433,13 +431,12 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
 
         String getProcInsturl = "rest/runtime/" + deploymentId + "/process/" + HUMAN_TASK_VAR_PROCESS_ID + "/";
 
-        processInstance = RestUtil.get(deploymentUrl,
+        JaxbProcessDefinition procDef = RestUtil.get(deploymentUrl,
                                        getProcInsturl, contentType,
                                        200, user, password,
-                                       JaxbProcessInstanceResponse.class);
+                                       JaxbProcessDefinition.class);
 
-        assertNotNull( "Null process instance using GET operation", processInstance );
-        assertEquals( "Process instance id", procInstId, processInstance.getId() );
+        assertNotNull( "Null process definition using GET operation", procDef );
 
         // query tasks for associated task Id
         Map<String, String> queryparams = new HashMap<String, String>();
@@ -1307,6 +1304,7 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
                 .addUrl(deploymentUrl)
                 .addUserName(user)
                 .addDeploymentId(deploymentId) // set new deployment id in task
+                .disableTaskSecurity() // DBG
                 .addPassword(password).build().getTaskService();
         // @formatter:on
 
@@ -1337,6 +1335,85 @@ public class KieWbRestIntegrationTestMethods implements IntegrationTestMethods {
         List<Status> statuses = new ArrayList<Status>();
         statuses.add(Status.Reserved);
         List<TaskSummary> taskSums = nullDepIdTaskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
+        assertEquals("Expected 2 tasks.", 2, taskSums.size());
+    }
+
+    public void remoteApiInsecureHumanTaskProcess( URL deploymentUrl) throws Exception {
+        String restUser = KRIS_USER;
+        String restPassword = KRIS_PASSWORD;
+        setRestInfo(deploymentUrl, restUser, restPassword);
+
+        // Remote API setup
+        // @formatter:off
+        RemoteRestRuntimeEngineBuilder builder = RemoteRuntimeEngineFactory.newRestBuilder()
+                .addDeploymentId(deploymentId)
+                .addUrl(deploymentUrl)
+                .addUserName(restUser)
+                .disableTaskSecurity()
+                .addPassword(restPassword);
+        // @formatter:on
+        RuntimeEngine engine = builder.build();
+        KieSession ksession = engine.getKieSession();
+        TaskService taskService = engine.getTaskService();
+
+        // 1. start process
+        ProcessInstance processInstance = ksession.startProcess(HUMAN_TASK_PROCESS_ID);
+        assertNotNull("Null ProcessInstance!", processInstance);
+        long procInstId = processInstance.getId();
+
+        // 2c. Another way to find the task
+        // (testing TaskQueryWhereCommand based operations. )
+        List<TaskSummary> tasks = taskService.getTasksAssignedAsPotentialOwnerByProcessId(taskUserId, HUMAN_TASK_PROCESS_ID);
+        long taskId = findTaskIdByProcessInstanceId(procInstId, tasks);
+
+        // 2. find task (without deployment id)
+        long sameTaskId;
+        {
+            List<Long> taskIds = taskService.getTasksByProcessInstanceId(procInstId);
+            assertEquals("Incorrect number of tasks for started process: ", 1, taskIds.size());
+            sameTaskId = taskIds.get(0);
+        }
+        assertEquals( "Did not find the same task!", taskId, sameTaskId );
+
+        // 2b. Get the task instance itself
+        Task task = taskService.getTaskById(taskId);
+        checkReturnedTask(task, taskId);
+        String actualOwnerId = task.getTaskData().getActualOwner().getId();
+        // the user should be different (insecure task test)..
+        assertTrue( "Unexpected owner: " + actualOwnerId, ! actualOwnerId.equals(restUser) );
+
+        // 3. Start the task
+        taskService.start(taskId, taskUserId);
+
+        List<TaskSummary> userTaskSums = taskService.getTasksOwned(taskUserId, "en-UK");
+
+        boolean found = false;
+        for( TaskSummary userTaskSum : userTaskSums ) {
+           if( userTaskSum.getId().equals(taskId) )  {
+               found = true;
+               break;
+           }
+        }
+        assertTrue( "Insecure task retrieval failed!", found);
+
+        // 5. complete task with TaskService instance that *has a deployment id*
+        taskService.complete(taskId, taskUserId, null);
+
+        Map<String, Object> contentMap = taskService.getTaskContent(taskId);
+        assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
+
+        org.kie.api.task.model.Content content = taskService.getContentById(task.getTaskData().getDocumentContentId());
+        if( content != null && content.getContent() != null ) {
+            Object contentMapObj = ContentMarshallerHelper.unmarshall(content.getContent(), null);
+            contentMap = (Map<String, Object>) contentMapObj;
+            assertFalse( "Empty content map", contentMap == null || contentMap.isEmpty() );
+        } else  {
+            assertNotNull("No task content found" , content);
+        }
+
+        List<Status> statuses = new ArrayList<Status>();
+        statuses.add(Status.Reserved);
+        List<TaskSummary> taskSums = taskService.getTasksByStatusByProcessInstanceId(procInstId, statuses, "en-UK");
         assertEquals("Expected 2 tasks.", 2, taskSums.size());
     }
 

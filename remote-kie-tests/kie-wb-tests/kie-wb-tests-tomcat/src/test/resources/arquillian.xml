@@ -19,7 +19,8 @@
         -Dbtm.root=${tomcat.home} 
         -Dbitronix.tm.configuration=${tomcat.home}/conf/btm-config.properties
         -Djbpm.tsr.jndi.lookup=java:comp/env/TransactionSynchronizationRegistry
-        -Dorg.jboss.logging.provider=jdk</property>
+        -Dorg.jboss.logging.provider=jdk
+        -Dorg.kie.task.insecure=true</property>
       <property name="bindHttpPort">8080</property>
       
       <!-- deploy --> 

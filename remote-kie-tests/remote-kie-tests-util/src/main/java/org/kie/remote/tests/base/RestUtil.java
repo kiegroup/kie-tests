@@ -123,6 +123,7 @@ public class RestUtil {
         try {
             return resp.handleResponse(rh);
         } catch( Exception e ) {
+            e.printStackTrace();
             logAndFail("Failed retrieving response from [GET] " + uriStr, e);
         }
 

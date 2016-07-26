@@ -1,10 +1,10 @@
 /*
  * JBoss, Home of Professional Open Source
- * 
+ *
  * Copyright 2014, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,7 @@
  */
 package org.kie.tests.wb.tomcat;
 
-import static org.kie.tests.wb.base.util.TestConstants.KJAR_DEPLOYMENT_ID;
+import static org.kie.tests.wb.base.util.TestConstants.*;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_PASSWORD;
 import static org.kie.tests.wb.base.util.TestConstants.MARY_USER;
 import static org.kie.tests.wb.tomcat.KieWbWarTomcatDeploy.createTestWar;
@@ -49,13 +49,13 @@ public class TomcatRemoteApiIssueTest {
     public static Archive<?> createWar() {
         return createTestWar();
     }
- 
+
     private static final Logger logger = LoggerFactory.getLogger(TomcatRemoteApiIssueTest.class);
-    
+
     @ArquillianResource
     URL deploymentUrl;
-   
-    
+
+
     @AfterClass
     public static void waitForTxOnServer() throws InterruptedException {
         long sleep = 1000;
@@ -63,41 +63,43 @@ public class TomcatRemoteApiIssueTest {
         Thread.sleep(sleep);
     }
 
-    protected void printTestName() { 
+    protected void printTestName() {
         String testName = Thread.currentThread().getStackTrace()[2].getMethodName();
         System.out.println( "-=> " + testName );
     }
-    
+
     @Test
-    public void issueTest() throws Exception { 
-        printTestName();
+    public void issueTest() throws Exception {
         printTestName();
         String username = MARY_USER;
         String password = MARY_PASSWORD;
-        
+
         // deploy
 
-        RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
-        deployUtil.setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE);
+        boolean deploy = true;
+        if( deploy ) {
+            RepositoryDeploymentUtil deployUtil = new RepositoryDeploymentUtil(deploymentUrl, username, password, 5);
+            deployUtil.setStrategy(RuntimeStrategy.SINGLETON);
 
-        String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
-        String repositoryName = "tests";
-        String project = "integration-tests";
-        String deploymentId = KJAR_DEPLOYMENT_ID;
-        String orgUnit = UUID.randomUUID().toString();
-        deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+            String repoUrl = "https://github.com/droolsjbpm/jbpm-playground.git";
+            String repositoryName = "tests";
+            String project = "integration-tests";
+            String deploymentId = KJAR_DEPLOYMENT_ID;
+            String orgUnit = UUID.randomUUID().toString();
+            deployUtil.createRepositoryAndDeployProject(repoUrl, repositoryName, project, deploymentId, orgUnit);
+        }
 
         int sleep = 2;
         logger.info("Waiting {} more seconds to make sure deploy is done..", sleep);
-        Thread.sleep(sleep * 1000); 
-        
+        Thread.sleep(sleep * 1000);
+
         KieWbRestIntegrationTestMethods restTests = KieWbRestIntegrationTestMethods.newBuilderInstance()
                 .setDeploymentId(KJAR_DEPLOYMENT_ID)
                 .setMediaType(MediaType.APPLICATION_XML)
                 .setStrategy(RuntimeStrategy.PER_PROCESS_INSTANCE)
                 .setTimeoutInSecs(5)
                 .build();
-               
-        restTests.remoteApiCorrelationKeyOperations(deploymentUrl, username, password);
+
+        restTests.remoteApiInsecureHumanTaskProcess(deploymentUrl);
     }
 }
