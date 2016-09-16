@@ -17,6 +17,7 @@
         <module>jbpm-performance-tests</module>
         <module>remotewb-performance-tests</module>
         <module>workbench-assets</module>
+        <module>kieserver-performance-tests</module>
     </modules>
 
     <build>
