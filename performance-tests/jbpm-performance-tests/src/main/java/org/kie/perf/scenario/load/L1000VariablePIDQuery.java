@@ -5,6 +5,7 @@ import java.util.List;
 import org.kie.api.runtime.manager.audit.AuditService;
 import org.kie.api.runtime.manager.audit.VariableInstanceLog;
 import org.kie.perf.SharedMetricRegistry;
+import org.kie.perf.annotation.KPKLimit;
 import org.kie.perf.jbpm.JBPMController;
 import org.kie.perf.jbpm.constant.ProcessStorage;
 import org.kie.perf.scenario.IPerfTest;
@@ -14,6 +15,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 
+@KPKLimit(100)
 public class L1000VariablePIDQuery implements IPerfTest {
 
     private JBPMController jc;
@@ -24,6 +26,8 @@ public class L1000VariablePIDQuery implements IPerfTest {
     private Timer valVarsDuration;
     /**private Meter pidVars;
     private Meter valVars;*/
+    
+    private int age;
 
     @Override
     public void init() {
@@ -34,7 +38,8 @@ public class L1000VariablePIDQuery implements IPerfTest {
 
     @Override
     public void initMetrics() {
-        pids = PrepareEngine.createNewVariableHumanTask(1000, jc);
+        age = 1;
+        pids = PrepareEngine.createNewVariableHumanTask(100000, jc);
         
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
         pidVarsDuration = metrics.timer(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.pid.duration"));
@@ -47,7 +52,7 @@ public class L1000VariablePIDQuery implements IPerfTest {
     public void execute() {
         Timer.Context context;
 
-        int age = 1;
+        int rounds = 0;
         for (Long pid : pids) {
             context = pidVarsDuration.time();
             List<? extends VariableInstanceLog> piage = auditService.findVariableInstances(pid, "age");
@@ -64,6 +69,13 @@ public class L1000VariablePIDQuery implements IPerfTest {
             }*/
             
             age++;
+            rounds++;
+            if (age > pids.size()) {
+                age = 1;
+            }
+            if (rounds == 1000) {
+                break;
+            }
         }
     }
 
