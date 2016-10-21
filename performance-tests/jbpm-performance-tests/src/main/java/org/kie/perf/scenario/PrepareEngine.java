@@ -2,11 +2,17 @@ package org.kie.perf.scenario;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jbpm.services.task.impl.factories.TaskFactory;
+import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.manager.RuntimeEngine;
 import org.kie.api.task.TaskService;
 import org.kie.api.task.model.Task;
+import org.kie.perf.jbpm.JBPMController;
+import org.kie.perf.jbpm.constant.ProcessStorage;
 import org.kie.perf.jbpm.constant.UserStorage;
 
 public class PrepareEngine {
@@ -27,6 +33,20 @@ public class PrepareEngine {
             count--;
         }
         return taskIds;
+    }
+    
+    public static List<Long> createNewVariableHumanTask(int count, JBPMController jc) {
+        List<Long> pids = new ArrayList<Long>();
+        Map<String, Object> params = new HashMap<String, Object>();
+        for (int i=0; i<count; ++i) {
+            RuntimeEngine runtimeEngine = jc.getRuntimeEngine();
+            KieSession ksession = runtimeEngine.getKieSession();
+
+            params.put("age", i+1);
+            Long pid = ksession.startProcess(ProcessStorage.VariableHumanTask.getProcessDefinitionId(), params).getId();
+            pids.add(pid);
+        }
+        return pids;
     }
 
 }

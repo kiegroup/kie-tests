@@ -7,7 +7,7 @@ public enum ProcessStorage {
             "org.kie.perf.ParallelGatewayTenTimes"), ParallelGatewayTwoTimes("ParallelGatewayTwoTimes.bpmn2", "org.kie.perf.ParallelGatewayTwoTimes"), RuleTask(
             "RuleTask.bpmn2", "org.kie.perf.RuleTask"), ScriptTask("ScriptTask.bpmn2", "org.kie.perf.ScriptTask"), IntermediateSignal(
             "IntermediateSignal.bpmn2", "org.kie.perf.IntermediateSignal"), StartEnd("StartEnd.bpmn2", "org.kie.perf.StartEnd"), IntermediateTimer(
-            "IntermediateTimer.bpmn2", "org.kie.perf.IntermediateTimer");
+            "IntermediateTimer.bpmn2", "org.kie.perf.IntermediateTimer"), VariableHumanTask("VariableHumanTask.bpmn2", "org.kie.perf.VariableHumanTask");
 
     private String path;
     private String processDefinitionId;
