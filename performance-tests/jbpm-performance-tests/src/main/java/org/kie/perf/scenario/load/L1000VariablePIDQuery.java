@@ -37,10 +37,10 @@ public class L1000VariablePIDQuery implements IPerfTest {
         pids = PrepareEngine.createNewVariableHumanTask(1000, jc);
         
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
-        pidVarsDuration = metrics.timer(MetricRegistry.name(LHumanTaskProcess.class, "scenario.audit.variable.pid.duration"));
-        valVarsDuration = metrics.timer(MetricRegistry.name(LHumanTaskProcess.class, "scenario.audit.variable.val.duration"));
-        //pidVars = metrics.meter(MetricRegistry.name(L1000HumanTasksStart.class, "scenario.audit.variable.pidcount"));
-        //valVars = metrics.meter(MetricRegistry.name(L1000HumanTasksStart.class, "scenario.audit.variable.valcount"));
+        pidVarsDuration = metrics.timer(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.pid.duration"));
+        valVarsDuration = metrics.timer(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.val.duration"));
+        //pidVars = metrics.meter(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.pidcount"));
+        //valVars = metrics.meter(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.valcount"));
     }
 
     @Override
