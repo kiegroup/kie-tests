@@ -43,6 +43,8 @@ public class PrepareEngine {
             KieSession ksession = runtimeEngine.getKieSession();
 
             params.put("age", i+1);
+            params.put("name", "Name-" + (i+1));
+            params.put("address", "Address-" + (i+1));
             Long pid = ksession.startProcess(ProcessStorage.VariableHumanTask.getProcessDefinitionId(), params).getId();
             pids.add(pid);
         }

@@ -34,12 +34,12 @@ public class L1000VariablePIDQuery implements IPerfTest {
         jc = JBPMController.getInstance();
         jc.createRuntimeManager(ProcessStorage.VariableHumanTask.getPath());
         auditService = jc.getRuntimeEngine().getAuditService();
+        age = 1;
+        pids = PrepareEngine.createNewVariableHumanTask(10000, jc);
     }
 
     @Override
     public void initMetrics() {
-        age = 1;
-        pids = PrepareEngine.createNewVariableHumanTask(100000, jc);
         
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
         pidVarsDuration = metrics.timer(MetricRegistry.name(L1000VariablePIDQuery.class, "scenario.audit.variable.pid.duration"));
