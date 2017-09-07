@@ -15,8 +15,8 @@ import org.kie.perf.scenario.PrepareEngine;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
-@KPKLimit(1000)
-public class L1000HumanTasksComplete implements IPerfTest {
+@KPKLimit(10000)
+public class L10000HumanTasksComplete implements IPerfTest {
 
     private JBPMController jc;
 
@@ -47,10 +47,10 @@ public class L1000HumanTasksComplete implements IPerfTest {
     @Override
     public void initMetrics() {
         taskId = 0;
-        taskIds = PrepareEngine.createNewTasks(true, 1000, taskService);
+        taskIds = PrepareEngine.createNewTasks(true, 10000, taskService);
         
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
-        taskCompleted = metrics.meter(MetricRegistry.name(L1000HumanTasksComplete.class, "scenario.task.completed"));
+        taskCompleted = metrics.meter(MetricRegistry.name(L10000HumanTasksComplete.class, "scenario.task.completed"));
     }
 
     static int taskId = 0;
