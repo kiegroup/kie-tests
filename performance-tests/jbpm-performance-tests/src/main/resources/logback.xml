@@ -59,7 +59,7 @@
   </logger>
 
   <logger name="org.kie">
-    <level value="debug" />
+    <level value="info" />
     <appender-ref ref="asyncWarnConsoleAppender" /> <!-- prints only warn and higher messages to console -->
   </logger>
 </configuration>
