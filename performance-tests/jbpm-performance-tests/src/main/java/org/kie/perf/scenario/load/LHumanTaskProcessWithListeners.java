@@ -63,8 +63,8 @@ public class LHumanTaskProcessWithListeners implements IPerfTest {
         startTaskDuration = metrics.timer(MetricRegistry.name(LHumanTaskProcessWithListeners.class, "scenario.task.start.duration"));
         completeTaskDuration = metrics.timer(MetricRegistry.name(LHumanTaskProcessWithListeners.class, "scenario.task.complete.duration"));
         completedProcess = metrics.meter(MetricRegistry.name(LHumanTaskProcessWithListeners.class, "scenario.process.completed"));
-        taskStarted = metrics.meter(MetricRegistry.name(LHumanTaskProcessWithListeners.class, "scenario.task.started"));
-        taskCompleted = metrics.meter(MetricRegistry.name(LHumanTaskProcessWithListeners.class, "scenario.task.completed"));
+        taskStarted = metrics.meter(MetricRegistry.name(L1000HumanTasksStart.class, "scenario.task.started"));
+        taskCompleted = metrics.meter(MetricRegistry.name(L1000HumanTasksComplete.class, "scenario.task.completed"));
     }
 
     @Override

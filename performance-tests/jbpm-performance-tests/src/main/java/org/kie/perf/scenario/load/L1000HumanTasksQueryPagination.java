@@ -20,8 +20,8 @@ import org.kie.perf.scenario.PrepareEngine;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 
-@KPKLimit(10000)
-public class L10000HumanTasksQueryPagination implements IPerfTest {
+@KPKLimit(1000)
+public class L1000HumanTasksQueryPagination implements IPerfTest {
 
     private JBPMController jc;
 
@@ -43,13 +43,13 @@ public class L10000HumanTasksQueryPagination implements IPerfTest {
         ((RuntimeDataServiceImpl) runtimeDataService).setTaskAuditService(TaskAuditServiceFactory
                 .newTaskAuditServiceConfigurator().setTaskService(taskService).getTaskAuditService());
 
-        PrepareEngine.createNewTasks(false, 10000, taskService);
+        PrepareEngine.createNewTasks(false, 1000, taskService);
     }
 
     @Override
     public void initMetrics() {
         MetricRegistry metrics = SharedMetricRegistry.getInstance();
-        metrics.register(MetricRegistry.name(L10000HumanTasksQueryPagination.class, "scenario.tasks.query.page.size"),
+        metrics.register(MetricRegistry.name(L1000HumanTasksQueryPagination.class, "scenario.tasks.query.page.size"),
                 new Gauge<Integer>() {
                     @Override
                     public Integer getValue() {
