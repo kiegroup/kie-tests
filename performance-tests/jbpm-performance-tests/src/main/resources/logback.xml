@@ -48,6 +48,11 @@
     <appender-ref ref="asyncWarnConsoleAppender" />
   </logger>
 
+  <logger name="org.kie">
+    <level value="info" />
+    <appender-ref ref="asyncWarnConsoleAppender" />
+  </logger>
+
   <logger name="org.drools">
     <level value="debug" />
     <appender-ref ref="asyncWarnConsoleAppender" /> <!-- prints only warn and higher messages to console -->
@@ -58,8 +63,4 @@
     <appender-ref ref="asyncWarnConsoleAppender" /> <!-- prints only warn and higher messages to console -->
   </logger>
 
-  <logger name="org.kie">
-    <level value="info" />
-    <appender-ref ref="asyncWarnConsoleAppender" /> <!-- prints only warn and higher messages to console -->
-  </logger>
 </configuration>
