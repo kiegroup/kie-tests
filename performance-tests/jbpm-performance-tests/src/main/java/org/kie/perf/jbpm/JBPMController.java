@@ -609,6 +609,10 @@ public class JBPMController {
         return manager.getRuntimeEngine(EmptyContext.get());
     }
 
+    public String getRuntimeManagerIdentifier() {
+        return manager.getIdentifier();
+    }
+
     public EntityManagerFactory getEmf() {
         return emf;
     }

@@ -43,7 +43,7 @@ public class L1000HumanTasksQueryPagination implements IPerfTest {
         ((RuntimeDataServiceImpl) runtimeDataService).setTaskAuditService(TaskAuditServiceFactory
                 .newTaskAuditServiceConfigurator().setTaskService(taskService).getTaskAuditService());
 
-        PrepareEngine.createNewTasks(false, 1000, taskService);
+        PrepareEngine.createNewTasks(false, 1000, taskService, jc.getRuntimeManagerIdentifier());
     }
 
     @Override
