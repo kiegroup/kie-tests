@@ -21,4 +21,5 @@ bitronix-default-config.properties
 *.db
 reportData
 ${env.JBOSS_HOME}
+!.github/
 
